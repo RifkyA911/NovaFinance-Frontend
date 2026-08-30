@@ -5,7 +5,6 @@ import {
   Card,
   Button,
   Chip,
-  Table,
   Input,
   Avatar,
 } from "@heroui/react";
@@ -26,8 +25,6 @@ import {
   Target,
   Calendar,
   Filter,
-  Moon,
-  Sun,
 } from "lucide-react";
 import {
   LineChart,
@@ -76,7 +73,6 @@ const spendingCategories = [
 ];
 
 export default function Dashboard() {
-  const { theme, setTheme } = useTheme();
   const [selectedTab, setSelectedTab] = useState("overview");
   const [transactions, setTransactions] = useState<TransactionWithIcon[]>([]);
   const [loading, setLoading] = useState(true);
@@ -173,21 +169,12 @@ export default function Dashboard() {
               </div>
               <span className="font-bold text-xl">NovaJournal</span>
             </div>
-            <div className="flex items-center gap-6">
-              <div className="flex gap-4">
-                <a href="/dashboard" className="text-foreground font-medium">Overview</a>
-                <a href="/transactions" className="text-default-500 hover:text-foreground">Transactions</a>
-                <a href="/portfolio" className="text-default-500 hover:text-foreground">Portfolio</a>
-                <a href="/analytics" className="text-default-500 hover:text-foreground">Analytics</a>
-                <a href="/settings" className="text-default-500 hover:text-foreground">Settings</a>
-              </div>
-              <Button
-                isIconOnly
-                variant="ghost"
-                onPress={() => setTheme(theme === "dark" ? "light" : "dark")}
-              >
-                {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-              </Button>
+            <div className="flex gap-4">
+              <a href="/dashboard" className="text-foreground font-medium">Overview</a>
+              <a href="/transactions" className="text-default-500 hover:text-foreground">Transactions</a>
+              <a href="/portfolio" className="text-default-500 hover:text-foreground">Portfolio</a>
+              <a href="/analytics" className="text-default-500 hover:text-foreground">Analytics</a>
+              <a href="/settings" className="text-default-500 hover:text-foreground">Settings</a>
             </div>
           </div>
         </div>
@@ -377,48 +364,48 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="p-6">
-            <Table aria-label="Recent transactions">
-              <Table.Content>
-                <Table.Header>
-                  <Table.Column id="transaction">Transaction</Table.Column>
-                  <Table.Column id="category">Category</Table.Column>
-                  <Table.Column id="date">Date</Table.Column>
-                  <Table.Column id="amount" className="text-right">Amount</Table.Column>
-                  <Table.Column id="status" className="text-right">Status</Table.Column>
-                </Table.Header>
-                <Table.Body>
-                  {transactions.map((txn) => (
-                    <Table.Row key={txn.id} id={txn.id}>
-                      <Table.Cell>
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${txn.type === "INCOME" ? "bg-green-500/10" : "bg-red-500/10"}`}>
-                            {txn.icon}
-                          </div>
-                          <div>
-                            <p className="font-medium">{txn.description}</p>
-                            <p className="text-sm text-default-500">{txn.category}</p>
-                          </div>
+            <table className="w-full">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-3 px-4">Transaction</th>
+                  <th className="text-left py-3 px-4">Category</th>
+                  <th className="text-left py-3 px-4">Date</th>
+                  <th className="text-right py-3 px-4">Amount</th>
+                  <th className="text-right py-3 px-4">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.map((txn) => (
+                  <tr key={txn.id} className="border-b hover:bg-default-100">
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${txn.type === "INCOME" ? "bg-green-500/10" : "bg-red-500/10"}`}>
+                          {txn.icon}
                         </div>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Chip size="sm" variant="soft">
-                          {txn.category}
-                        </Chip>
-                      </Table.Cell>
-                      <Table.Cell className="text-default-500">{txn.date}</Table.Cell>
-                      <Table.Cell className={`text-right font-semibold ${txn.type === "INCOME" ? "text-success" : "text-danger"}`}>
-                        {txn.type === "INCOME" ? "+" : "-"}Rp {(txn.amount / 1000000).toFixed(1)}M
-                      </Table.Cell>
-                      <Table.Cell className="text-right">
-                        <Chip size="sm" color="success" variant="soft">
-                          Completed
-                        </Chip>
-                      </Table.Cell>
-                    </Table.Row>
-                  ))}
-                </Table.Body>
-              </Table.Content>
-            </Table>
+                        <div>
+                          <p className="font-medium">{txn.description}</p>
+                          <p className="text-sm text-default-500">{txn.category}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <Chip size="sm" variant="soft">
+                        {txn.category}
+                      </Chip>
+                    </td>
+                    <td className="py-3 px-4 text-default-500">{txn.date}</td>
+                    <td className={`py-3 px-4 text-right font-semibold ${txn.type === "INCOME" ? "text-success" : "text-danger"}`}>
+                      {txn.type === "INCOME" ? "+" : "-"}Rp {(txn.amount / 1000000).toFixed(1)}M
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <Chip size="sm" color="success" variant="soft">
+                        Completed
+                      </Chip>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </Card>
 

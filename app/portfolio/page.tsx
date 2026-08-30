@@ -5,125 +5,98 @@ import {
   Card,
   Button,
   Chip,
-  Table,
-  Input,
-  Avatar,
-  Tabs,
-  Tab,
 } from "@heroui/react";
 import {
   Wallet,
   TrendingUp,
-  Plus,
-  Search,
-  Bell,
-  Filter,
-  ArrowUpRight,
-  ArrowDownRight,
-  Settings,
   PieChart,
-  BarChart3,
-  LineChart,
   Target,
-  Percent,
-  DollarSign,
+  LineChart,
+  Filter,
+  Plus,
 } from "lucide-react";
 import {
+  LineChart as RechartsLineChart,
+  Line,
   PieChart as RechartsPieChart,
   Pie,
   Cell,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
-  LineChart as RechartsLineChart,
-  Line,
+  ResponsiveContainer,
 } from "recharts";
 
 const portfolioData = [
-  { name: "Stocks", value: 45000000, color: "#3b82f6", change: 12.5, allocation: 45 },
-  { name: "Crypto", value: 25000000, color: "#8b5cf6", change: -3.2, allocation: 25 },
-  { name: "Bonds", value: 15000000, color: "#10b981", change: 5.8, allocation: 15 },
-  { name: "Cash", value: 35000000, color: "#f59e0b", change: 0.0, allocation: 35 },
-  { name: "Real Estate", value: 80000000, color: "#ef4444", change: 8.1, allocation: 80 },
-];
-
-const assets = [
-  {
-    id: 1,
-    name: "Apple Inc.",
-    symbol: "AAPL",
-    type: "Stock",
-    value: 15000000,
-    shares: 50,
-    avgPrice: 280000,
-    currentPrice: 300000,
-    change: 7.14,
-    color: "#3b82f6",
-  },
-  {
-    id: 2,
-    name: "Bitcoin",
-    symbol: "BTC",
-    type: "Crypto",
-    value: 25000000,
-    shares: 0.5,
-    avgPrice: 45000000,
-    currentPrice: 50000000,
-    change: -3.2,
-    color: "#8b5cf6",
-  },
-  {
-    id: 3,
-    name: "Government Bonds",
-    symbol: "GOV",
-    type: "Bond",
-    value: 15000000,
-    shares: 150,
-    avgPrice: 95000,
-    currentPrice: 100000,
-    change: 5.26,
-    color: "#10b981",
-  },
-  {
-    id: 4,
-    name: "Cash Savings",
-    symbol: "CASH",
-    type: "Cash",
-    value: 35000000,
-    shares: 1,
-    avgPrice: 35000000,
-    currentPrice: 35000000,
-    change: 0.0,
-    color: "#f59e0b",
-  },
+  { name: "Stocks", value: 45000000, color: "#3b82f6", allocation: 45, change: 12.5 },
+  { name: "Crypto", value: 25000000, color: "#8b5cf6", allocation: 25, change: 8.3 },
+  { name: "Bonds", value: 15000000, color: "#10b981", allocation: 15, change: 3.2 },
+  { name: "Cash", value: 35000000, color: "#f59e0b", allocation: 35, change: 0.5 },
 ];
 
 const performanceData = [
   { month: "Jan", value: 95000000 },
   { month: "Feb", value: 98000000 },
   { month: "Mar", value: 102000000 },
-  { month: "Apr", value: 98000000 },
-  { month: "May", value: 105000000 },
-  { month: "Jun", value: 110000000 },
-  { month: "Jul", value: 115000000 },
+  { month: "Apr", value: 108000000 },
+  { month: "May", value: 115000000 },
+  { month: "Jun", value: 120000000 },
 ];
 
-const allocationData = [
-  { name: "Stocks", value: 45 },
-  { name: "Crypto", value: 25 },
-  { name: "Bonds", value: 15 },
-  { name: "Cash", value: 35 },
-  { name: "Real Estate", value: 80 },
+const assets = [
+  {
+    id: "1",
+    name: "BBCA",
+    symbol: "BBCA.JK",
+    type: "Stock",
+    shares: 1000,
+    avgPrice: 8500,
+    currentPrice: 9200,
+    value: 9200000,
+    change: 8.2,
+    color: "#3b82f6",
+  },
+  {
+    id: "2",
+    name: "Bitcoin",
+    symbol: "BTC",
+    type: "Crypto",
+    shares: 0.5,
+    avgPrice: 450000000,
+    currentPrice: 520000000,
+    value: 260000000,
+    change: 15.6,
+    color: "#f59e0b",
+  },
+  {
+    id: "3",
+    name: "SBN",
+    symbol: "SBN018",
+    type: "Bond",
+    shares: 100,
+    avgPrice: 980000,
+    currentPrice: 1020000,
+    value: 102000000,
+    change: 4.1,
+    color: "#10b981",
+  },
+  {
+    id: "4",
+    name: "GOTO",
+    symbol: "GOTO.JK",
+    type: "Stock",
+    shares: 5000,
+    avgPrice: 86,
+    currentPrice: 78,
+    value: 390000,
+    change: -9.3,
+    color: "#ef4444",
+  },
 ];
 
 export default function Portfolio() {
   const [selectedTab, setSelectedTab] = useState("overview");
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const totalValue = portfolioData.reduce((sum, item) => sum + item.value, 0);
   const totalChange = portfolioData.reduce((sum, item) => sum + item.change, 0) / portfolioData.length;
@@ -145,6 +118,7 @@ export default function Portfolio() {
               <a href="/transactions" className="text-default-500 hover:text-foreground">Transactions</a>
               <a href="/portfolio" className="text-foreground font-medium">Portfolio</a>
               <a href="/analytics" className="text-default-500 hover:text-foreground">Analytics</a>
+              <a href="/settings" className="text-default-500 hover:text-foreground">Settings</a>
             </div>
           </div>
         </div>
@@ -156,7 +130,7 @@ export default function Portfolio() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold">Portfolio</h1>
-            <p className="text-default-500 mt-1">Track your investments and asset allocation</p>
+            <p className="text-default-500 mt-1">Track your investments and assets</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline">
@@ -177,13 +151,9 @@ export default function Portfolio() {
               <div>
                 <p className="text-sm text-default-500">Total Value</p>
                 <p className="text-2xl font-bold mt-1">Rp {(totalValue / 1000000).toFixed(0)}M</p>
-                <div className="flex items-center gap-1 mt-2 text-success text-sm">
-                  <ArrowUpRight className="w-4 h-4" />
-                  <span>+{totalChange.toFixed(1)}%</span>
-                </div>
               </div>
               <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-blue-500" />
+                <Wallet className="w-6 h-6 text-blue-500" />
               </div>
             </div>
           </Card>
@@ -193,7 +163,6 @@ export default function Portfolio() {
               <div>
                 <p className="text-sm text-default-500">Total Assets</p>
                 <p className="text-2xl font-bold mt-1">{assets.length}</p>
-                <p className="text-sm text-default-500 mt-2">Active positions</p>
               </div>
               <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center">
                 <PieChart className="w-6 h-6 text-purple-500" />
@@ -204,12 +173,8 @@ export default function Portfolio() {
           <Card className="p-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-default-500">Best Performer</p>
-                <p className="text-2xl font-bold mt-1">AAPL</p>
-                <div className="flex items-center gap-1 mt-2 text-success text-sm">
-                  <ArrowUpRight className="w-4 h-4" />
-                  <span>+7.14%</span>
-                </div>
+                <p className="text-sm text-default-500">Avg Return</p>
+                <p className="text-2xl font-bold mt-1 text-success">{totalChange.toFixed(1)}%</p>
               </div>
               <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-green-500" />
@@ -220,10 +185,10 @@ export default function Portfolio() {
           <Card className="p-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-default-500">Target Allocation</p>
-                <p className="text-2xl font-bold mt-1">85%</p>
+                <p className="text-sm text-default-500">Target Goal</p>
+                <p className="text-2xl font-bold mt-1">Rp 500M</p>
                 <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                  <div className="bg-blue-500 h-2 rounded-full" style={{ width: "85%" }}></div>
+                  <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${(totalValue / 500000000) * 100}%` }}></div>
                 </div>
               </div>
               <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center">
@@ -234,9 +199,24 @@ export default function Portfolio() {
         </div>
 
         {/* Tabs */}
-        <Tabs selectedKey={selectedTab} onSelectionChange={(key) => setSelectedTab(key as string)}>
-          <Tab key="overview" title="Overview">
-            <div className="space-y-6 mt-6">
+        <div className="flex gap-4 border-b mb-6">
+          <button
+            className={`pb-2 px-4 ${selectedTab === "overview" ? "border-b-2 border-blue-500 text-blue-500" : "text-default-500"}`}
+            onClick={() => setSelectedTab("overview")}
+          >
+            Overview
+          </button>
+          <button
+            className={`pb-2 px-4 ${selectedTab === "assets" ? "border-b-2 border-blue-500 text-blue-500" : "text-default-500"}`}
+            onClick={() => setSelectedTab("assets")}
+          >
+            Assets
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        {selectedTab === "overview" && (
+          <div className="space-y-6 mt-6">
               {/* Performance Chart */}
               <Card className="p-6">
                 <div className="flex items-center justify-between mb-6">
@@ -287,7 +267,7 @@ export default function Portfolio() {
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value: number) => `Rp ${(value / 1000000).toFixed(1)}M`} />
+                      <Tooltip formatter={(value: any) => `Rp ${(value / 1000000).toFixed(1)}M`} />
                     </RechartsPieChart>
                   </ResponsiveContainer>
                 </Card>
@@ -307,19 +287,13 @@ export default function Portfolio() {
                             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
                             <span className="text-sm font-medium">{item.name}</span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-default-500">Rp {(item.value / 1000000).toFixed(0)}M</span>
-                            <Chip
-                              size="sm"
-                              color={item.change >= 0 ? "success" : "danger"}
-                              variant="soft"
-                            >
-                              {item.change >= 0 ? "+" : ""}{item.change}%
-                            </Chip>
-                          </div>
+                          <span className="text-sm text-default-500">Rp {(item.value / 1000000).toFixed(1)}M</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${item.allocation}%` }}></div>
+                          <div 
+                            className="bg-blue-500 h-2 rounded-full" 
+                            style={{ width: `${(item.value / portfolioData.reduce((sum, cat) => sum + cat.value, 0)) * 100}%` }}
+                          ></div>
                         </div>
                       </div>
                     ))}
@@ -327,9 +301,8 @@ export default function Portfolio() {
                 </Card>
               </div>
             </div>
-          </Tab>
-
-          <Tab key="assets" title="Assets">
+          )}
+        {selectedTab === "assets" && (
             <div className="mt-6">
               <Card>
                 <div className="p-6 border-b">
@@ -341,61 +314,60 @@ export default function Portfolio() {
                   </div>
                 </div>
                 <div className="p-6">
-                  <Table aria-label="Assets table">
-                    <Table.Content>
-                      <Table.Header>
-                        <Table.Column id="asset">Asset</Table.Column>
-                        <Table.Column id="type">Type</Table.Column>
-                        <Table.Column id="shares">Shares/Units</Table.Column>
-                        <Table.Column id="avgPrice">Avg Price</Table.Column>
-                        <Table.Column id="currentPrice">Current Price</Table.Column>
-                        <Table.Column id="value" className="text-right">Value</Table.Column>
-                        <Table.Column id="change" className="text-right">Change</Table.Column>
-                      </Table.Header>
-                      <Table.Body>
-                        {assets.map((asset) => (
-                          <Table.Row key={asset.id} id={asset.id}>
-                            <Table.Cell>
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: `${asset.color}20` }}>
-                                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: asset.color }} />
-                                </div>
-                                <div>
-                                  <p className="font-medium">{asset.name}</p>
-                                  <p className="text-sm text-default-500">{asset.symbol}</p>
-                                </div>
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-3 px-4">Asset</th>
+                        <th className="text-left py-3 px-4">Type</th>
+                        <th className="text-left py-3 px-4">Shares/Units</th>
+                        <th className="text-left py-3 px-4">Avg Price</th>
+                        <th className="text-left py-3 px-4">Current Price</th>
+                        <th className="text-right py-3 px-4">Value</th>
+                        <th className="text-right py-3 px-4">Change</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {assets.map((asset) => (
+                        <tr key={asset.id} className="border-b hover:bg-default-100">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: `${asset.color}20` }}>
+                                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: asset.color }} />
                               </div>
-                            </Table.Cell>
-                            <Table.Cell>
-                              <Chip size="sm" variant="flat">
-                                {asset.type}
-                              </Chip>
-                            </Table.Cell>
-                            <Table.Cell>{asset.shares}</Table.Cell>
-                            <Table.Cell>Rp {(asset.avgPrice / 1000).toFixed(0)}K</Table.Cell>
-                            <Table.Cell>Rp {(asset.currentPrice / 1000).toFixed(0)}K</Table.Cell>
-                            <Table.Cell className="text-right font-medium">
-                              Rp {(asset.value / 1000000).toFixed(1)}M
-                            </Table.Cell>
-                            <Table.Cell className="text-right">
-                              <Chip
-                                size="sm"
-                                color={asset.change >= 0 ? "success" : "danger"}
-                                variant="soft"
-                              >
-                                {asset.change >= 0 ? "+" : ""}{asset.change}%
-                              </Chip>
-                            </Table.Cell>
-                          </Table.Row>
-                        ))}
-                      </Table.Body>
-                    </Table.Content>
-                  </Table>
+                              <div>
+                                <p className="font-medium">{asset.name}</p>
+                                <p className="text-sm text-default-500">{asset.symbol}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <Chip size="sm" variant="soft">
+                              {asset.type}
+                            </Chip>
+                          </td>
+                          <td className="py-3 px-4">{asset.shares}</td>
+                          <td className="py-3 px-4">Rp {(asset.avgPrice / 1000).toFixed(0)}K</td>
+                          <td className="py-3 px-4">Rp {(asset.currentPrice / 1000).toFixed(0)}K</td>
+                          <td className="py-3 px-4 text-right font-medium">
+                            Rp {(asset.value / 1000000).toFixed(1)}M
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <Chip
+                              size="sm"
+                              color={asset.change >= 0 ? "success" : "danger"}
+                              variant="soft"
+                            >
+                              {asset.change >= 0 ? "+" : ""}{asset.change}%
+                            </Chip>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </Card>
             </div>
-          </Tab>
-        </Tabs>
+          )}
       </div>
     </div>
   );
