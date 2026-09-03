@@ -1,36 +1,640 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 💰 NovaJournal
+
+<div align="center">
+
+![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)
+![Bun](https://img.shields.io/badge/Bun-1.0-white?style=for-the-badge&logo=bun)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.0-38bdf8?style=for-the-badge&logo=tailwind-css)
+![HeroUI](https://img.shields.io/badge/HeroUI-2.0-8b5cf6?style=for-the-badge)
+
+**A comprehensive financial management application built with Next.js 16**
+
+[Features](#features) • [Architecture](#system-architecture) • [Getting Started](#getting-started) • [Documentation](#documentation)
+
+</div>
+
+---
+
+## 📖 Overview
+
+NovaJournal is a powerful financial management application that helps you track income, expenses, investments, and achieve your financial goals. Built with modern technologies including Next.js 16, TypeScript, and HeroUI, it provides a beautiful and intuitive user experience with advanced analytics and reporting capabilities.
+
+## ✨ Features
+
+### 🎯 Core Functionality
+
+- **💳 Transaction Management**
+  - Track income, expenses, and transfers with full CRUD operations
+  - Recurring transactions with smart reminders
+  - Transaction splitting across multiple categories
+  - Import from CSV, Excel, and bank statements
+  - Export to PDF, CSV, Excel formats
+  - Receipt scanning with OCR support
+  - Voice input for quick entry
+
+- **📊 Budget Planning**
+  - Set and monitor budgets for categories
+  - Real-time progress tracking with visual indicators
+  - Budget rollover to next period
+  - Smart budget suggestions based on spending history
+  - Budget alerts via email and push notifications
+  - Zero-based budgeting support
+  - Budget comparison with previous periods
+
+- **🎯 Financial Goals**
+  - Create and track savings goals
+  - Milestone celebrations with achievements
+  - Automatic contribution from linked accounts
+  - Goal sharing with accountability partners
+  - Goal templates (emergency fund, vacation, home)
+  - Progress visualization with charts and timelines
+  - AI-powered goal suggestions
+
+- **📈 Investment Portfolio**
+  - Monitor investments with real-time price updates
+  - Portfolio diversification analysis
+  - Performance metrics (ROI, annualized return)
+  - Dividend tracking
+  - Tax lot tracking (FIFO, LIFO)
+  - Investment comparison with benchmarks
+  - Automatic portfolio rebalancing suggestions
+
+- **📉 Advanced Analytics**
+  - Income statement reports
+  - Balance sheet and cash flow analysis
+  - Spending breakdown by category and tags
+  - Budget vs actual performance
+  - Investment performance tracking
+  - Goal progress reports
+  - Tax-deductible expense summaries
+  - Custom report generation
+
+- **🏦 Multi-Account Support**
+  - Manage multiple account types (bank, cash, credit cards, crypto, loans)
+  - Multi-currency support with auto-conversion
+  - Account balance history tracking
+  - Bank synchronization via API (Planned)
+  - Account transfer between accounts
+  - Account grouping and organization
+  - Credit card payment tracking
+
+- **🔄 Recurring Transactions**
+  - Automate recurring income and expenses
+  - Flexible scheduling (daily, weekly, monthly, yearly)
+  - Smart reminders before due dates
+  - Skip occurrence option
+  - Variable amount support
+  - Recurring transaction templates
+  - Auto-creation of transactions
+
+- **🏷️ Category Management**
+  - Custom categories with unlimited hierarchy
+  - Category icons and colors
+  - Default categories for new users
+  - Category usage analytics
+  - AI-powered category suggestions
+  - Bulk category reassignment
+  - Category-based spending analysis
+
+- **🏷️ Tags System**
+  - Flexible organization with custom tags
+  - Tag colors and icons
+  - Tag-based filtering and search
+  - Bulk tag assignment
+  - Tag groups
+  - Tag usage statistics
+
+### 🎨 User Experience
+
+- **🖥️ Modern UI**
+  - Beautiful gradient-based design
+  - HeroUI component library
+  - Smooth animations and transitions
+  - Intuitive navigation with sidebar
+  - Clean and organized layout
+
+- **📱 Responsive Design**
+  - Works seamlessly on desktop, tablet, and mobile
+  - Mobile-optimized interface
+  - Touch-friendly controls
+  - Adaptive layouts
+
+- **🌙 Dark Mode**
+  - Full dark mode support
+  - Automatic theme switching
+  - Custom theme preferences
+  - Eye-friendly color schemes
+
+- **⚡ Real-time Updates**
+  - Instant data synchronization
+  - Live balance updates
+  - Real-time chart rendering
+  - WebSocket support (Planned)
+
+- **📤 Export/Import**
+  - Export data to CSV, PDF, Excel
+  - Import from bank statements
+  - Backup and restore functionality
+  - Data migration tools
+
+## 🛠️ Tech Stack
+
+### Frontend
+
+- **⚛️ Framework**: Next.js 16 (App Router)
+  - Server Components and Server Actions
+  - Route Groups for protected routes
+  - Streaming and Suspense
+  - Image optimization
+
+- **📘 Language**: TypeScript 5.0
+  - Strict type checking
+  - Path aliases (@/*)
+  - Interface definitions
+
+- **🎨 UI Library**: HeroUI (@heroui/react)
+  - Beautiful pre-built components
+  - Dark mode support
+  - Customizable themes
+  - Accessibility features
+
+- **💅 Styling**: Tailwind CSS 3.0
+  - Utility-first CSS
+  - Custom gradients
+  - Responsive design
+  - Dark mode variants
+
+- **📊 Charts**: Recharts
+  - Interactive charts
+  - Responsive visualization
+  - Custom tooltips
+  - Animation support
+
+- **🎯 Icons**: Lucide React
+  - Consistent icon set
+  - Tree-shakeable
+  - Customizable size and color
+
+- **🌗 Theme**: next-themes
+  - System theme detection
+  - Theme persistence
+  - Smooth transitions
+
+### Backend
+
+- **🚀 Runtime**: Bun
+  - Fast JavaScript runtime
+  - Native TypeScript support
+  - Built-in bundler
+
+- **⚡ Framework**: Elysia
+  - Fast HTTP framework
+  - Type-safe routing
+  - Schema validation
+  - Plugin system
+
+- **🔐 Authentication**: Supabase Auth (Planned)
+  - Built-in authentication
+  - OAuth providers (Google, GitHub, etc.)
+  - Session management
+  - Role-based access control (RBAC)
+  - Password hashing with bcrypt
+
+- **🗄️ Database**: Supabase (PostgreSQL)
+  - Built-in Auth
+  - Real-time subscriptions
+  - File storage for receipts
+  - Row Level Security (RLS)
+  - Auto-scaling
+  - Alternative: NeonDB (Serverless PostgreSQL)
+
+### Development
+
+- **📦 Package Manager**: Bun
+  - Fast dependency installation
+  - Native TypeScript support efficient
+
+- **🔍 Linting**: ESLint
+  - Code quality checks
+  - Auto-fixing
+  - Custom rules
+
+- **🐳 Containerization**: Docker + Podman
+  - Consistent environments
+  - Easy deployment
+  - Multi-stage builds
+
+### Integrations
+
+- **📷 OCR (Receipt Scanning)**
+  - Library: tesseract.js (v7.0.0)
+  - Browser-based OCR
+  - Receipt parsing
+  - Invoice digitization
+  - Camera capture support
+  - Alternative: TabScanner API, Google Gemini Vision
+
+- **🤖 MCP (Model Context Protocol)**
+  - Library: @modelcontextprotocol/sdk (v2)
+  - AI-powered financial advisor
+  - Automated categorization
+  - Spending insights
+  - Integration with Claude/GPT
+  - Tools and resources for LLM context
+
+- **💬 Natural Language Processing**
+  - Library: compromise
+  - Parse natural language transactions
+  - Voice input support
+  - Entity extraction
+  - Quick transaction entry
+
+- **🌐 Hosting**
+  - Platform: Vercel
+  - Database: Supabase (PostgreSQL)
+  - Alternative: NeonDB
+  - Edge functions support
+  - Global CDN
+
+## 🏗️ System Architecture
+
+### Architecture Overview
+
+The application follows a modern client-server architecture with clear separation of concerns:
+
+```mermaid
+graph TB
+    subgraph "Frontend - Next.js 16"
+        A[👤 User Interface] --> B[📄 Pages]
+        B --> C[🧩 Components]
+        C --> D[🔐 Auth Context]
+        C --> E[🌐 API Client]
+        D --> F[📋 Session Management]
+    end
+
+    subgraph "Protected Routes"
+        B --> G[📊 Dashboard]
+        B --> H[💳 Transactions]
+        B --> I[📈 Portfolio]
+        B --> J[📉 Analytics]
+        B --> K[⚙️ Settings]
+    end
+
+    subgraph "Backend - Elysia"
+        E --> L[🔌 API Endpoints]
+        L --> M[🛡️ Auth Middleware]
+        L --> N[💰 Transaction Controller]
+        L --> O[📊 Budget Controller]
+        L --> P[🎯 Goal Controller]
+        L --> Q[📈 Investment Controller]
+        L --> R[📋 Report Controller]
+    end
+
+    subgraph "Data Layer"
+        N --> S[(🗄️ Database)]
+        O --> S
+        P --> S
+        Q --> S
+        R --> S
+        M --> T[💾 Session Store]
+    end
+
+    F --> T
+    M --> T
+
+    subgraph "External Services"
+        L --> U[🏦 Bank API]
+        L --> V[💳 Payment Gateway]
+        L --> W[📧 Email Service]
+    end
+
+    style A fill:#3b82f6
+    style B fill:#8b5cf6
+    style L fill:#10b981
+    style S fill:#f59e0b
+```
+
+### Data Flow
+
+1. **User Interaction**: User interacts with the UI components
+2. **Authentication**: AuthContext manages session state and authentication
+3. **API Calls**: API Client communicates with backend endpoints
+4. **Data Processing**: Controllers process business logic
+5. **Data Storage**: Data is persisted in the database
+6. **External Integration**: External services are called when needed
+
+## 🔄 CRUD Flow Diagram
+
+### Authentication & Transaction Flow
+
+This diagram shows the complete flow from user login to CRUD operations:
+
+```mermaid
+sequenceDiagram
+    participant 👤 User
+    participant 🖥️ UI
+    participant 🔐 Auth
+    participant 🌐 API
+    participant 🗄️ DB
+
+    User->>UI: Login
+    UI->>Auth: Authenticate
+    Auth->>API: POST /api/auth/login
+    API->>DB: Validate credentials
+    DB-->>API: User data
+    API-->>Auth: JWT Token
+    Auth-->>UI: Session established
+    UI-->>User: Redirect to Dashboard
+
+    User->>UI: Create Transaction
+    UI->>API: POST /api/transactions
+    API->>DB: Insert transaction
+    DB-->>API: Transaction ID
+    API-->>UI: Success response
+    UI-->>User: Transaction added
+
+    User->>UI: View Transactions
+    UI->>API: GET /api/transactions
+    API->>DB: Query transactions
+    DB-->>API: Transaction list
+    API-->>UI: Transaction data
+    UI-->>User: Display transactions
+
+    User->>UI: Update Transaction
+    UI->>API: PUT /api/transactions/:id
+    API->>DB: Update transaction
+    DB-->>API: Updated data
+    API-->>UI: Success response
+    UI-->>User: Transaction updated
+
+    User->>UI: Delete Transaction
+    UI->>API: DELETE /api/transactions/:id
+    API->>DB: Soft delete transaction
+    DB-->>API: Success
+    API-->>UI: Success response
+    UI-->>User: Transaction deleted
+
+    User->>UI: Logout
+    UI->>Auth: Clear session
+    Auth-->>UI: Session cleared
+    UI-->>User: Redirect to Login
+```
+
+### Flow Explanation
+
+1. **Authentication Flow**
+   - User submits credentials through login form
+   - AuthContext validates with backend API
+   - Backend checks database for user
+   - JWT token generated and stored
+   - Session established and user redirected
+
+2. **Create Transaction**
+   - User fills transaction form
+   - API validates and inserts into database
+   - Transaction ID returned
+   - UI updates with success message
+
+3. **Read Transactions**
+   - User requests transaction list
+   - API queries database with filters
+   - Results returned and displayed
+   - Pagination for large datasets
+
+4. **Update Transaction**
+   - User edits transaction details
+   - API updates database record
+   - Changes reflected immediately
+   - Audit log updated
+
+5. **Delete Transaction**
+   - User requests deletion
+   - Soft delete performed (not permanent)
+   - Can be restored within grace period
+   - Hard delete after retention period
+
+6. **Logout**
+   - User clicks logout
+   - Session cleared from context
+   - Token invalidated
+   - Redirected to login page
+
+## 🗂️ Entity Relationship Diagram
+
+### Database Schema
+
+This diagram shows the relationships between all entities in the system:
+
+```mermaid
+erDiagram
+    USER ||--o{ TRANSACTION : creates
+    USER ||--o{ CATEGORY : owns
+    USER ||--o{ ACCOUNT : manages
+    USER ||--o{ BUDGET : sets
+    USER ||--o{ GOAL : tracks
+    USER ||--o{ INVESTMENT : holds
+    USER ||--o{ RECURRING : schedules
+    USER ||--o{ TAG : creates
+
+    TRANSACTION }o--|| CATEGORY : belongs
+    TRANSACTION }o--|| ACCOUNT : from
+    TRANSACTION }o--o| TAG : has
+    TRANSACTION }o--|| RECURRING : generated
+
+    CATEGORY ||--o{ CATEGORY : parent
+
+    ACCOUNT ||--o{ INVESTMENT : contains
+
+    BUDGET }o--|| CATEGORY : for
+
+    GOAL }o--|| ACCOUNT : funded_by
+
+    USER {
+        uuid id PK
+        string name
+        string email
+        string password
+        datetime created_at
+    }
+
+    TRANSACTION {
+        uuid id PK
+        uuid user_id FK
+        enum type
+        decimal amount
+        string currency
+        string description
+        uuid category_id FK
+        uuid account_id FK
+        datetime date
+        enum status
+        datetime created_at
+    }
+
+    CATEGORY {
+        uuid id PK
+        uuid user_id FK
+        string name
+        enum type
+        string icon
+        string color
+        uuid parent_id FK
+    }
+
+    ACCOUNT {
+        uuid id PK
+        uuid user_id FK
+        string name
+        enum type
+        decimal balance
+        string currency
+    }
+
+    BUDGET {
+        uuid id PK
+        uuid user_id FK
+        string name
+        decimal amount
+        enum period
+        date start_date
+    }
+
+    GOAL {
+        uuid id PK
+        uuid user_id FK
+        string name
+        decimal target_amount
+        decimal current_amount
+        date target_date
+        enum status
+    }
+
+    INVESTMENT {
+        uuid id PK
+        uuid user_id FK
+        string name
+        enum type
+        decimal quantity
+        decimal average_buy_price
+        decimal current_price
+    }
+```
+
+### Entity Descriptions
+
+- **👤 USER**: User account with authentication credentials
+- **💳 TRANSACTION**: Financial transactions (income, expense, transfer)
+- **🏷️ CATEGORY**: Transaction categories with hierarchy support
+- **🏦 ACCOUNT**: Financial accounts (bank, cash, credit, crypto)
+- **📊 BUDGET**: Budget limits for spending control
+- **🎯 GOAL**: Financial goals with progress tracking
+- **📈 INVESTMENT**: Investment holdings and performance
+- **🔄 RECURRING**: Recurring transaction schedules
+- **🏷️ TAG**: Flexible tags for organization
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+ or Bun
+- Docker/Podman (for containerization)
 
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/yourusername/novajournal.git
+cd novajournal/novajournal-fe
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+bun install
+# or
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up environment variables:
+```bash
+cp .env.example .env
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Run the development server:
+```bash
+bun dev
+# or
+npm run dev
+```
 
-## Learn More
+5. Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-To learn more about Next.js, take a look at the following resources:
+### Backend Setup
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Navigate to backend directory:
+```bash
+cd ../novajournal-be
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. Install dependencies:
+```bash
+bun install
+```
 
-## Deploy on Vercel
+3. Run the backend server:
+```bash
+bun run src/index.ts
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The backend will be available at [http://localhost:8080](http://localhost:8080).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Dummy Accounts
+
+For testing purposes, use these dummy accounts:
+
+- **User**: `user@example.com` / `password123`
+- **Admin**: `admin@example.com` / `admin123`
+
+## Documentation
+
+- [Changelog](./docs/CHANGELOG.md) - Track all changes and updates
+- [CRUD Concept](./docs/CRUD_CONCEPT.md) - Detailed CRUD operations and API design
+- [API Documentation](./docs/API.md) - Complete API reference (coming soon)
+- [Deployment Guide](./docs/DEPLOYMENT.md) - Deployment instructions (coming soon)
+
+## Project Structure
+
+```
+novajournal-fe/
+├── app/                      # Next.js app directory
+│   ├── (protected)/         # Protected route group
+│   │   ├── components/       # Shared components (Sidebar)
+│   │   ├── dashboard/       # Dashboard page
+│   │   ├── transactions/    # Transactions page
+│   │   ├── portfolio/       # Portfolio page
+│   │   ├── analytics/       # Analytics page
+│   │   └── settings/        # Settings page
+│   ├── login/               # Login page
+│   ├── register/            # Registration page
+│   ├── forgot-password/     # Forgot password page
+│   └── page.tsx             # Home page
+├── contexts/                # React contexts
+│   └── AuthContext.tsx      # Authentication context
+├── lib/                     # Utility libraries
+│   └── api.ts               # API client
+├── docs/                    # Documentation
+│   ├── CHANGELOG.md
+│   └── CRUD_CONCEPT.md
+└── public/                  # Static assets
+```
+
+## Contributing
+
+Contributions are welcome! Please read our contributing guidelines before submitting PRs.
+
+## License
+
+This project is licensed under the MIT License.
+
+## Support
+
+For support, email support@novajournal.com or open an issue on GitHub.
