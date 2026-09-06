@@ -6,7 +6,6 @@ import { Card, Input, Button, Link } from "@heroui/react";
 import { Wallet, Mail, ArrowLeft } from "lucide-react";
 
 export default function ForgotPasswordPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -23,7 +22,7 @@ export default function ForgotPasswordPage() {
       // In production, this would call an API endpoint
       await new Promise(resolve => setTimeout(resolve, 1000));
       setSuccess(true);
-    } catch (err) {
+    } catch {
       setError("An error occurred. Please try again.");
     } finally {
       setLoading(false);
@@ -51,7 +50,7 @@ export default function ForgotPasswordPage() {
                   <Mail className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <p className="text-sm text-default-600 dark:text-default-400">
-                  Enter your email address and we'll send you a link to reset your password.
+                  Enter your email address and we&apos;ll send you a link to reset your password.
                 </p>
               </div>
 
@@ -89,7 +88,7 @@ export default function ForgotPasswordPage() {
               </div>
               <h3 className="text-xl font-semibold mb-2">Check your email</h3>
               <p className="text-sm text-default-600 dark:text-default-400 mb-6">
-                We've sent a password reset link to your email address. Please check your inbox.
+                We&apos;ve sent a password reset link to your email address. Please check your inbox.
               </p>
               <Button
                 variant="outline"

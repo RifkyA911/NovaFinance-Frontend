@@ -31,6 +31,7 @@ export default function RegisterPage() {
       const response = await fetch("http://localhost:8080/api/auth/sign-up", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({ email, password, name }),
       });
 
@@ -45,7 +46,7 @@ export default function RegisterPage() {
       } else {
         setError(data.error || "Registration failed");
       }
-    } catch (err) {
+    } catch {
       setError("An error occurred. Please try again.");
     } finally {
       setLoading(false);

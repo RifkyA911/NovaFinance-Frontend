@@ -1,18 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, Input, Button, Link } from "@heroui/react";
-import { Wallet, ArrowRight } from "lucide-react";
+import { Wallet } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, isAuthenticated, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, authLoading, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +29,7 @@ export default function LoginPage() {
       const response = await fetch("http://localhost:8080/api/auth/sign-in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
 
@@ -36,7 +43,7 @@ export default function LoginPage() {
       } else {
         setError(data.error || "Login failed");
       }
-    } catch (err) {
+    } catch {
       setError("An error occurred. Please try again.");
     } finally {
       setLoading(false);
@@ -51,6 +58,7 @@ export default function LoginPage() {
       const response = await fetch("http://localhost:8080/api/auth/sign-in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
 
@@ -64,7 +72,7 @@ export default function LoginPage() {
       } else {
         setError(data.error || "Login failed");
       }
-    } catch (err) {
+    } catch {
       setError("An error occurred. Please try again.");
     } finally {
       setLoading(false);
@@ -92,6 +100,7 @@ export default function LoginPage() {
               <label className="text-sm font-medium mb-2 block">Email</label>
               <Input
                 type="email"
+                className="w-full"
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -102,6 +111,7 @@ export default function LoginPage() {
               <label className="text-sm font-medium mb-2 block">Password</label>
               <Input
                 type="password"
+                className="w-full"
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -143,7 +153,7 @@ export default function LoginPage() {
               <Button
                 variant="outline"
                 className="h-12"
-                onClick={() => handleDummyLogin("user@example.com", "password123")}
+                onClick={() => handleDummyLogin("test@example.com", "password123")}
                 isDisabled={loading}
               >
                 Test User
