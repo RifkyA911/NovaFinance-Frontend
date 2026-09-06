@@ -15,10 +15,8 @@ import {
   PiggyBank,
   Filter,
   Plus,
-  Search,
   ArrowUpRight,
   ArrowDownRight,
-  LogOut,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -91,7 +89,7 @@ const categories = [
 
 export default function Transactions() {
   const router = useRouter();
-  const { logout, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
@@ -100,11 +98,6 @@ export default function Transactions() {
       router.push("/login");
     }
   }, [isAuthenticated, router]);
-
-  const handleLogout = () => {
-    logout();
-    router.push("/login");
-  };
 
   const filteredTransactions = transactions.filter((txn) => {
     const matchesSearch = txn.description.toLowerCase().includes(searchQuery.toLowerCase());
