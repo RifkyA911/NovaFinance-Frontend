@@ -7,22 +7,18 @@ import {
   Button,
 } from "@heroui/react";
 import {
-  Wallet,
-  Settings as SettingsIcon,
   Bell,
   Shield,
   Palette,
-  Globe,
   CreditCard,
   User,
   Save,
-  LogOut,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function Settings() {
   const router = useRouter();
-  const { user, logout, isAuthenticated } = useAuth();
+  const { logout, isAuthenticated } = useAuth();
   const [notifications, setNotifications] = useState(true);
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
@@ -33,11 +29,6 @@ export default function Settings() {
       router.push("/login");
     }
   }, [isAuthenticated, router]);
-
-  const handleLogout = () => {
-    logout();
-    router.push("/login");
-  };
 
   return (
     <div className="min-h-screen bg-background p-6">

@@ -15,7 +15,6 @@ import {
   LineChart,
   Filter,
   Plus,
-  LogOut,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -100,7 +99,7 @@ const assets = [
 
 export default function Portfolio() {
   const router = useRouter();
-  const { logout, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [selectedTab, setSelectedTab] = useState("overview");
 
   useEffect(() => {
@@ -108,11 +107,6 @@ export default function Portfolio() {
       router.push("/login");
     }
   }, [isAuthenticated, router]);
-
-  const handleLogout = () => {
-    logout();
-    router.push("/login");
-  };
 
   const totalValue = portfolioData.reduce((sum, item) => sum + item.value, 0);
   const totalChange = portfolioData.reduce((sum, item) => sum + item.change, 0) / portfolioData.length;
@@ -231,7 +225,7 @@ export default function Portfolio() {
                     <YAxis stroke="currentColor" strokeOpacity={0.5} fontSize={12} tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`} />
                     <Tooltip
                       contentStyle={{ backgroundColor: "var(--heroui-background)", border: "1px solid var(--border)", borderRadius: "8px" }}
-                      formatter={(value: any) => `Rp ${(value / 1000000).toFixed(1)}M`}
+                      formatter={(value: number) => `Rp ${(value / 1000000).toFixed(1)}M`}
                     />
                     <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={2} dot={{ fill: "#3b82f6" }} />
                   </RechartsLineChart>
@@ -262,7 +256,7 @@ export default function Portfolio() {
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value: any) => `Rp ${(value / 1000000).toFixed(1)}M`} />
+                      <Tooltip formatter={(value: number) => `Rp ${(value / 1000000).toFixed(1)}M`} />
                     </RechartsPieChart>
                   </ResponsiveContainer>
                 </Card>
