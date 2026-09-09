@@ -26,25 +26,13 @@ function LoginForm() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!executeRecaptcha) {
-      setError("reCAPTCHA not loaded");
-      return;
-    }
-    
     setLoading(true);
     setError("");
 
     try {
-      const captchaToken = await executeRecaptcha("login");
-      
       const result = await signIn.email({
         email,
         password,
-        fetchOptions: {
-          headers: {
-            'x-captcha-token': captchaToken,
-          },
-        },
       });
 
       if (result.error) {
@@ -61,25 +49,13 @@ function LoginForm() {
   };
 
   const handleDummyLogin = async (email: string, password: string) => {
-    if (!executeRecaptcha) {
-      setError("reCAPTCHA not loaded");
-      return;
-    }
-    
     setLoading(true);
     setError("");
 
     try {
-      const captchaToken = await executeRecaptcha("login");
-      
       const result = await signIn.email({
         email,
         password,
-        fetchOptions: {
-          headers: {
-            'x-captcha-token': captchaToken,
-          },
-        },
       });
 
       if (result.error) {
