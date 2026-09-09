@@ -5,10 +5,13 @@ import { useRouter } from "next/navigation";
 import { Card, Input, Button, Link } from "@heroui/react";
 import { Wallet } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import { signIn } from "@/lib/auth";
+import { GoogleReCaptchaProvider, useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
-  const { login, isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { executeRecaptcha } = useGoogleReCaptcha();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,28 +25,35 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!executeRecaptcha) {
+      setError("reCAPTCHA not loaded");
+      return;
+    }
+    
     setLoading(true);
     setError("");
 
     try {
-      const response = await fetch("http://localhost:8080/api/auth/sign-in", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
+      const captchaToken = await executeRecaptcha("login");
+      
+      const result = await signIn.email({
+        email,
+        password,
+        fetchOptions: {
+          headers: {
+            'x-captcha-token': captchaToken,
+          },
+        },
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        const userData = data.data.user;
-        const token = data.data.token;
-        login(userData, token);
-        router.push("/dashboard");
+      if (result.error) {
+        setError(result.error.message || "Login failed");
       } else {
-        setError(data.error || "Login failed");
+        router.push("/dashboard");
       }
-    } catch {
+    } catch (err) {
+      console.error("Login error:", err);
       setError("An error occurred. Please try again.");
     } finally {
       setLoading(false);
@@ -51,28 +61,34 @@ export default function LoginPage() {
   };
 
   const handleDummyLogin = async (email: string, password: string) => {
+    if (!executeRecaptcha) {
+      setError("reCAPTCHA not loaded");
+      return;
+    }
+    
     setLoading(true);
     setError("");
 
     try {
-      const response = await fetch("http://localhost:8080/api/auth/sign-in", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
+      const captchaToken = await executeRecaptcha("login");
+      
+      const result = await signIn.email({
+        email,
+        password,
+        fetchOptions: {
+          headers: {
+            'x-captcha-token': captchaToken,
+          },
+        },
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        const userData = data.data.user;
-        const token = data.data.token;
-        login(userData, token);
-        router.push("/dashboard");
+      if (result.error) {
+        setError(result.error.message || "Login failed");
       } else {
-        setError(data.error || "Login failed");
+        router.push("/dashboard");
       }
-    } catch {
+    } catch (err) {
+      console.error("Login error:", err);
       setError("An error occurred. Please try again.");
     } finally {
       setLoading(false);
@@ -145,31 +161,54 @@ export default function LoginPage() {
                 <div className="w-full border-t border-default-200 dark:border-default-700"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-background text-default-500">Or use dummy accounts</span>
+                <span className="px-2 bg-background text-default-500">Quick Login (Development)</span>
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="mt-4 space-y-3">
               <Button
                 variant="outline"
-                className="h-12"
+                className="w-full h-14 bg-linear-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800"
                 onClick={() => handleDummyLogin("test@example.com", "password123")}
                 isDisabled={loading}
+                startContent={<span className="text-lg">👤</span>}
               >
-                Test User
+                <div className="flex flex-col items-start">
+                  <span className="font-semibold">Test User</span>
+                  <span className="text-xs text-default-500">test@example.com</span>
+                </div>
               </Button>
               <Button
                 variant="outline"
-                className="h-12"
+                className="w-full h-14 bg-linear-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-800"
                 onClick={() => handleDummyLogin("admin@example.com", "admin123")}
                 isDisabled={loading}
+                startContent={<span className="text-lg">👑</span>}
               >
-                Admin User
+                <div className="flex flex-col items-start">
+                  <span className="font-semibold">Admin User</span>
+                  <span className="text-xs text-default-500">admin@example.com</span>
+                </div>
               </Button>
             </div>
           </div>
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <GoogleReCaptchaProvider
+      reCaptchaKey={process.env.NEXT_PUBLIC_GOOGLE_CAPTCHA_SITE_KEY || ""}
+      scriptProps={{
+        async: true,
+        defer: true,
+        appendTo: "head",
+      }}
+    >
+      <LoginForm />
+    </GoogleReCaptchaProvider>
   );
 }
