@@ -223,7 +223,7 @@ export default function Analytics() {
                   <YAxis stroke="currentColor" strokeOpacity={0.5} fontSize={12} tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`} />
                   <Tooltip
                     contentStyle={{ backgroundColor: "var(--heroui-background)", border: "1px solid var(--border)", borderRadius: "8px" }}
-                    formatter={(value: any) => `Rp ${(value / 1000000).toFixed(1)}M`}
+                    formatter={(value: number) => `Rp ${(value / 1000000).toFixed(1)}M`}
                   />
                   <Legend />
                   <Bar dataKey="salary" fill="#3b82f6" name="Salary" />
@@ -258,7 +258,7 @@ export default function Analytics() {
                   <YAxis stroke="currentColor" strokeOpacity={0.5} fontSize={12} tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`} />
                   <Tooltip
                     contentStyle={{ backgroundColor: "var(--heroui-background)", border: "1px solid var(--border)", borderRadius: "8px" }}
-                    formatter={(value: any) => `Rp ${(value / 1000000).toFixed(1)}M`}
+                    formatter={(value: number) => `Rp ${(value / 1000000).toFixed(1)}M`}
                   />
                   <Legend />
                   <Area type="monotone" dataKey="food" stackId="1" stroke="#3b82f6" fillOpacity={1} fill="url(#colorFood)" />
@@ -296,7 +296,7 @@ export default function Analytics() {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: any) => `Rp ${(value / 1000000).toFixed(1)}M`} />
+                    <Tooltip formatter={(value: number) => `Rp ${(value / 1000000).toFixed(1)}M`} />
                   </RechartsPieChart>
                 </ResponsiveContainer>
               </Card>
@@ -348,7 +348,7 @@ export default function Analytics() {
                   <YAxis stroke="currentColor" strokeOpacity={0.5} fontSize={12} tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`} />
                   <Tooltip
                     contentStyle={{ backgroundColor: "var(--heroui-background)", border: "1px solid var(--border)", borderRadius: "8px" }}
-                    formatter={(value: any) => `Rp ${(value / 1000000).toFixed(1)}M`}
+                    formatter={(value: number) => `Rp ${(value / 1000000).toFixed(1)}M`}
                   />
                   <Line type="monotone" dataKey="savings" stroke="#3b82f6" strokeWidth={2} dot={{ fill: "#3b82f6" }} />
                 </RechartsLineChart>

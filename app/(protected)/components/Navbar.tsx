@@ -2,10 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { Button } from "@heroui/react";
-import { Wallet, Plus, ChevronDown, Search, Menu, LogOut, Moon, Sun } from "lucide-react";
+import { Plus, ChevronDown, Search, Menu, LogOut, Moon, Sun } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTheme } from "next-themes";
 
 interface NavbarProps {
@@ -18,16 +18,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
   const { workspaces, selectedWorkspace, setSelectedWorkspace, loading, refreshWorkspaces } = useWorkspace();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const handleLogout = () => {
-    logout();
-    router.push("/login");
-  };
+  const [mounted] = useState(true);
 
   const handleCreateWorkspace = async () => {
     try {

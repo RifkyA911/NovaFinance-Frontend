@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react";
 import { api, Workspace } from "@/app/lib/api";
 
 interface WorkspaceContextType {
@@ -17,6 +17,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(null);
   const [loading, setLoading] = useState(true);
+  const isInitialLoad = useRef(true);
 
   const refreshWorkspaces = useCallback(async () => {
     try {
@@ -55,7 +56,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, [selectedWorkspace]);
 
   useEffect(() => {
-    refreshWorkspaces();
+    if (isInitialLoad.current) {
+      refreshWorkspaces();
+      isInitialLoad.current = false;
+    }
   }, [refreshWorkspaces]);
 
   return (

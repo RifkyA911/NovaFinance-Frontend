@@ -230,7 +230,7 @@ export default function Dashboard() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
-            <p className="text-default-500 mt-1 text-sm md:text-base">Welcome back! Here's your financial overview.</p>
+            <p className="text-default-500 mt-1 text-sm md:text-base">Welcome back! Here&apos;s your financial overview.</p>
           </div>
           {apiError && (
             <div className="bg-red-500/10 border border-red-500/20 text-red-600 px-4 py-2 rounded-lg text-sm">
@@ -505,7 +505,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-4 md:mb-6">
             <div>
               <h3 className="text-base md:text-lg font-semibold">Spending by Category</h3>
-              <p className="text-xs md:text-sm text-default-500">This month's breakdown</p>
+              <p className="text-xs md:text-sm text-default-500">This month&apos;s breakdown</p>
             </div>
           </div>
           <div className="space-y-3 md:space-y-4">
