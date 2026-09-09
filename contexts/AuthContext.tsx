@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { createContext, useContext, ReactNode } from "react";
+import { useSession, signOut } from "@/lib/auth";
 
 interface User {
   id: string;
@@ -13,7 +13,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (user: User, token: string) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
   loading: boolean;
 }
@@ -21,65 +21,34 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Verify session with backend on mount
-    async function verifySession() {
-      try {
-        const response = await fetch("http://localhost:8080/api/auth/get-session", {
-          credentials: 'include',
-        });
-        const data = await response.json();
-        if (data.success && data.data.user) {
-          setUser(data.data.user);
-          setToken('session'); // Placeholder, actual token is in HttpOnly cookie
-        }
-      } catch (error) {
-        console.error('Session verification failed:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    verifySession();
-  }, []);
+  const { data: session, isPending } = useSession();
+  
+  const user = session?.user as User | null;
+  const loading = isPending;
 
   const login = (userData: User, tokenData: string) => {
-    setUser(userData);
-    setToken(tokenData);
-    // Store in localStorage as backup for UI state
+    // Login is handled by BetterAuth signIn
     localStorage.setItem("token", tokenData);
     localStorage.setItem("user", JSON.stringify(userData));
   };
 
   const logout = async () => {
-    setUser(null);
-    setToken(null);
+    // Use BetterAuth signOut
+    await signOut();
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    // Call backend to clear HttpOnly cookie
-    try {
-      await fetch("http://localhost:8080/api/auth/sign-out", {
-        method: 'POST',
-        credentials: 'include',
-      });
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-    router.push("/login");
+    // Force redirect to login
+    window.location.href = "/login";
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        token,
+        token: null, // BetterAuth handles session via HttpOnly cookie
         login,
         logout,
-        isAuthenticated: !!user && !!token,
+        isAuthenticated: !!user,
         loading,
       }}
     >
