@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import {
   Card,
   Button,
+  Input,
+  Switch,
+  Select,
+  SelectItem,
 } from "@heroui/react";
 import {
   Bell,
@@ -53,42 +57,36 @@ export default function Settings() {
           </div>
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">First Name</label>
-                <input
-                  type="text"
-                  placeholder="John"
-                  defaultValue="John"
-                  className="w-full px-4 py-2 rounded-lg border border-default-200 bg-background"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">Last Name</label>
-                <input
-                  type="text"
-                  placeholder="Doe"
-                  defaultValue="Doe"
-                  className="w-full px-4 py-2 rounded-lg border border-default-200 bg-background"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Email</label>
-              <input
-                type="email"
-                placeholder="john@example.com"
-                defaultValue="john@example.com"
-                className="w-full px-4 py-2 rounded-lg border border-default-200 bg-background"
+              <Input
+                label="First Name"
+                labelPlacement="outside"
+                placeholder="John"
+                defaultValue="John"
+                variant="bordered"
+              />
+              <Input
+                label="Last Name"
+                labelPlacement="outside"
+                placeholder="Doe"
+                defaultValue="Doe"
+                variant="bordered"
               />
             </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Phone</label>
-              <input
-                type="tel"
-                placeholder="+62 812 3456 7890"
-                className="w-full px-4 py-2 rounded-lg border border-default-200 bg-background"
-              />
-            </div>
+            <Input
+              label="Email"
+              labelPlacement="outside"
+              type="email"
+              placeholder="john@example.com"
+              defaultValue="john@example.com"
+              variant="bordered"
+            />
+            <Input
+              label="Phone"
+              labelPlacement="outside"
+              type="tel"
+              placeholder="+62 812 3456 7890"
+              variant="bordered"
+            />
           </div>
         </Card>
 
@@ -109,30 +107,14 @@ export default function Settings() {
                 <p className="font-medium">Push Notifications</p>
                 <p className="text-sm text-default-500">Receive push notifications on your device</p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={notifications}
-                  onChange={(e) => setNotifications(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
-              </label>
+              <Switch isSelected={notifications} onValueChange={setNotifications} color="primary" />
             </div>
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Email Alerts</p>
                 <p className="text-sm text-default-500">Receive email notifications for important updates</p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={emailAlerts}
-                  onChange={(e) => setEmailAlerts(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
-              </label>
+              <Switch isSelected={emailAlerts} onValueChange={setEmailAlerts} color="primary" />
             </div>
           </div>
         </Card>
@@ -154,17 +136,9 @@ export default function Settings() {
                 <p className="font-medium">Two-Factor Authentication</p>
                 <p className="text-sm text-default-500">Add an extra layer of security to your account</p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={twoFactor}
-                  onChange={(e) => setTwoFactor(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
-              </label>
+              <Switch isSelected={twoFactor} onValueChange={setTwoFactor} color="primary" />
             </div>
-            <Button variant="outline" className="w-full">
+            <Button variant="bordered" className="w-full border-default-200">
               Change Password
             </Button>
           </div>
@@ -187,26 +161,18 @@ export default function Settings() {
                 <p className="font-medium">Dark Mode</p>
                 <p className="text-sm text-default-500">Switch between light and dark theme</p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={darkMode}
-                  onChange={(e) => setDarkMode(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
-              </label>
+              <Switch isSelected={darkMode} onValueChange={setDarkMode} color="primary" />
             </div>
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Language</p>
                 <p className="text-sm text-default-500">Select your preferred language</p>
               </div>
-              <select className="px-3 py-2 rounded-lg border border-default-200 bg-background">
-                <option>English</option>
-                <option>Indonesian</option>
-                <option>Spanish</option>
-              </select>
+              <Select className="w-48" variant="bordered" defaultSelectedKeys={["en"]} aria-label="Language">
+                <SelectItem key="en">English</SelectItem>
+                <SelectItem key="id">Indonesian</SelectItem>
+                <SelectItem key="es">Spanish</SelectItem>
+              </Select>
             </div>
           </div>
         </Card>
@@ -228,24 +194,24 @@ export default function Settings() {
                 <p className="font-medium">Default Currency</p>
                 <p className="text-sm text-default-500">Select your preferred currency</p>
               </div>
-              <select className="px-3 py-2 rounded-lg border border-default-200 bg-background">
-                <option>IDR - Indonesian Rupiah</option>
-                <option>USD - US Dollar</option>
-                <option>EUR - Euro</option>
-                <option>SGD - Singapore Dollar</option>
-              </select>
+              <Select className="w-64" variant="bordered" defaultSelectedKeys={["idr"]} aria-label="Currency">
+                <SelectItem key="idr">IDR - Indonesian Rupiah</SelectItem>
+                <SelectItem key="usd">USD - US Dollar</SelectItem>
+                <SelectItem key="eur">EUR - Euro</SelectItem>
+                <SelectItem key="sgd">SGD - Singapore Dollar</SelectItem>
+              </Select>
             </div>
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Timezone</p>
                 <p className="text-sm text-default-500">Set your local timezone</p>
               </div>
-              <select className="px-3 py-2 rounded-lg border border-default-200 bg-background">
-                <option>Asia/Jakarta (WIB)</option>
-                <option>Asia/Makassar (WITA)</option>
-                <option>Asia/Jayapura (WIT)</option>
-                <option>UTC</option>
-              </select>
+              <Select className="w-64" variant="bordered" defaultSelectedKeys={["wib"]} aria-label="Timezone">
+                <SelectItem key="wib">Asia/Jakarta (WIB)</SelectItem>
+                <SelectItem key="wita">Asia/Makassar (WITA)</SelectItem>
+                <SelectItem key="wit">Asia/Jayapura (WIT)</SelectItem>
+                <SelectItem key="utc">UTC</SelectItem>
+              </Select>
             </div>
           </div>
         </Card>
