@@ -6,43 +6,38 @@ import {
   Card,
   Button,
   Chip,
-  Avatar,
   Input,
+  TextArea,
+  Label,
+  TextField,
   Modal,
   Select,
+  ListBox,
+  Dropdown,
+  ProgressBar,
+  Checkbox,
+  Spinner,
+  Table,
 } from "@heroui/react";
 import { DocumentUpload } from "../components/DocumentUpload";
 import {
-  LayoutDashboard,
   Wallet,
   TrendingUp,
-  PieChart,
-  Settings,
   Plus,
-  Search,
-  Bell,
   ArrowUpRight,
   ArrowDownRight,
-  MoreVertical,
   CreditCard,
   PiggyBank,
-  Target,
-  Calendar,
   Filter,
-  LogOut,
   Download,
   FileSpreadsheet,
   FileText,
 } from "lucide-react";
 import {
-  LineChart,
-  Line,
   AreaChart,
   Area,
   BarChart,
   Bar,
-  PieChart as RechartsPieChart,
-  Pie,
   Cell,
   XAxis,
   YAxis,
@@ -51,24 +46,24 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { api, Transaction, TransactionWithIcon } from "../../lib/api";
-import { useTheme } from "next-themes";
+import { TransactionWithIcon } from "../../lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryKeys, queryFunctions, mutationFunctions } from "../../lib/queries";
 import { useForm } from "@tanstack/react-form";
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, logout, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { selectedWorkspace } = useWorkspace();
   const queryClient = useQueryClient();
-  const [selectedTab, setSelectedTab] = useState("overview");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'addTransaction' | 'filter' | 'addIncome' | 'addExpense'>('addTransaction');
-  const [isDownloadDropdownOpen, setIsDownloadDropdownOpen] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [transactionError, setTransactionError] = useState('');
 
   // TanStack Form for Add Transaction
   const form = useForm({
@@ -83,18 +78,28 @@ export default function Dashboard() {
     },
     onSubmit: async ({ value }) => {
       if (!selectedWorkspace) return;
-      const transaction = {
-        description: value.description,
-        amount: Number(value.amount),
-        type: modalType === 'addIncome' ? 'INCOME' : 'EXPENSE',
-        category: value.categoryId,
-        date: value.date,
-      };
-      await mutationFunctions.createTransaction(transaction);
-      queryClient.invalidateQueries({ queryKey: queryKeys.transactions(selectedWorkspace.id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboardSummary(selectedWorkspace.id) });
-      setIsModalOpen(false);
-      form.reset();
+      setIsSubmitting(true);
+      try {
+        const transaction = {
+          description: value.description,
+          amount: Number(value.amount),
+          type: modalType === 'addIncome' ? 'INCOME' as const : 'EXPENSE' as const,
+          category: value.categoryId,
+          date: value.date,
+        };
+        await mutationFunctions.createTransaction(transaction);
+        queryClient.invalidateQueries({ queryKey: queryKeys.transactions(selectedWorkspace.id) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.dashboardSummary(selectedWorkspace.id) });
+        setIsModalOpen(false);
+        form.reset();
+        setShowSuccessModal(true);
+      } catch (error) {
+        console.error('Transaction creation error:', error);
+        setTransactionError('Failed to create transaction. Please try again.');
+        setShowErrorModal(true);
+      } finally {
+        setIsSubmitting(false);
+      }
     },
   });
 
@@ -121,11 +126,6 @@ export default function Dashboard() {
       router.push("/login");
     }
   }, [isAuthenticated, router]);
-
-  const handleLogout = () => {
-    logout();
-    router.push("/login");
-  };
 
   // TanStack Query hooks for dashboard data
   const summaryQuery = useQuery({
@@ -167,12 +167,12 @@ export default function Dashboard() {
   const loading = summaryQuery.isLoading || trendsQuery.isLoading || categoriesQuery.isLoading || accountsQuery.isLoading || transactionsQuery.isLoading || allCategoriesQuery.isLoading;
 
   const summary = summaryQuery.data?.data;
-  const trends = trendsQuery.data?.data.trends;
-  const categories = categoriesQuery.data?.data.categories || [];
-  const accounts = accountsQuery.data?.data.accounts || [];
-  const allCategories = allCategoriesQuery.data?.data.categories || [];
+  const trends = trendsQuery.data?.data?.trends;
+  const categories = categoriesQuery.data?.data?.categories || [];
+  const accounts = accountsQuery.data?.data?.accounts || [];
+  const allCategories = allCategoriesQuery.data?.data?.categories || [];
 
-  const transactions: TransactionWithIcon[] = transactionsQuery.data?.data.transactions?.map((tx: { category: string | { name: string }; type: string; date: string }) => {
+  const transactions: TransactionWithIcon[] = transactionsQuery.data?.data?.transactions?.map((tx: { id?: string; category?: string | { name?: string }; type: string; date: string; description: string; amount: number }, index: number) => {
     const categoryValue = tx.category;
     let categoryName = 'Uncategorized';
     if (typeof categoryValue === 'string') {
@@ -180,11 +180,14 @@ export default function Dashboard() {
     } else if (categoryValue && typeof categoryValue === 'object' && categoryValue.name) {
       categoryName = categoryValue.name;
     }
+    const isIncome = tx.type?.toLowerCase() === "income";
     return {
       ...tx,
+      type: isIncome ? ('INCOME' as const) : ('EXPENSE' as const),
+      id: tx.id || `tx-${index}`,
       category: categoryName,
-      icon: tx.type === "income" ? <Wallet className="w-4 h-4" /> : <CreditCard className="w-4 h-4" />,
-      date: new Date(tx.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      icon: isIncome ? <Wallet className="w-4 h-4 text-green-500" /> : <CreditCard className="w-4 h-4 text-red-500" />,
+      date: tx.date ? new Date(tx.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '-',
     };
   }) || [];
 
@@ -204,9 +207,9 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background p-6 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-default-500">Loading dashboard...</p>
+        <div className="text-center flex flex-col items-center gap-3">
+          <Spinner size="lg" />
+          <p className="text-default-500 text-sm">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -229,47 +232,52 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
             <p className="text-default-500 mt-1 text-sm md:text-base">Welcome back! Here&apos;s your financial overview.</p>
           </div>
-          {apiError && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-600 px-4 py-2 rounded-lg text-sm">
-              {apiError}
-            </div>
-          )}
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={() => { setModalType('filter'); setIsModalOpen(true); }}>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" onPress={() => { setModalType('filter'); setIsModalOpen(true); }}>
               <Filter className="w-4 h-4 mr-2" />
               Filter
             </Button>
-            <Button className="bg-linear-to-r from-blue-500 to-purple-600 text-white" size="sm" onClick={() => { setModalType('addTransaction'); setIsModalOpen(true); }}>
+            <Button className="bg-linear-to-r from-blue-500 to-purple-600 text-white shadow-sm" size="sm" onPress={() => { setModalType('addTransaction'); setIsModalOpen(true); }}>
               <Plus className="w-4 h-4 mr-2" />
               Add Transaction
             </Button>
-            <div className="relative">
-              <Button variant="outline" size="sm" onClick={() => setIsDownloadDropdownOpen(!isDownloadDropdownOpen)}>
-                <Download className="w-4 h-4 mr-2" />
-                Download
-              </Button>
-              {isDownloadDropdownOpen && (
-                <div className="absolute top-full mt-2 right-0 bg-background border border-default-200 rounded-lg shadow-lg z-50 min-w-40">
-                  <button className="w-full text-left px-4 py-3 hover:bg-default-100 text-sm flex items-center gap-2" onClick={() => { console.log('Download Excel'); setIsDownloadDropdownOpen(false); }}>
-                    <FileSpreadsheet className="w-4 h-4" />
-                    Download Excel
-                  </button>
-                  <button className="w-full text-left px-4 py-3 hover:bg-default-100 text-sm flex items-center gap-2" onClick={() => { console.log('Download PDF'); setIsDownloadDropdownOpen(false); }}>
-                    <FileText className="w-4 h-4" />
-                    Download PDF
-                  </button>
-                </div>
-              )}
-            </div>
+
+            {/* HeroUI Dropdown */}
+            <Dropdown>
+              <Dropdown.Trigger>
+                <Button variant="outline" size="sm">
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
+                </Button>
+              </Dropdown.Trigger>
+              <Dropdown.Popover className="min-w-44 z-50 shadow-lg">
+                <Dropdown.Menu
+                  aria-label="Export options"
+                  onAction={(key) => {
+                    if (key === 'excel') console.log('Download Excel');
+                    if (key === 'pdf') console.log('Download PDF');
+                  }}
+                >
+                  <Dropdown.Item id="excel" textValue="Download Excel" className="flex items-center gap-2 cursor-pointer py-2">
+                    <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                    <span>Download Excel</span>
+                  </Dropdown.Item>
+                  <Dropdown.Item id="pdf" textValue="Download PDF" className="flex items-center gap-2 cursor-pointer py-2">
+                    <FileText className="w-4 h-4 text-red-600" />
+                    <span>Download PDF</span>
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown.Popover>
+            </Dropdown>
           </div>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="p-4 md:p-6 border-2 border-blue-500/20">
+          <Card className="p-4 md:p-6 border-2 border-blue-500/20 shadow-xs">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-xs md:text-sm text-default-500 font-medium">Total Balance</p>
@@ -279,13 +287,13 @@ export default function Dashboard() {
                   <span>+12.5%</span>
                 </div>
               </div>
-              <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-blue-500/20 flex items-center justify-center">
+              <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
                 <Wallet className="w-5 h-5 md:w-7 md:h-7 text-blue-500" />
               </div>
             </div>
           </Card>
 
-          <Card className="p-4 md:p-6 border-2 border-green-500/20">
+          <Card className="p-4 md:p-6 border-2 border-green-500/20 shadow-xs">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-xs md:text-sm text-default-500 font-medium">Monthly Income</p>
@@ -295,13 +303,13 @@ export default function Dashboard() {
                   <span>+8.2%</span>
                 </div>
               </div>
-              <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-green-500/20 flex items-center justify-center">
+              <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0">
                 <TrendingUp className="w-5 h-5 md:w-7 md:h-7 text-green-500" />
               </div>
             </div>
           </Card>
 
-          <Card className="p-4 md:p-6 border-2 border-red-500/20">
+          <Card className="p-4 md:p-6 border-2 border-red-500/20 shadow-xs">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-xs md:text-sm text-default-500 font-medium">Monthly Expenses</p>
@@ -311,22 +319,25 @@ export default function Dashboard() {
                   <span>-3.1%</span>
                 </div>
               </div>
-              <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-red-500/20 flex items-center justify-center">
+              <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0">
                 <CreditCard className="w-5 h-5 md:w-7 md:h-7 text-red-500" />
               </div>
             </div>
           </Card>
 
-          <Card className="p-4 md:p-6 border-2 border-purple-500/20">
+          <Card className="p-4 md:p-6 border-2 border-purple-500/20 shadow-xs">
             <div className="flex items-start justify-between">
-              <div>
+              <div className="w-full mr-2">
                 <p className="text-xs md:text-sm text-default-500 font-medium">Savings Rate</p>
                 <p className="text-2xl md:text-3xl font-bold mt-2 text-purple-600">{savingsRate}%</p>
-                <div className="w-full bg-gray-200 rounded-full h-2 md:h-3 mt-3">
-                  <div className="bg-purple-500 h-2 md:h-3 rounded-full transition-all duration-500" style={{ width: `${savingsRate}%` }}></div>
-                </div>
+                {/* HeroUI ProgressBar */}
+                <ProgressBar value={Math.min(100, Math.max(0, savingsRate))} aria-label="Savings Rate" className="mt-3">
+                  <ProgressBar.Track className="h-2 md:h-3 rounded-full bg-purple-100 dark:bg-purple-950/40">
+                    <ProgressBar.Fill className="bg-purple-500 rounded-full transition-all duration-500" />
+                  </ProgressBar.Track>
+                </ProgressBar>
               </div>
-              <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-purple-500/20 flex items-center justify-center">
+              <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0">
                 <PiggyBank className="w-5 h-5 md:w-7 md:h-7 text-purple-500" />
               </div>
             </div>
@@ -336,129 +347,138 @@ export default function Dashboard() {
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           {/* Income vs Expense Chart */}
-          <Card className="p-4 md:p-6">
-            <div className="flex items-center justify-between mb-4 md:mb-6">
+          <Card className="p-4 md:p-6 shadow-xs">
+            <Card.Header className="flex items-center justify-between mb-4 md:mb-6 p-0">
               <div>
-                <h3 className="text-base md:text-lg font-semibold">Income vs Expenses</h3>
-                <p className="text-xs md:text-sm text-default-500">Monthly comparison</p>
+                <Card.Title className="text-base md:text-lg font-semibold">Income vs Expenses</Card.Title>
+                <Card.Description className="text-xs md:text-sm text-default-500">Monthly comparison</Card.Description>
               </div>
               <Button size="sm" variant="ghost" className="text-xs md:text-sm">
                 This Year
               </Button>
-            </div>
-            {monthlyData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <AreaChart data={monthlyData}>
-                  <defs>
-                    <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
-                  <XAxis dataKey="month" stroke="currentColor" strokeOpacity={0.5} fontSize={10} tick={{ fontSize: 10 }} />
-                  <YAxis stroke="currentColor" strokeOpacity={0.5} fontSize={10} tick={{ fontSize: 10 }} tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: "var(--heroui-background)", border: "1px solid var(--border)", borderRadius: "8px" }}
-                    formatter={(value: number) => `Rp ${(value / 1000000).toFixed(1)}M`}
-                  />
-                  <Legend />
-                  <Area type="monotone" dataKey="income" stroke="#3b82f6" fillOpacity={1} fill="url(#colorIncome)" />
-                  <Area type="monotone" dataKey="expense" stroke="#ef4444" fillOpacity={1} fill="url(#colorExpense)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-64 flex items-center justify-center text-default-500 text-sm">
-                No trend data available
-              </div>
-            )}
+            </Card.Header>
+            <Card.Content className="p-0">
+              {monthlyData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <AreaChart data={monthlyData}>
+                    <defs>
+                      <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="colorExpense" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
+                    <XAxis dataKey="month" stroke="currentColor" strokeOpacity={0.5} fontSize={10} tick={{ fontSize: 10 }} />
+                    <YAxis stroke="currentColor" strokeOpacity={0.5} fontSize={10} tick={{ fontSize: 10 }} tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "var(--heroui-background, #fff)", border: "1px solid var(--border, #e5e7eb)", borderRadius: "8px" }}
+                      formatter={(value) => `Rp ${(Number(value || 0) / 1000000).toFixed(1)}M`}
+                    />
+                    <Legend />
+                    <Area type="monotone" dataKey="income" stroke="#3b82f6" fillOpacity={1} fill="url(#colorIncome)" />
+                    <Area type="monotone" dataKey="expense" stroke="#ef4444" fillOpacity={1} fill="url(#colorExpense)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-64 flex items-center justify-center text-default-500 text-sm">
+                  No trend data available
+                </div>
+              )}
+            </Card.Content>
           </Card>
 
           {/* Portfolio Distribution */}
-          <Card className="p-4 md:p-6">
-            <div className="flex items-center justify-between mb-4 md:mb-6">
+          <Card className="p-4 md:p-6 shadow-xs">
+            <Card.Header className="flex items-center justify-between mb-4 md:mb-6 p-0">
               <div>
-                <h3 className="text-base md:text-lg font-semibold">Portfolio Distribution</h3>
-                <p className="text-xs md:text-sm text-default-500">Asset allocation</p>
+                <Card.Title className="text-base md:text-lg font-semibold">Portfolio Distribution</Card.Title>
+                <Card.Description className="text-xs md:text-sm text-default-500">Asset allocation</Card.Description>
               </div>
               <Button size="sm" variant="ghost" className="text-xs md:text-sm">
                 View Details
               </Button>
-            </div>
-            {portfolioData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={portfolioData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
-                  <XAxis
-                    dataKey="name"
-                    stroke="currentColor"
-                    strokeOpacity={0.5}
-                    fontSize={10}
-                    tick={{ fontSize: 10 }}
-                    tickFormatter={(value: string) => typeof value === 'string' ? value.slice(0, 8) : value}
-                  />
-                  <YAxis
-                    stroke="currentColor"
-                    strokeOpacity={0.5}
-                    fontSize={10}
-                    tick={{ fontSize: 10 }}
-                    tickFormatter={(value: number) => `${(value / 1000000).toFixed(0)}M`}
-                  />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: "var(--heroui-background)", border: "1px solid var(--border)", borderRadius: "8px" }}
-                    formatter={(value: number) => `Rp ${(value / 1000000).toFixed(1)}M`}
-                  />
-                  <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]}>
-                    {portfolioData.map((entry: { color?: string }, index: number) => (
-                      <Cell key={`cell-${index}`} fill={entry.color || '#3b82f6'} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="w-full h-75 flex items-center justify-center text-default-500 text-sm">
-                No portfolio data available
-              </div>
-            )}
+            </Card.Header>
+            <Card.Content className="p-0">
+              {portfolioData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart data={portfolioData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" strokeOpacity={0.1} />
+                    <XAxis
+                      dataKey="name"
+                      stroke="currentColor"
+                      strokeOpacity={0.5}
+                      fontSize={10}
+                      tick={{ fontSize: 10 }}
+                      tickFormatter={(value: string) => typeof value === 'string' ? value.slice(0, 8) : value}
+                    />
+                    <YAxis
+                      stroke="currentColor"
+                      strokeOpacity={0.5}
+                      fontSize={10}
+                      tick={{ fontSize: 10 }}
+                      tickFormatter={(value: number) => `${(value / 1000000).toFixed(0)}M`}
+                    />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "var(--heroui-background, #fff)", border: "1px solid var(--border, #e5e7eb)", borderRadius: "8px" }}
+                      formatter={(value) => `Rp ${(Number(value || 0) / 1000000).toFixed(1)}M`}
+                    />
+                    <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+                      {portfolioData.map((entry: { color?: string }, index: number) => (
+                        <Cell key={`cell-${index}`} fill={entry.color || '#3b82f6'} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="w-full h-64 flex items-center justify-center text-default-500 text-sm">
+                  No portfolio data available
+                </div>
+              )}
+            </Card.Content>
           </Card>
         </div>
 
-        {/* Recent Transactions */}
-        <Card>
-          <div className="p-4 md:p-6 border-b">
-            <div className="flex items-center justify-between">
+        {/* Recent Transactions with HeroUI Table */}
+        <Card className="shadow-xs">
+          <Card.Header className="p-4 md:p-6 border-b border-default-200 dark:border-default-700">
+            <div className="flex items-center justify-between w-full">
               <div>
-                <h3 className="text-base md:text-lg font-semibold">Recent Transactions</h3>
-                <p className="text-xs md:text-sm text-default-500">Your latest financial activities</p>
+                <Card.Title className="text-base md:text-lg font-semibold">Recent Transactions</Card.Title>
+                <Card.Description className="text-xs md:text-sm text-default-500">Your latest financial activities</Card.Description>
               </div>
               <Button size="sm" variant="ghost" className="text-xs md:text-sm">
                 View All
               </Button>
             </div>
-          </div>
-          <div className="p-4 md:p-6">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-150">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm">Transaction</th>
-                    <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm hidden sm:table-cell">Category</th>
-                    <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm hidden md:table-cell">Date</th>
-                    <th className="text-right py-3 px-2 md:px-4 text-xs md:text-sm">Amount</th>
-                    <th className="text-left py-3 px-2 md:px-4 text-xs md:text-sm hidden sm:table-cell">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {transactions.length > 0 ? (
-                    transactions.map((tx: TransactionWithIcon) => (
-                      <tr key={tx.id} className="border-b hover:bg-default-100">
-                        <td className="py-3 px-2 md:px-4">
+          </Card.Header>
+          <Card.Content className="p-4 md:p-6">
+            <Table className="w-full">
+              <Table.ScrollContainer className="overflow-x-auto">
+                <Table.Content aria-label="Recent Transactions" className="w-full min-w-150">
+                  <Table.Header>
+                    <Table.Column isRowHeader className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-semibold">Transaction</Table.Column>
+                    <Table.Column className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-semibold hidden sm:table-cell">Category</Table.Column>
+                    <Table.Column className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-semibold hidden md:table-cell">Date</Table.Column>
+                    <Table.Column className="text-right py-3 px-2 md:px-4 text-xs md:text-sm font-semibold">Amount</Table.Column>
+                    <Table.Column className="text-left py-3 px-2 md:px-4 text-xs md:text-sm font-semibold hidden sm:table-cell">Status</Table.Column>
+                  </Table.Header>
+                  <Table.Body
+                    items={transactions}
+                    renderEmptyState={() => (
+                      <div className="py-8 text-center text-default-500 text-sm">
+                        No transactions available
+                      </div>
+                    )}
+                  >
+                    {(tx: TransactionWithIcon) => (
+                      <Table.Row id={tx.id} className="border-b border-default-100 dark:border-default-800 hover:bg-default-50 dark:hover:bg-default-800/50 transition-colors">
+                        <Table.Cell className="py-3 px-2 md:px-4">
                           <div className="flex items-center gap-2 md:gap-3">
-                            <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0 ${tx.type === "INCOME" ? "bg-green-500/10" : "bg-red-500/10"}`}>
+                            <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0 ${tx.type?.toLowerCase() === "income" ? "bg-green-500/10" : "bg-red-500/10"}`}>
                               {tx.icon}
                             </div>
                             <div className="min-w-0">
@@ -466,53 +486,48 @@ export default function Dashboard() {
                               <p className="text-xs text-default-500 hidden sm:block">{tx.category}</p>
                             </div>
                           </div>
-                        </td>
-                        <td className="py-3 px-2 md:px-4 hidden sm:table-cell">
+                        </Table.Cell>
+                        <Table.Cell className="py-3 px-2 md:px-4 hidden sm:table-cell">
                           <Chip size="sm" variant="soft" className="text-xs">
                             {tx.category}
                           </Chip>
-                        </td>
-                        <td className="py-3 px-2 md:px-4 hidden md:table-cell">
+                        </Table.Cell>
+                        <Table.Cell className="py-3 px-2 md:px-4 hidden md:table-cell">
                           <span className="text-default-500 text-xs md:text-sm">{tx.date}</span>
-                        </td>
-                        <td className="py-3 px-2 md:px-4 text-right">
-                          <span className={`font-semibold text-xs md:text-sm ${tx.type === "INCOME" ? "text-success" : "text-danger"}`}>
-                            {tx.type === "INCOME" ? "+" : "-"}Rp {(Number(tx.amount) / 1000000).toFixed(1)}M
+                        </Table.Cell>
+                        <Table.Cell className="py-3 px-2 md:px-4 text-right">
+                          <span className={`font-semibold text-xs md:text-sm ${tx.type?.toLowerCase() === "income" ? "text-success" : "text-danger"}`}>
+                            {tx.type?.toLowerCase() === "income" ? "+" : "-"}Rp {(Number(tx.amount) / 1000000).toFixed(1)}M
                           </span>
-                        </td>
-                        <td className="py-3 px-2 md:px-4 hidden sm:table-cell">
+                        </Table.Cell>
+                        <Table.Cell className="py-3 px-2 md:px-4 hidden sm:table-cell">
                           <Chip size="sm" color="success" variant="soft" className="text-xs">
                             Completed
                           </Chip>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className="py-8 text-center text-default-500 text-sm">
-                        No transactions available
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                        </Table.Cell>
+                      </Table.Row>
+                    )}
+                  </Table.Body>
+                </Table.Content>
+              </Table.ScrollContainer>
+            </Table>
+          </Card.Content>
         </Card>
 
-        {/* Spending Categories */}
-        <Card className="p-4 md:p-6">
-          <div className="flex items-center justify-between mb-4 md:mb-6">
+        {/* Spending Categories with HeroUI ProgressBar */}
+        <Card className="p-4 md:p-6 shadow-xs">
+          <Card.Header className="flex items-center justify-between mb-4 md:mb-6 p-0">
             <div>
-              <h3 className="text-base md:text-lg font-semibold">Spending by Category</h3>
-              <p className="text-xs md:text-sm text-default-500">This month&apos;s breakdown</p>
+              <Card.Title className="text-base md:text-lg font-semibold">Spending by Category</Card.Title>
+              <Card.Description className="text-xs md:text-sm text-default-500">This month&apos;s breakdown</Card.Description>
             </div>
-          </div>
-          <div className="space-y-3 md:space-y-4">
-            {spendingCategories.length > 0 ? spendingCategories.map((category: { id?: string; name: string; value?: string; percentage?: string }, index: number) => {
+          </Card.Header>
+          <Card.Content className="space-y-3 md:space-y-4 p-0">
+            {spendingCategories.length > 0 ? spendingCategories.map((category, index) => {
               const categoryName = typeof category === 'object' && category.name ? category.name : (typeof category === 'string' ? category : `Category ${index}`);
+              const percentageNum = Number(category.percentage) || 0;
               return (
-                <div key={category.id || index} className="space-y-2">
+                <div key={category.name || index} className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs md:text-sm font-medium">{categoryName}</span>
                     <span className="text-xs md:text-sm text-default-500">
@@ -521,22 +536,23 @@ export default function Dashboard() {
                     </span>
                   </div>
                   {category.percentage && (
-                    <div className="w-full bg-gray-200 rounded-full h-1.5 md:h-2">
-                      <div className="bg-blue-500 h-1.5 md:h-2 rounded-full" style={{ width: `${category.percentage}%` }}></div>
-                    </div>
+                    <ProgressBar value={percentageNum} aria-label={categoryName}>
+                      <ProgressBar.Track className="h-1.5 md:h-2 rounded-full bg-default-200 dark:bg-default-700">
+                        <ProgressBar.Fill className="bg-blue-500 rounded-full transition-all duration-500" />
+                      </ProgressBar.Track>
+                    </ProgressBar>
                   )}
                 </div>
               );
             }) : (
               <p className="text-default-500 text-xs md:text-sm">No category data available</p>
             )}
-          </div>
+          </Card.Content>
         </Card>
-
       </div>
 
-      {/* Modal */}
-      <Modal isOpen={isModalOpen} onOpenChange={setIsModalOpen} size="2xl">
+      {/* Main Modal (Add Transaction / Filter) */}
+      <Modal isOpen={isModalOpen} onOpenChange={setIsModalOpen}>
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog className="max-w-5xl w-full">
@@ -563,51 +579,61 @@ export default function Dashboard() {
                         name="description"
                         // eslint-disable-next-line react/no-children-prop
                         children={(field) => (
-                          <div>
-                            <label className="text-sm font-medium mb-1 block">Description</label>
+                          <TextField className="space-y-1">
+                            <Label className="text-sm font-medium block text-default-700 dark:text-default-300">Title</Label>
                             <Input
-                              fullWidth
+                              type="text"
+                              aria-label="Title"
                               placeholder="Enter description"
                               value={field.state.value}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.handleChange(e.target.value)}
+                              onChange={(e) => field.handleChange(e.target.value)}
                             />
-                          </div>
+                          </TextField>
                         )}
                       />
                       <form.Field
                         name="amount"
                         // eslint-disable-next-line react/no-children-prop
                         children={(field) => (
-                          <div>
-                            <label className="text-sm font-medium mb-1 block">Amount</label>
+                          <TextField className="space-y-1">
+                            <Label className="text-sm font-medium block text-default-700 dark:text-default-300">Amount</Label>
                             <Input
-                              fullWidth
                               type="number"
+                              aria-label="Amount"
                               placeholder="Enter amount"
                               value={field.state.value}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.handleChange(e.target.value)}
+                              onChange={(e) => field.handleChange(e.target.value)}
                             />
-                          </div>
+                          </TextField>
                         )}
                       />
                       <form.Field
                         name="categoryId"
                         // eslint-disable-next-line react/no-children-prop
                         children={(field) => (
-                          <div>
-                            <label className="text-sm font-medium mb-1 block">Category</label>
-                            <select
-                              className="w-full p-2 pl-3 pr-10 border rounded-lg bg-background"
-                              value={field.state.value}
-                              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => field.handleChange(e.target.value)}
+                          <div className="space-y-1">
+                            <Label className="text-sm font-medium block text-default-700 dark:text-default-300">Category</Label>
+                            <Select
+                              aria-label="Category"
+                              selectedKey={field.state.value || null}
+                              onSelectionChange={(key) => field.handleChange(key ? String(key) : '')}
+                              placeholder="Select category"
+                              className="w-full"
                             >
-                              <option value="">Select category</option>
-                              {allCategories?.map((cat: { id: string; name: string }, index: number) => (
-                                <option key={`cat-${cat.id || index}`} value={cat.id}>
-                                  {typeof cat.name === 'string' ? cat.name : 'Category'}
-                                </option>
-                              ))}
-                            </select>
+                              <Select.Trigger className="w-full justify-between">
+                                <Select.Value />
+                                <Select.Indicator />
+                              </Select.Trigger>
+                              <Select.Popover className="min-w-50 z-50 shadow-lg">
+                                <ListBox items={allCategories || []}>
+                                  {(cat: { id: string; name: string }) => (
+                                    <ListBox.Item id={cat.id} textValue={typeof cat.name === 'string' ? cat.name : 'Category'}>
+                                      {typeof cat.name === 'string' ? cat.name : 'Category'}
+                                    </ListBox.Item>
+                                  )}
+                                </ListBox>
+                              </Select.Popover>
+                            </Select>
                           </div>
                         )}
                       />
@@ -615,20 +641,29 @@ export default function Dashboard() {
                         name="accountId"
                         // eslint-disable-next-line react/no-children-prop
                         children={(field) => (
-                          <div>
-                            <label className="text-sm font-medium mb-1 block">Account</label>
-                            <select
-                              className="w-full p-2 pl-3 pr-10 border rounded-lg bg-background"
-                              value={field.state.value}
-                              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => field.handleChange(e.target.value)}
+                          <div className="space-y-1">
+                            <Label className="text-sm font-medium block text-default-700 dark:text-default-300">Account</Label>
+                            <Select
+                              aria-label="Account"
+                              selectedKey={field.state.value || null}
+                              onSelectionChange={(key) => field.handleChange(key ? String(key) : '')}
+                              placeholder="Select account"
+                              className="w-full"
                             >
-                              <option value="">Select account</option>
-                              {accounts?.map((acc: { id: string; name: string }, index: number) => (
-                                <option key={`acc-${acc.id || index}`} value={acc.id}>
-                                  {typeof acc.name === 'string' ? acc.name : 'Account'}
-                                </option>
-                              ))}
-                            </select>
+                              <Select.Trigger className="w-full justify-between">
+                                <Select.Value />
+                                <Select.Indicator />
+                              </Select.Trigger>
+                              <Select.Popover className="min-w-50 z-50 shadow-lg">
+                                <ListBox items={accounts || []}>
+                                  {(acc: { id: string; name: string }) => (
+                                    <ListBox.Item id={acc.id} textValue={typeof acc.name === 'string' ? acc.name : 'Account'}>
+                                      {typeof acc.name === 'string' ? acc.name : 'Account'}
+                                    </ListBox.Item>
+                                  )}
+                                </ListBox>
+                              </Select.Popover>
+                            </Select>
                           </div>
                         )}
                       />
@@ -636,15 +671,15 @@ export default function Dashboard() {
                         name="date"
                         // eslint-disable-next-line react/no-children-prop
                         children={(field) => (
-                          <div>
-                            <label className="text-sm font-medium mb-1 block">Date</label>
+                          <TextField className="space-y-1">
+                            <Label className="text-sm font-medium block text-default-700 dark:text-default-300">Date</Label>
                             <Input
-                              fullWidth
                               type="date"
+                              aria-label="Date"
                               value={field.state.value}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => field.handleChange(e.target.value)}
+                              onChange={(e) => field.handleChange(e.target.value)}
                             />
-                          </div>
+                          </TextField>
                         )}
                       />
                     </div>
@@ -652,211 +687,271 @@ export default function Dashboard() {
                       name="notes"
                       // eslint-disable-next-line react/no-children-prop
                       children={(field) => (
-                        <div>
-                          <label className="text-sm font-medium mb-1 block">Notes</label>
-                          <textarea
-                            className="w-full p-2 border rounded-lg bg-background min-h-25"
+                        <TextField className="space-y-1">
+                          <Label className="text-sm font-medium block text-default-700 dark:text-default-300">Notes</Label>
+                          <TextArea
+                            className="min-h-24"
+                            aria-label="Notes"
                             placeholder="Optional notes"
                             value={field.state.value}
-                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => field.handleChange(e.target.value)}
+                            onChange={(e) => field.handleChange(e.target.value)}
                           />
-                        </div>
+                        </TextField>
                       )}
                     />
-                    <div className="border-t pt-4">
-                      <label className="text-sm font-medium mb-2 block">Attach Documents</label>
+                    <div className="border-t border-default-200 dark:border-default-700 pt-4">
+                      <Label className="text-sm font-medium mb-2 block text-default-700 dark:text-default-300">Attach Documents</Label>
                       <DocumentUpload
                         onUpload={(file, type) => console.log('Uploaded:', file, type)}
                         workspaceId={selectedWorkspace?.id || ''}
                       />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                      <Button
+                        variant="ghost"
+                        onPress={() => setIsModalOpen(false)}
+                        isDisabled={isSubmitting}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="bg-linear-to-r from-blue-500 to-purple-600 text-white shadow-sm flex items-center gap-2"
+                        isDisabled={isSubmitting}
+                      >
+                        {isSubmitting && <Spinner size="sm" />}
+                        <span>{isSubmitting ? 'Saving...' : 'Save Transaction'}</span>
+                      </Button>
                     </div>
                   </form>
                 )}
                 {modalType === 'filter' && (
                   <div className="space-y-4">
                     {/* Filter by Time */}
-                    <div className="border-b pb-4">
+                    <div className="border-b border-default-200 dark:border-default-700 pb-4">
                       <h4 className="text-sm font-semibold mb-3">Time Range</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                          <label className="text-xs font-medium mb-1 block">Period</label>
-                          <select
-                            className="w-full p-2 pl-3 pr-10 border rounded-lg bg-background text-sm"
-                            value={filterTimeRange}
-                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilterTimeRange(e.target.value)}
+                          <Label className="text-xs font-medium mb-1 block text-default-700 dark:text-default-300">Period</Label>
+                          <Select
+                            aria-label="Time Period"
+                            selectedKey={filterTimeRange}
+                            onSelectionChange={(key) => setFilterTimeRange(String(key))}
+                            className="w-full"
                           >
-                            <option value="all">All Time</option>
-                            <option value="year">This Year</option>
-                            <option value="month">This Month</option>
-                            <option value="month_today">Month to Date</option>
-                            <option value="day">Today</option>
-                            <option value="custom">Custom Range</option>
-                          </select>
+                            <Select.Trigger className="w-full justify-between">
+                              <Select.Value />
+                              <Select.Indicator />
+                            </Select.Trigger>
+                            <Select.Popover className="min-w-40 z-50 shadow-lg">
+                              <ListBox items={[
+                                { id: 'all', name: 'All Time' },
+                                { id: 'year', name: 'This Year' },
+                                { id: 'month', name: 'This Month' },
+                                { id: 'month_today', name: 'Month to Date' },
+                                { id: 'day', name: 'Today' },
+                                { id: 'custom', name: 'Custom Range' },
+                              ]}>
+                                {(item) => (
+                                  <ListBox.Item id={item.id} textValue={item.name}>
+                                    {item.name}
+                                  </ListBox.Item>
+                                )}
+                              </ListBox>
+                            </Select.Popover>
+                          </Select>
                         </div>
                         {filterTimeRange === 'custom' && (
                           <>
-                            <div>
-                              <label className="text-xs font-medium mb-1 block">Start Date</label>
+                            <TextField className="space-y-1">
+                              <Label className="text-xs font-medium block text-default-700 dark:text-default-300">Start Date</Label>
                               <Input
                                 type="date"
+                                aria-label="Start Date"
                                 value={filterStartDate ? filterStartDate.toISOString().split('T')[0] : ''}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilterStartDate(new Date(e.target.value))}
-                                className="text-sm"
+                                onChange={(e) => setFilterStartDate(new Date(e.target.value))}
                               />
-                            </div>
-                            <div>
-                              <label className="text-xs font-medium mb-1 block">End Date</label>
+                            </TextField>
+                            <TextField className="space-y-1">
+                              <Label className="text-xs font-medium block text-default-700 dark:text-default-300">End Date</Label>
                               <Input
                                 type="date"
+                                aria-label="End Date"
                                 value={filterEndDate ? filterEndDate.toISOString().split('T')[0] : ''}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilterEndDate(new Date(e.target.value))}
-                                className="text-sm"
+                                onChange={(e) => setFilterEndDate(new Date(e.target.value))}
                               />
-                            </div>
+                            </TextField>
                           </>
                         )}
                       </div>
                     </div>
 
                     {/* Filter by Category */}
-                    <div className="border-b pb-4">
+                    <div className="border-b border-default-200 dark:border-default-700 pb-4">
                       <h4 className="text-sm font-semibold mb-3">Category</h4>
-                      <Select
-                        selectionMode="multiple"
-                        placeholder="Select categories"
-                        selectedKeys={filterCategory}
-                        onSelectionChange={(keys) => setFilterCategory(Array.from(keys) as string[])}
-                        className="w-full"
-                      >
-                        {allCategories?.map((cat: { name: string }) => (
-                          <Select.Item key={cat.name}>
-                            {cat.name}
-                          </Select.Item>
+                      <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                        {allCategories?.map((cat: { id?: string; name: string }) => (
+                          <Checkbox
+                            key={cat.id || cat.name}
+                            isSelected={filterCategory.includes(cat.name)}
+                            onChange={(isSelected) => {
+                              if (isSelected) {
+                                setFilterCategory([...filterCategory, cat.name]);
+                              } else {
+                                setFilterCategory(filterCategory.filter(c => c !== cat.name));
+                              }
+                            }}
+                          >
+                            <Checkbox.Content className="flex items-center gap-2 cursor-pointer p-1 rounded hover:bg-default-100 dark:hover:bg-default-800">
+                              <Checkbox.Control>
+                                <Checkbox.Indicator />
+                              </Checkbox.Control>
+                              <span className="text-sm">{cat.name}</span>
+                            </Checkbox.Content>
+                          </Checkbox>
                         ))}
-                      </Select>
+                      </div>
                     </div>
 
                     {/* Filter by Amount Ranges */}
-                    <div className="border-b pb-4">
+                    <div className="border-b border-default-200 dark:border-default-700 pb-4">
                       <h4 className="text-sm font-semibold mb-3">Amount Ranges</h4>
                       <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="text-xs font-medium mb-1 block">Equity Min</label>
+                          <TextField className="space-y-1">
+                            <Label className="text-xs font-medium block text-default-700 dark:text-default-300">Equity Min</Label>
                             <Input
                               type="number"
+                              aria-label="Equity Min"
                               placeholder="Min"
                               value={filterEquityMin}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilterEquityMin(e.target.value)}
-                              className="text-sm"
+                              onChange={(e) => fieldToNumber(e, setFilterEquityMin)}
                             />
-                          </div>
-                          <div>
-                            <label className="text-xs font-medium mb-1 block">Equity Max</label>
+                          </TextField>
+                          <TextField className="space-y-1">
+                            <Label className="text-xs font-medium block text-default-700 dark:text-default-300">Equity Max</Label>
                             <Input
                               type="number"
+                              aria-label="Equity Max"
                               placeholder="Max"
                               value={filterEquityMax}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilterEquityMax(e.target.value)}
-                              className="text-sm"
+                              onChange={(e) => fieldToNumber(e, setFilterEquityMax)}
                             />
-                          </div>
+                          </TextField>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="text-xs font-medium mb-1 block">Invested Min</label>
+                          <TextField className="space-y-1">
+                            <Label className="text-xs font-medium block text-default-700 dark:text-default-300">Invested Min</Label>
                             <Input
                               type="number"
+                              aria-label="Invested Min"
                               placeholder="Min"
                               value={filterInvestedMin}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilterInvestedMin(e.target.value)}
-                              className="text-sm"
+                              onChange={(e) => fieldToNumber(e, setFilterInvestedMin)}
                             />
-                          </div>
-                          <div>
-                            <label className="text-xs font-medium mb-1 block">Invested Max</label>
+                          </TextField>
+                          <TextField className="space-y-1">
+                            <Label className="text-xs font-medium block text-default-700 dark:text-default-300">Invested Max</Label>
                             <Input
                               type="number"
+                              aria-label="Invested Max"
                               placeholder="Max"
                               value={filterInvestedMax}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilterInvestedMax(e.target.value)}
-                              className="text-sm"
+                              onChange={(e) => fieldToNumber(e, setFilterInvestedMax)}
                             />
-                          </div>
+                          </TextField>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="text-xs font-medium mb-1 block">Income Min</label>
+                          <TextField className="space-y-1">
+                            <Label className="text-xs font-medium block text-default-700 dark:text-default-300">Income Min</Label>
                             <Input
                               type="number"
+                              aria-label="Income Min"
                               placeholder="Min"
                               value={filterIncomeMin}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilterIncomeMin(e.target.value)}
-                              className="text-sm"
+                              onChange={(e) => fieldToNumber(e, setFilterIncomeMin)}
                             />
-                          </div>
-                          <div>
-                            <label className="text-xs font-medium mb-1 block">Income Max</label>
+                          </TextField>
+                          <TextField className="space-y-1">
+                            <Label className="text-xs font-medium block text-default-700 dark:text-default-300">Income Max</Label>
                             <Input
                               type="number"
+                              aria-label="Income Max"
                               placeholder="Max"
                               value={filterIncomeMax}
-                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilterIncomeMax(e.target.value)}
-                              className="text-sm"
+                              onChange={(e) => fieldToNumber(e, setFilterIncomeMax)}
                             />
-                          </div>
+                          </TextField>
                         </div>
                       </div>
                     </div>
 
                     {/* Filter by Currencies */}
-                    <div className="border-b pb-4">
+                    <div className="border-b border-default-200 dark:border-default-700 pb-4">
                       <h4 className="text-sm font-semibold mb-3">Currencies</h4>
-                      <Select
-                        selectionMode="multiple"
-                        placeholder="Select currencies"
-                        selectedKeys={filterCurrencies}
-                        onSelectionChange={(keys) => setFilterCurrencies(Array.from(keys) as string[])}
-                        className="w-full"
-                      >
+                      <div className="space-y-2">
                         {['IDR', 'USD', 'EUR', 'SGD', 'JPY'].map((currency) => (
-                          <Select.Item key={currency}>
-                            {currency}
-                          </Select.Item>
+                          <Checkbox
+                            key={currency}
+                            isSelected={filterCurrencies.includes(currency)}
+                            onChange={(isSelected) => {
+                              if (isSelected) {
+                                setFilterCurrencies([...filterCurrencies, currency]);
+                              } else {
+                                setFilterCurrencies(filterCurrencies.filter(c => c !== currency));
+                              }
+                            }}
+                          >
+                            <Checkbox.Content className="flex items-center gap-2 cursor-pointer p-1 rounded hover:bg-default-100 dark:hover:bg-default-800">
+                              <Checkbox.Control>
+                                <Checkbox.Indicator />
+                              </Checkbox.Control>
+                              <span className="text-sm">{currency}</span>
+                            </Checkbox.Content>
+                          </Checkbox>
                         ))}
-                      </Select>
+                      </div>
                     </div>
 
                     {/* Filter by Platform */}
                     <div>
                       <h4 className="text-sm font-semibold mb-3">Platform Income</h4>
-                      <Select
-                        selectionMode="multiple"
-                        placeholder="Select platforms"
-                        selectedKeys={filterPlatforms}
-                        onSelectionChange={(keys) => setFilterPlatforms(Array.from(keys) as string[])}
-                        className="w-full"
-                      >
+                      <div className="space-y-2">
                         {['stocks', 'crypto', 'trading', 'freelance', 'salary'].map((platform) => (
-                          <Select.Item key={platform}>
-                            {platform.charAt(0).toUpperCase() + platform.slice(1)}
-                          </Select.Item>
+                          <Checkbox
+                            key={platform}
+                            isSelected={filterPlatforms.includes(platform)}
+                            onChange={(isSelected) => {
+                              if (isSelected) {
+                                setFilterPlatforms([...filterPlatforms, platform]);
+                              } else {
+                                setFilterPlatforms(filterPlatforms.filter(p => p !== platform));
+                              }
+                            }}
+                          >
+                            <Checkbox.Content className="flex items-center gap-2 cursor-pointer p-1 rounded hover:bg-default-100 dark:hover:bg-default-800">
+                              <Checkbox.Control>
+                                <Checkbox.Indicator />
+                              </Checkbox.Control>
+                              <span className="text-sm capitalize">{platform}</span>
+                            </Checkbox.Content>
+                          </Checkbox>
                         ))}
-                      </Select>
+                      </div>
                     </div>
                   </div>
                 )}
               </Modal.Body>
-              {(modalType === 'addTransaction' || modalType === 'addIncome' || modalType === 'addExpense') && (
+              {modalType === 'addIncome' || modalType === 'addExpense' ? (
                 <Modal.Footer>
                   <Button type="submit" className="w-full bg-blue-500 text-white" onPress={() => form.handleSubmit()}>
                     {modalType === 'addIncome' ? 'Add Income' : 'Add Expense'}
                   </Button>
                 </Modal.Footer>
-              )}
+              ) : null}
               {modalType === 'filter' && (
                 <Modal.Footer>
-                  <Button onClick={handleFilterSubmit} className="w-full bg-blue-500 text-white">
+                  <Button onPress={handleFilterSubmit} className="w-full bg-blue-500 text-white">
                     Apply Filter
                   </Button>
                 </Modal.Footer>
@@ -865,6 +960,58 @@ export default function Dashboard() {
           </Modal.Container>
         </Modal.Backdrop>
       </Modal>
+
+      {/* Success Modal */}
+      <Modal isOpen={showSuccessModal} onOpenChange={setShowSuccessModal}>
+        <Modal.Backdrop>
+          <Modal.Container>
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading>Success</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <p className="text-default-600">Transaction created successfully!</p>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  onPress={() => setShowSuccessModal(false)}
+                  className="bg-linear-to-r from-blue-500 to-purple-600 text-white"
+                >
+                  OK
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
+      </Modal>
+
+      {/* Error Modal */}
+      <Modal isOpen={showErrorModal} onOpenChange={setShowErrorModal}>
+        <Modal.Backdrop>
+          <Modal.Container>
+            <Modal.Dialog>
+              <Modal.Header>
+                <Modal.Heading>Error</Modal.Heading>
+              </Modal.Header>
+              <Modal.Body>
+                <p className="text-danger">{transactionError}</p>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  onPress={() => setShowErrorModal(false)}
+                  className="bg-linear-to-r from-blue-500 to-purple-600 text-white"
+                >
+                  OK
+                </Button>
+              </Modal.Footer>
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
+      </Modal>
     </div>
   );
+}
+
+function fieldToNumber(e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) {
+  setter(e.target.value);
 }
