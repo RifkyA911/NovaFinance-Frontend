@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Button } from "@heroui/react";
+import { Button, Modal } from "@heroui/react";
 import { Camera, Upload, X, FileImage } from "lucide-react";
 
 interface DocumentUploadProps {
@@ -18,6 +18,10 @@ export function DocumentUpload({ onUpload, transactionId, workspaceId }: Documen
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [error, setError] = useState("");
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -43,7 +47,8 @@ export function DocumentUpload({ onUpload, transactionId, workspaceId }: Documen
       setIsCameraOpen(true);
     } catch (error) {
       console.error('Camera access denied:', error);
-      alert('Unable to access camera. Please check permissions.');
+      setError('Unable to access camera. Please check permissions.');
+      setShowErrorModal(true);
     }
   };
 
@@ -83,6 +88,8 @@ export function DocumentUpload({ onUpload, transactionId, workspaceId }: Documen
   const handleUpload = async () => {
     if (!selectedFile) return;
 
+    setIsUploading(true);
+
     const formData = new FormData();
     formData.append('file', selectedFile);
     formData.append('filename', selectedFile.name);
@@ -104,12 +111,17 @@ export function DocumentUpload({ onUpload, transactionId, workspaceId }: Documen
         onUpload(selectedFile, selectedFile.name.startsWith('receipt-') ? 'camera' : 'file');
         setPreview(null);
         setSelectedFile(null);
+        setShowSuccessModal(true);
       } else {
-        alert('Upload failed: ' + (result.error || 'Unknown error'));
+        setError('Upload failed: ' + (result.error || 'Unknown error'));
+        setShowErrorModal(true);
       }
     } catch (error) {
       console.error('Upload error:', error);
-      alert('Upload failed. Please try again.');
+      setError('Upload failed. Please try again.');
+      setShowErrorModal(true);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -182,9 +194,13 @@ export function DocumentUpload({ onUpload, transactionId, workspaceId }: Documen
             </button>
           </div>
           <div className="flex gap-2">
-            <Button onClick={handleUpload} className="flex-1 bg-blue-500 text-white">
+            <Button 
+              onClick={handleUpload} 
+              className="flex-1 bg-blue-500 text-white"
+              isDisabled={isUploading}
+            >
               <FileImage className="w-4 h-4 mr-2" />
-              Upload Document
+              {isUploading ? 'Uploading...' : 'Upload Document'}
             </Button>
             <Button onClick={clearPreview} className="flex-1 bg-gray-500 text-white">
               Clear
@@ -192,6 +208,32 @@ export function DocumentUpload({ onUpload, transactionId, workspaceId }: Documen
           </div>
         </div>
       )}
+
+      {/* Error Modal */}
+      <Modal isOpen={showErrorModal} onOpenChange={setShowErrorModal}>
+        <div className="flex flex-col gap-1 p-6 text-danger">Error</div>
+        <div className="p-6">
+          <p>{error}</p>
+        </div>
+        <div className="p-6">
+          <Button color="primary" onPress={() => setShowErrorModal(false)}>
+            OK
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal isOpen={showSuccessModal} onOpenChange={setShowSuccessModal}>
+        <div className="flex flex-col gap-1 p-6 text-success">Success</div>
+        <div className="p-6">
+          <p>Document uploaded successfully!</p>
+        </div>
+        <div className="p-6">
+          <Button color="primary" onPress={() => setShowSuccessModal(false)}>
+            OK
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -37,16 +37,16 @@ export default function ProtectedLayout({
 
   return (
     <WorkspaceProvider>
-      <div className="flex h-screen">
-        <Sidebar 
-          collapsed={sidebarCollapsed} 
+      <div className="flex h-screen text-sm">
+        <Sidebar
+          collapsed={sidebarCollapsed}
           onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
           isMobileMenuOpen={isMobileMenuOpen}
           onMobileMenuClose={() => setIsMobileMenuOpen(false)}
         />
         <div className="flex-1 flex flex-col overflow-hidden">
           <Navbar onToggleSidebar={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-          <main className="flex-1 overflow-auto">
+          <main className="flex-1 overflow-auto p-4">
             {children}
           </main>
         </div>

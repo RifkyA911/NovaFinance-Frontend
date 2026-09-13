@@ -11,6 +11,7 @@ import {
   LogOut,
   Menu,
   X,
+  Building2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
@@ -18,6 +19,7 @@ import { useState } from "react";
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: Wallet, label: "Transactions", path: "/transactions" },
+  { icon: Building2, label: "Workspaces", path: "/workspaces" },
   { icon: TrendingUp, label: "Portfolio", path: "/portfolio" },
   { icon: PieChart, label: "Analytics", path: "/analytics" },
   { icon: Settings, label: "Settings", path: "/settings" },
@@ -97,7 +99,7 @@ export default function Sidebar({ collapsed = false, onToggle, isMobileMenuOpen 
               }`}
               title={collapsed ? item.label : undefined}
             >
-              <Icon className="w-5 h-5 flex-shrink-0" />
+              <Icon className="w-5 h-5 shrink-0" />
               {!collapsed && <span className="font-medium">{item.label}</span>}
             </button>
           );
@@ -117,16 +119,14 @@ export default function Sidebar({ collapsed = false, onToggle, isMobileMenuOpen 
             </div>
           </div>
         )}
-        <Button
-          variant="ghost"
-          className={`w-full justify-start text-danger cursor-pointer ${collapsed ? 'px-2' : ''}`}
+        <button
           onClick={handleLogout}
-          isIconOnly={collapsed}
+          className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-danger hover:bg-default-100 dark:hover:bg-default-100/50 transition-all duration-200 cursor-pointer ${collapsed ? 'justify-center' : ''}`}
           title={collapsed ? "Logout" : undefined}
         >
           <LogOut className="w-5 h-5" />
-          {!collapsed && <span className="ml-2">Logout</span>}
-        </Button>
+          {!collapsed && <span className="font-medium">Logout</span>}
+        </button>
       </div>
     </div>
     </>

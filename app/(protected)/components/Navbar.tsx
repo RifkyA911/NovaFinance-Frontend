@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { Button } from "@heroui/react";
+import { Button, Select, Input } from "@heroui/react";
 import { Plus, ChevronDown, Search, Menu, LogOut, Moon, Sun } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -13,7 +12,6 @@ interface NavbarProps {
 }
 
 export default function Navbar({ onToggleSidebar }: NavbarProps) {
-  const router = useRouter();
   const { user, logout } = useAuth();
   const { workspaces, selectedWorkspace, setSelectedWorkspace, loading, refreshWorkspaces } = useWorkspace();
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -64,31 +62,23 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
         {/* Workspace Selector */}
         <div className="flex items-center gap-2">
           {workspaces.length > 0 ? (
-            <>
-              <select
-                value={selectedWorkspace?.id || ""}
-                onChange={(e) => {
-                  const selected = workspaces.find(w => w.id === e.target.value);
-                  if (selected) setSelectedWorkspace(selected);
-                }}
-                disabled={loading}
-                className="h-9 px-3 py-1.5 rounded-lg border border-default-200 dark:border-default-700 bg-default-100 dark:bg-default-100/50 text-sm text-default-900 dark:text-default-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer hover:bg-default-200 dark:hover:bg-default-200/50 transition-colors"
-              >
-                {workspaces.map((workspace) => (
-                  <option key={workspace.id} value={workspace.id}>
-                    {workspace.name}
-                  </option>
-                ))}
-              </select>
-              <Button
-                size="sm"
-                className="h-9 bg-linear-to-r from-blue-500 to-purple-600 text-white cursor-pointer"
-                isIconOnly
-                onClick={() => router.push('/transactions/new')}
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-            </>
+            <Select
+              selectedKeys={selectedWorkspace?.id ? [selectedWorkspace.id] : []}
+              onChange={(e) => {
+                const selected = workspaces.find(w => w.id === e.target.value);
+                if (selected) setSelectedWorkspace(selected);
+              }}
+              isDisabled={loading}
+              className="w-48"
+              size="sm"
+              aria-label="Select Workspace"
+            >
+              {workspaces.map((workspace) => (
+                <option key={workspace.id} value={workspace.id}>
+                  {workspace.name}
+                </option>
+              ))}
+            </Select>
           ) : (
             <Button
               size="sm"
@@ -104,14 +94,18 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
 
       {/* Center - Search */}
       <div className="flex-1 max-w-md mx-6">
-        <div className="relative">
-          <Search className="w-4 h-4 text-default-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search menu..."
-            className="w-full h-9 pl-9 pr-4 rounded-lg border border-default-200 dark:border-default-700 bg-default-100 dark:bg-default-100/50 text-sm text-default-900 dark:text-default-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-          />
-        </div>
+        <Input
+          classNames={{
+            base: "max-w-full sm:max-w-[20rem] h-10",
+            mainWrapper: "h-full",
+            input: "text-small",
+            inputWrapper: "h-full font-normal text-default-500 bg-default-100 dark:bg-default-50/20",
+          }}
+          placeholder="Search menu..."
+          size="sm"
+          startContent={<Search className="w-4 h-4 text-default-400 pointer-events-none flex-shrink-0" />}
+          type="search"
+        />
       </div>
 
       {/* Right - User Info */}
