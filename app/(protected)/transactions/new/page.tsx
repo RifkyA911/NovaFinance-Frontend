@@ -132,7 +132,6 @@ export default function NewTransactionPage() {
           </div>
 
           <textarea
-            label="Notes"
             placeholder="Add notes (optional)"
             value={formData.notes}
             onChange={(e) =>
@@ -145,7 +144,7 @@ export default function NewTransactionPage() {
           <div className="flex gap-4">
             <Button
               type="button"
-              variant="bordered"
+              variant="outline"
               onClick={() => router.back()}
               className="flex-1"
             >

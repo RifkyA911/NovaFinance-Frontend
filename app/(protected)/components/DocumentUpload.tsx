@@ -216,7 +216,7 @@ export function DocumentUpload({ onUpload, transactionId, workspaceId }: Documen
           <p>{error}</p>
         </div>
         <div className="p-6">
-          <Button color="primary" onPress={() => setShowErrorModal(false)}>
+          <Button onPress={() => setShowErrorModal(false)}>
             OK
           </Button>
         </div>
@@ -229,7 +229,7 @@ export function DocumentUpload({ onUpload, transactionId, workspaceId }: Documen
           <p>Document uploaded successfully!</p>
         </div>
         <div className="p-6">
-          <Button color="primary" onPress={() => setShowSuccessModal(false)}>
+          <Button onPress={() => setShowSuccessModal(false)}>
             OK
           </Button>
         </div>
