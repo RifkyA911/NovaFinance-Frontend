@@ -7,12 +7,15 @@ describe('Login Redirect', () => {
     cy.get('button[type="submit"]').click();
     
     // Wait a bit for the request to complete
-    cy.wait(3000);
+    cy.wait(5000);
     
     // Check for error message
     cy.get('body').then(($body) => {
       if ($body.find('.text-danger').length > 0) {
-        cy.log('Error message found:', $body.find('.text-danger').text());
+        const errorText = $body.find('.text-danger').text();
+        cy.log('Error message found:', errorText);
+      } else {
+        cy.log('No error message found');
       }
     });
     
