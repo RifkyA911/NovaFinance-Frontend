@@ -5,16 +5,22 @@ import { useRouter } from "next/navigation";
 import { Card, Input, Button, Link } from "@heroui/react";
 import { Wallet } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import { signUp } from "@/lib/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Redirect if already authenticated
+  if (!authLoading && isAuthenticated) {
+    router.push("/dashboard");
+  }
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,25 +34,20 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await fetch("http://localhost:8080/api/auth/sign-up", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify({ email, password, name }),
+      const result = await signUp.email({
+        email: email.trim(),
+        password,
+        name: name.trim(),
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        // Auto login after registration
-        const userData = data.data.user;
-        const token = data.data.token;
-        login(userData, token);
-        router.push("/dashboard");
+      if (result.error) {
+        setError(result.error.message || "Registration failed");
       } else {
-        setError(data.error || "Registration failed");
+        // Registration successful, redirect to login
+        router.push("/login");
       }
-    } catch {
+    } catch (err) {
+      console.error("Registration error:", err);
       setError("An error occurred. Please try again.");
     } finally {
       setLoading(false);

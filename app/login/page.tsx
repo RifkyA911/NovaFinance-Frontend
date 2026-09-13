@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Card, Input, Button, Link } from "@heroui/react";
 import { Wallet } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import { Input, Button } from "@heroui/react";
 import { signIn } from "@/lib/auth";
 import { GoogleReCaptchaProvider, useGoogleReCaptcha } from "react-google-recaptcha-v3";
 
@@ -30,14 +30,22 @@ function LoginForm() {
     setError("");
 
     try {
+      console.log("Attempting login with:", email);
+      console.log("Email type:", typeof email);
+      console.log("Email length:", email.length);
+      
       const result = await signIn.email({
-        email,
+        email: email.trim(),
         password,
       });
 
+      console.log("Login result:", result);
+
       if (result.error) {
+        console.error("Login error:", result.error);
         setError(result.error.message || "Login failed");
       } else {
+        console.log("Login successful, redirecting to dashboard");
         router.push("/dashboard");
       }
     } catch (err) {
@@ -86,49 +94,47 @@ function LoginForm() {
         </div>
 
         {/* Login Card */}
-        <Card className="p-6 shadow-xl">
+        <div className="bg-white rounded-lg shadow-xl p-6">
           <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Email</label>
-              <Input
-                type="email"
-                className="w-full"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Password</label>
-              <Input
-                type="password"
-                className="w-full"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+            <Input
+              label="Email"
+              labelPlacement="outside"
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              isRequired
+              variant="bordered"
+            />
+            <Input
+              label="Password"
+              labelPlacement="outside"
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              isRequired
+              variant="bordered"
+            />
             {error && (
-              <div className="text-danger text-sm">{error}</div>
+              <div className="text-red-600 text-sm">{error}</div>
             )}
             <Button
               type="submit"
+              isLoading={loading}
               className="w-full bg-linear-to-r from-blue-500 to-purple-600 text-white"
-              isDisabled={loading}
             >
-              {loading ? "Signing in..." : "Sign In"}
+              Sign In
             </Button>
           </form>
 
           <div className="mt-6 flex items-center justify-between text-sm">
-            <Link href="/forgot-password" className="text-blue-600 hover:text-blue-700">
+            <a href="/forgot-password" className="text-blue-600 hover:text-blue-700">
               Forgot password?
-            </Link>
-            <Link href="/register" className="text-blue-600 hover:text-blue-700">
+            </a>
+            <a href="/register" className="text-blue-600 hover:text-blue-700">
               Create account
-            </Link>
+            </a>
           </div>
 
           <div className="mt-6">
@@ -142,33 +148,33 @@ function LoginForm() {
             </div>
 
             <div className="mt-4 space-y-3">
-              <Button
-                variant="outline"
-                className="w-full h-14 bg-linear-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800"
+              <button
+                type="button"
+                disabled={loading}
                 onClick={() => handleDummyLogin("test@example.com", "password123")}
-                isDisabled={loading}
-                startContent={<span className="text-lg">👤</span>}
+                className="w-full h-14 bg-linear-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-md hover:from-blue-100 hover:to-blue-200 disabled:bg-gray-100 transition-colors flex items-center gap-3 px-4"
               >
+                <span className="text-lg">👤</span>
                 <div className="flex flex-col items-start">
                   <span className="font-semibold">Test User</span>
-                  <span className="text-xs text-default-500">test@example.com</span>
+                  <span className="text-xs text-gray-500">test@example.com</span>
                 </div>
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full h-14 bg-linear-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-800"
+              </button>
+              <button
+                type="button"
+                disabled={loading}
                 onClick={() => handleDummyLogin("admin@example.com", "admin123")}
-                isDisabled={loading}
-                startContent={<span className="text-lg">👑</span>}
+                className="w-full h-14 bg-linear-to-r from-purple-50 to-purple-100 border border-purple-200 rounded-md hover:from-purple-100 hover:to-purple-200 disabled:bg-gray-100 transition-colors flex items-center gap-3 px-4"
               >
+                <span className="text-lg">👑</span>
                 <div className="flex flex-col items-start">
                   <span className="font-semibold">Admin User</span>
-                  <span className="text-xs text-default-500">admin@example.com</span>
+                  <span className="text-xs text-gray-500">admin@example.com</span>
                 </div>
-              </Button>
+              </button>
             </div>
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );
