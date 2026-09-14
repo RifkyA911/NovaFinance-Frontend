@@ -1,10 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { Button, Card } from "@heroui/react";
-import { Wallet, BarChart3, PieChart, TrendingUp, Shield, Zap } from "lucide-react";
+import { Wallet, BarChart3, PieChart, TrendingUp, Shield, Zap, Sun, Moon } from "lucide-react";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 
 export default function Home() {
+  const { theme, setTheme } = useTheme();
+  const [mounted] = useState(true);
+
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
@@ -19,6 +24,18 @@ export default function Home() {
             </span>
           </div>
           <div className="flex items-center gap-3">
+            {mounted && (
+              <Button
+                size="sm"
+                variant="ghost"
+                isIconOnly
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="cursor-pointer"
+                aria-label="Toggle Theme"
+              >
+                {theme === "dark" ? <Sun className="w-4 h-4 text-warning" /> : <Moon className="w-4 h-4 text-default-600" />}
+              </Button>
+            )}
             <Link href="/login">
               <Button variant="ghost" size="sm">
                 Login

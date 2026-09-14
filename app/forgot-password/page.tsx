@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Card, Input, Button, Link } from "@heroui/react";
 import { Wallet, Mail, ArrowLeft } from "lucide-react";
 
