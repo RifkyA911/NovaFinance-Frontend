@@ -6,10 +6,12 @@ const PROTECTED_ROUTES = [
   "/dashboard",
   "/portfolio",
   "/transactions",
+  "/workspaces",
   "/settings",
   "/api/dashboard",
   "/api/transactions",
   "/api/portfolio",
+  "/api/workspaces",
   "/api/settings",
 ];
 

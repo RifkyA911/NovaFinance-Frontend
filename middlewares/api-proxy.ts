@@ -5,15 +5,15 @@ import type { NextRequest } from "next/server";
 export async function apiProxyMiddleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Only proxy API requests
-  if (pathname.startsWith("/api")) {
-    const backendUrl = new URL(pathname, "http://localhost:8080");
+  // Only proxy API requests except internal Next.js /api/ai endpoints
+  if (pathname.startsWith("/api") && !pathname.startsWith("/api/ai")) {
+    const backendUrl = new URL(pathname + request.nextUrl.search, "http://localhost:8080");
     
     try {
       const response = await fetch(backendUrl.toString(), {
         method: request.method,
         headers: request.headers,
-        body: request.body,
+        body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
         credentials: 'include',
       });
       
