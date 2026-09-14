@@ -25,19 +25,25 @@ export default function ProtectedLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3">
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-blue-500 border-t-transparent"></div>
+        <p className="text-default-500 text-sm">Loading NovaJournal...</p>
       </div>
     );
   }
 
   if (!isAuthenticated) {
-    return null;
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3">
+        <div className="animate-spin rounded-full h-10 w-10 border-2 border-blue-500 border-t-transparent"></div>
+        <p className="text-default-500 text-sm">Redirecting to login...</p>
+      </div>
+    );
   }
 
   return (
     <WorkspaceProvider>
-      <div className="flex h-screen text-sm">
+      <div className="flex h-screen bg-background text-foreground text-xs sm:text-sm antialiased overflow-hidden">
         <Sidebar
           collapsed={sidebarCollapsed}
           onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -46,7 +52,7 @@ export default function ProtectedLayout({
         />
         <div className="flex-1 flex flex-col overflow-hidden">
           <Navbar onToggleSidebar={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-          <main className="flex-1 overflow-auto p-4">
+          <main className="flex-1 overflow-auto">
             {children}
           </main>
         </div>
