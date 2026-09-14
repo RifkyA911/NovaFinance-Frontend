@@ -1,35 +1,196 @@
 "use client";
 
-import { Button, Select, Input } from "@heroui/react";
-import { Plus, ChevronDown, Search, Menu, LogOut, Moon, Sun } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  Button,
+  Select,
+  ListBox,
+  Dropdown,
+} from "@heroui/react";
+import {
+  Menu,
+  Search,
+  Moon,
+  Sun,
+  ChevronDown,
+  LogOut,
+  Settings,
+  Building2,
+  LayoutDashboard,
+  Wallet,
+  TrendingUp,
+  PieChart,
+  Plus,
+  ArrowRight,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useTheme } from "next-themes";
 
 interface NavbarProps {
   onToggleSidebar?: () => void;
 }
 
+interface SearchMenuItem {
+  id: string;
+  label: string;
+  path: string;
+  group: string;
+  icon: React.ComponentType<{ className?: string }>;
+  description: string;
+}
+
+const searchMenuItems: SearchMenuItem[] = [
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    path: "/dashboard",
+    group: "Overview",
+    icon: LayoutDashboard,
+    description: "Financial metrics, balance & recent activities",
+  },
+  {
+    id: "transactions",
+    label: "Transactions",
+    path: "/transactions",
+    group: "Overview",
+    icon: Wallet,
+    description: "View, filter and manage transaction records",
+  },
+  {
+    id: "new-transaction",
+    label: "New Transaction",
+    path: "/transactions/new",
+    group: "Overview",
+    icon: Plus,
+    description: "Record new income or expense transaction",
+  },
+  {
+    id: "workspaces",
+    label: "Workspaces",
+    path: "/workspaces",
+    group: "Management",
+    icon: Building2,
+    description: "Switch, configure and create workspaces",
+  },
+  {
+    id: "portfolio",
+    label: "Portfolio",
+    path: "/portfolio",
+    group: "Management",
+    icon: TrendingUp,
+    description: "Track investment assets and performance",
+  },
+  {
+    id: "analytics",
+    label: "Analytics",
+    path: "/analytics",
+    group: "System",
+    icon: PieChart,
+    description: "Visual charts, income vs expense breakdowns",
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    path: "/settings",
+    group: "System",
+    icon: Settings,
+    description: "User profile, currency and preferences",
+  },
+];
+
 export default function Navbar({ onToggleSidebar }: NavbarProps) {
+  const router = useRouter();
   const { user, logout } = useAuth();
   const { workspaces, selectedWorkspace, setSelectedWorkspace, loading, refreshWorkspaces } = useWorkspace();
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const { theme, setTheme } = useTheme();
   const [mounted] = useState(true);
 
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [activeSearchIndex, setActiveSearchIndex] = useState(0);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Filtered menu items for search
+  const filteredMenuItems = searchQuery.trim() === ""
+    ? searchMenuItems
+    : searchMenuItems.filter((item) =>
+        item.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.group.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+  // Handle outside click for search dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setIsSearchOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Keyboard navigation for search (Ctrl+K, Esc, Arrow keys, Enter)
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        setIsSearchOpen(true);
+      } else if (e.key === "Escape") {
+        setIsSearchOpen(false);
+        searchInputRef.current?.blur();
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
+
+  const navigateToMenu = (path: string) => {
+    router.push(path);
+    setIsSearchOpen(false);
+    setSearchQuery("");
+    searchInputRef.current?.blur();
+  };
+
+  const handleSearchInputKeyDown = (e: React.KeyboardEvent) => {
+    if (!isSearchOpen && e.key !== "Escape") {
+      setIsSearchOpen(true);
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveSearchIndex((prev) => (prev + 1) % Math.max(1, filteredMenuItems.length));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveSearchIndex((prev) => (prev - 1 + filteredMenuItems.length) % Math.max(1, filteredMenuItems.length));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (filteredMenuItems.length > 0 && filteredMenuItems[activeSearchIndex]) {
+        navigateToMenu(filteredMenuItems[activeSearchIndex].path);
+      }
+    }
+  };
+
   const handleCreateWorkspace = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/workspaces', {
-        method: 'POST',
+      const response = await fetch("http://localhost:8080/api/workspaces", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify({
-          name: 'My Workspace',
-          type: 'personal',
-          currency: 'IDR',
+          name: "My Workspace",
+          type: "personal",
+          currency: "IDR",
         }),
       });
 
@@ -37,122 +198,272 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
       if (data.success) {
         await refreshWorkspaces();
       } else {
-        console.error('Failed to create workspace:', data.error);
+        console.error("Failed to create workspace:", data.error);
       }
     } catch (error) {
-      console.error('Failed to create workspace:', error);
+      console.error("Failed to create workspace:", error);
     }
   };
 
   return (
-    <div className="h-16 bg-white dark:bg-gray-900 border-b border-default-200 dark:border-default-700 flex items-center justify-between px-4 md:px-6">
-      {/* Left - Sidebar Toggle & Logo & Workspace Selector */}
-      <div className="flex items-center gap-4">
-        {/* Sidebar Toggle */}
+    <header className="h-12 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-2xs flex items-center justify-between px-3 md:px-4 shrink-0 z-30 transition-colors">
+      {/* Left - Mobile Sidebar Toggle & HeroUI Workspace Selector (No plus button) */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Mobile Sidebar Toggle */}
         <Button
           size="sm"
           variant="ghost"
           isIconOnly
           onClick={onToggleSidebar}
-          className="cursor-pointer md:hidden"
+          className="h-7.5 w-7.5 cursor-pointer md:hidden text-default-600"
+          aria-label="Toggle Menu"
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="w-4 h-4" />
         </Button>
 
-        {/* Workspace Selector */}
-        <div className="flex items-center gap-2">
+        {/* HeroUI Compound Select for Workspace (No '+' button) */}
+        <div className="flex items-center">
           {workspaces.length > 0 ? (
             <Select
-              selectedKeys={selectedWorkspace?.id ? [selectedWorkspace.id] : []}
-              onChange={(e) => {
-                const selected = workspaces.find(w => w.id === e.target.value);
+              aria-label="Select Workspace"
+              placeholder="Select Workspace"
+              selectedKey={selectedWorkspace?.id || null}
+              onSelectionChange={(key) => {
+                if (!key) return;
+                const selected = workspaces.find((w) => w.id === String(key));
                 if (selected) setSelectedWorkspace(selected);
               }}
               isDisabled={loading}
-              className="w-48"
-              size="sm"
-              aria-label="Select Workspace"
+              className="w-40 sm:w-48"
             >
-              {workspaces.map((workspace) => (
-                <option key={workspace.id} value={workspace.id}>
-                  {workspace.name}
-                </option>
-              ))}
+              <Select.Trigger className="h-7.5 px-2.5 rounded-lg border border-default-200/80 dark:border-default-700/80 bg-default-100/70 dark:bg-default-800/60 text-xs font-medium text-foreground hover:bg-default-200/60 dark:hover:bg-default-700/60 transition-colors flex items-center justify-between gap-1.5 focus:outline-none focus:ring-1.5 focus:ring-blue-500 cursor-pointer">
+                <Select.Value className="truncate text-xs font-medium" />
+                <Select.Indicator className="text-default-400 shrink-0" />
+              </Select.Trigger>
+              <Select.Popover className="min-w-48 z-50 p-1 shadow-xl bg-white dark:bg-gray-900 rounded-xl border border-default-200 dark:border-default-800">
+                <ListBox className="outline-none space-y-0.5">
+                  {workspaces.map((workspace) => (
+                    <ListBox.Item
+                      key={workspace.id}
+                      id={workspace.id}
+                      textValue={workspace.name}
+                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs cursor-pointer hover:bg-default-100 dark:hover:bg-default-800 text-foreground transition-colors outline-none data-selected:bg-blue-500/10 data-selected:text-blue-600 dark:data-selected:text-blue-400 font-medium"
+                    >
+                      <span className="truncate">{workspace.name}</span>
+                      <ListBox.ItemIndicator className="text-blue-500" />
+                    </ListBox.Item>
+                  ))}
+                </ListBox>
+              </Select.Popover>
             </Select>
           ) : (
             <Button
               size="sm"
-              className="h-9 bg-linear-to-r from-blue-500 to-purple-600 text-white cursor-pointer"
+              className="h-7.5 px-2.5 text-xs bg-linear-to-r from-blue-500 to-purple-600 text-white cursor-pointer shadow-2xs"
               onClick={handleCreateWorkspace}
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-3 h-3 mr-1" />
               Create Workspace
             </Button>
           )}
         </div>
       </div>
 
-      {/* Center - Search */}
-      <div className="flex-1 max-w-md mx-6">
-        <Input
-          classNames={{
-            base: "max-w-full sm:max-w-[20rem] h-10",
-            mainWrapper: "h-full",
-            input: "text-small",
-            inputWrapper: "h-full font-normal text-default-500 bg-default-100 dark:bg-default-50/20",
-          }}
-          placeholder="Search menu..."
-          size="sm"
-          startContent={<Search className="w-4 h-4 text-default-400 pointer-events-none flex-shrink-0" />}
-          type="search"
-        />
+      {/* Center - Menu Search with Quick Results Dropdown */}
+      <div className="flex-1 max-w-sm mx-3 sm:mx-6 relative" ref={searchContainerRef}>
+        <div className="relative">
+          <Search className="w-3.5 h-3.5 text-default-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            ref={searchInputRef}
+            type="search"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setIsSearchOpen(true);
+              setActiveSearchIndex(0);
+            }}
+            onFocus={() => setIsSearchOpen(true)}
+            onKeyDown={handleSearchInputKeyDown}
+            placeholder="Search menu or page... (Ctrl+K)"
+            className="w-full h-7.5 pl-8 pr-12 rounded-lg border border-default-200/80 dark:border-default-700/80 bg-default-100/70 dark:bg-default-800/50 text-xs text-foreground placeholder:text-default-400 focus:outline-none focus:ring-1.5 focus:ring-blue-500 transition-colors"
+          />
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 absolute right-2 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[9px] font-mono text-default-400 bg-default-200/50 dark:bg-default-700/50 rounded pointer-events-none">
+            ⌘K
+          </kbd>
+        </div>
+
+        {/* Menu Search Dropdown Results */}
+        {isSearchOpen && (
+          <div className="absolute top-full left-0 right-0 mt-1.5 bg-white dark:bg-gray-900 border border-default-200/80 dark:border-default-800 rounded-xl shadow-xl z-50 overflow-hidden py-1 max-h-80 overflow-y-auto">
+            <div className="px-2.5 py-1 text-[10px] font-semibold text-default-400 uppercase tracking-wider border-b border-default-100 dark:border-default-800 flex items-center justify-between">
+              <span>Navigation Results</span>
+              <span className="text-[9px] font-normal normal-case">
+                {filteredMenuItems.length} found
+              </span>
+            </div>
+
+            {filteredMenuItems.length === 0 ? (
+              <div className="py-6 text-center text-default-400 text-xs">
+                No matching menu found
+              </div>
+            ) : (
+              <div className="p-1 space-y-0.5">
+                {filteredMenuItems.map((item, index) => {
+                  const Icon = item.icon;
+                  const isSelected = index === activeSearchIndex;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => navigateToMenu(item.path)}
+                      onMouseEnter={() => setActiveSearchIndex(index)}
+                      className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left transition-colors cursor-pointer ${
+                        isSelected
+                          ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                          : "hover:bg-default-100 dark:hover:bg-default-800 text-foreground"
+                      }`}
+                    >
+                      <div
+                        className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${
+                          isSelected
+                            ? "bg-blue-500 text-white"
+                            : "bg-default-100 dark:bg-default-800 text-default-600 dark:text-default-400"
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-semibold truncate">{item.label}</span>
+                          <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-default-200/60 dark:bg-default-800 text-default-500">
+                            {item.group}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-default-400 truncate leading-tight">
+                          {item.description}
+                        </p>
+                      </div>
+                      <ArrowRight className="w-3 h-3 text-default-300 opacity-0 group-hover:opacity-100 shrink-0" />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Right - User Info */}
-      <div className="flex items-center gap-3 relative">
-        {/* Theme Toggler */}
+      {/* Right - Theme Toggler & Modernized User Dropdown */}
+      <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Quick Theme Switcher */}
         {mounted && (
           <Button
             size="sm"
             variant="ghost"
             isIconOnly
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="cursor-pointer"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="h-7.5 w-7.5 cursor-pointer text-default-600 hover:text-foreground"
+            aria-label="Toggle Theme"
           >
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {theme === "dark" ? (
+              <Sun className="w-3.5 h-3.5 text-amber-500" />
+            ) : (
+              <Moon className="w-3.5 h-3.5 text-indigo-500" />
+            )}
           </Button>
         )}
-        
-        <div
-          className="flex items-center gap-3 cursor-pointer hover:bg-default-100 dark:hover:bg-default-100/50 rounded-lg px-3 py-2 transition-colors"
-          onClick={() => setShowUserMenu(!showUserMenu)}
-        >
-          <div className="w-8 h-8 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-semibold">
-            {user?.name?.charAt(0) || "U"}
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-default-900 dark:text-default-100">{user?.name || "User"}</span>
-            <span className="text-xs text-default-500">{user?.email || ""}</span>
-          </div>
-          <ChevronDown className="w-4 h-4 text-default-500" />
-        </div>
-        
-        {/* User Dropdown Menu */}
-        {showUserMenu && (
-          <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-default-200 dark:border-default-700 rounded-lg shadow-lg z-50">
-            <button
-              onClick={() => {
-                logout();
-                setShowUserMenu(false);
+
+        {/* HeroUI User Dropdown */}
+        <Dropdown>
+          <Dropdown.Trigger
+            className="flex items-center gap-2 p-1 pl-1.5 pr-2 rounded-lg bg-default-100/70 hover:bg-default-200/70 dark:bg-default-800/50 dark:hover:bg-default-700/60 transition-colors cursor-pointer text-left outline-none border border-transparent hover:border-default-200 dark:hover:border-default-700"
+            aria-label="User account menu"
+          >
+            <div className="w-6 h-6 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-[11px] font-bold shrink-0 shadow-2xs">
+              {user?.name?.charAt(0)?.toUpperCase() || "U"}
+            </div>
+            <div className="hidden sm:flex flex-col text-left max-w-28">
+              <span className="text-xs font-semibold text-foreground truncate leading-tight">
+                {user?.name || "User"}
+              </span>
+              <span className="text-[10px] text-default-500 truncate leading-tight">
+                {user?.email || "user@example.com"}
+              </span>
+            </div>
+            <ChevronDown className="w-3 h-3 text-default-400 shrink-0 ml-0.5" />
+          </Dropdown.Trigger>
+          <Dropdown.Popover className="min-w-56 z-50 p-1.5 shadow-xl bg-white dark:bg-gray-900 rounded-xl border border-default-200/80 dark:border-default-800">
+            {/* User Profile Card Header */}
+            <div className="flex items-center gap-2.5 p-2 mb-1 rounded-lg bg-default-100/60 dark:bg-default-800/50">
+              <div className="w-7 h-7 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-2xs">
+                {user?.name?.charAt(0)?.toUpperCase() || "U"}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-foreground truncate">{user?.name || "User"}</p>
+                <p className="text-[10px] text-default-500 truncate">{user?.email || ""}</p>
+              </div>
+            </div>
+
+            <Dropdown.Menu
+              aria-label="User actions"
+              onAction={(key) => {
+                if (key === "settings") router.push("/settings");
+                else if (key === "workspaces") router.push("/workspaces");
+                else if (key === "theme") setTheme(theme === "dark" ? "light" : "dark");
+                else if (key === "logout") {
+                  logout();
+                  router.push("/login");
+                }
               }}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-danger hover:bg-default-100 dark:hover:bg-default-100/50 transition-colors"
+              className="outline-none space-y-0.5 text-xs"
             >
-              <LogOut className="w-4 h-4" />
-              <span>Logout</span>
-            </button>
-          </div>
-        )}
+              <Dropdown.Section>
+                <Dropdown.Item
+                  id="settings"
+                  textValue="Settings"
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-default-100 dark:hover:bg-default-800 cursor-pointer outline-none"
+                >
+                  <Settings className="w-3.5 h-3.5 text-default-500" />
+                  <span>Account Settings</span>
+                </Dropdown.Item>
+                <Dropdown.Item
+                  id="workspaces"
+                  textValue="Workspaces"
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-default-100 dark:hover:bg-default-800 cursor-pointer outline-none"
+                >
+                  <Building2 className="w-3.5 h-3.5 text-default-500" />
+                  <span>Workspaces</span>
+                </Dropdown.Item>
+                <Dropdown.Item
+                  id="theme"
+                  textValue="Toggle Theme"
+                  className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-foreground hover:bg-default-100 dark:hover:bg-default-800 cursor-pointer outline-none"
+                >
+                  <div className="flex items-center gap-2">
+                    {theme === "dark" ? (
+                      <Sun className="w-3.5 h-3.5 text-amber-500" />
+                    ) : (
+                      <Moon className="w-3.5 h-3.5 text-indigo-500" />
+                    )}
+                    <span>Theme: {theme === "dark" ? "Dark" : "Light"}</span>
+                  </div>
+                  <span className="text-[10px] text-default-400 font-mono">Toggle</span>
+                </Dropdown.Item>
+              </Dropdown.Section>
+
+              <Dropdown.Section>
+                <Dropdown.Item
+                  id="logout"
+                  textValue="Logout"
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-danger hover:bg-danger/10 cursor-pointer mt-0.5 outline-none font-medium"
+                >
+                  <LogOut className="w-3.5 h-3.5 text-danger" />
+                  <span>Logout</span>
+                </Dropdown.Item>
+              </Dropdown.Section>
+            </Dropdown.Menu>
+          </Dropdown.Popover>
+        </Dropdown>
       </div>
-    </div>
+    </header>
   );
 }
