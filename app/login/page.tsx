@@ -2,16 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Card, Button } from "@heroui/react";
 import { Wallet } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
-import { Input, Button } from "@heroui/react";
 import { signIn } from "@/lib/auth";
-import { GoogleReCaptchaProvider, useGoogleReCaptcha } from "react-google-recaptcha-v3";
+import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 
 function LoginForm() {
   const router = useRouter();
   const { isAuthenticated, loading: authLoading } = useAuth();
-  const { executeRecaptcha } = useGoogleReCaptcha();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,27 +25,19 @@ function LoginForm() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     setLoading(true);
     setError("");
 
     try {
-      console.log("Attempting login with:", email);
-      console.log("Email type:", typeof email);
-      console.log("Email length:", email.length);
-      
       const result = await signIn.email({
         email: email.trim(),
         password,
       });
 
-      console.log("Login result:", result);
-
       if (result.error) {
-        console.error("Login error:", result.error);
         setError(result.error.message || "Login failed");
       } else {
-        console.log("Login successful, redirecting to dashboard");
         router.push("/dashboard");
       }
     } catch (err) {
@@ -56,14 +48,14 @@ function LoginForm() {
     }
   };
 
-  const handleDummyLogin = async (email: string, password: string) => {
+  const handleDummyLogin = async (dummyEmail: string, dummyPassword: string) => {
     setLoading(true);
     setError("");
 
     try {
       const result = await signIn.email({
-        email,
-        password,
+        email: dummyEmail,
+        password: dummyPassword,
       });
 
       if (result.error) {
@@ -94,47 +86,51 @@ function LoginForm() {
         </div>
 
         {/* Login Card */}
-        <div className="bg-white rounded-lg shadow-xl p-6">
+        <Card className="p-6 md:p-8 shadow-xl border border-default-200 dark:border-default-700 bg-white dark:bg-gray-900">
           <form onSubmit={handleLogin} className="space-y-4">
-            <Input
-              label="Email"
-              labelPlacement="outside"
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              isRequired
-              variant="bordered"
-            />
-            <Input
-              label="Password"
-              labelPlacement="outside"
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              isRequired
-              variant="bordered"
-            />
+            <div>
+              <label className="text-sm font-medium mb-1.5 block text-foreground">Email</label>
+              <input
+                type="email"
+                className="w-full px-3.5 py-2 rounded-lg border border-default-200 dark:border-default-700 bg-default-50 dark:bg-default-100/5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1.5 block text-foreground">Password</label>
+              <input
+                type="password"
+                className="w-full px-3.5 py-2 rounded-lg border border-default-200 dark:border-default-700 bg-default-50 dark:bg-default-100/5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
             {error && (
-              <div className="text-red-600 text-sm">{error}</div>
+              <div className="text-danger text-sm bg-danger/10 p-3 rounded-lg border border-danger/20">
+                {error}
+              </div>
             )}
             <Button
               type="submit"
-              isLoading={loading}
-              className="w-full bg-linear-to-r from-blue-500 to-purple-600 text-white"
+              className="w-full bg-linear-to-r from-blue-500 to-purple-600 text-white font-medium shadow-md cursor-pointer"
+              isDisabled={loading}
             >
-              Sign In
+              {loading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
 
           <div className="mt-6 flex items-center justify-between text-sm">
-            <a href="/forgot-password" className="text-blue-600 hover:text-blue-700">
+            <Link href="/forgot-password" className="text-blue-600 dark:text-blue-400 hover:underline">
               Forgot password?
-            </a>
-            <a href="/register" className="text-blue-600 hover:text-blue-700">
+            </Link>
+            <Link href="/register" className="text-blue-600 dark:text-blue-400 hover:underline">
               Create account
-            </a>
+            </Link>
           </div>
 
           <div className="mt-6">
@@ -143,7 +139,9 @@ function LoginForm() {
                 <div className="w-full border-t border-default-200 dark:border-default-700"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-background text-default-500">Quick Login (Development)</span>
+                <span className="px-2 bg-white dark:bg-gray-900 text-default-500 text-xs uppercase tracking-wider">
+                  Quick Login (Development)
+                </span>
               </div>
             </div>
 
@@ -152,29 +150,29 @@ function LoginForm() {
                 type="button"
                 disabled={loading}
                 onClick={() => handleDummyLogin("test@example.com", "password123")}
-                className="w-full h-14 bg-linear-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-md hover:from-blue-100 hover:to-blue-200 disabled:bg-gray-100 transition-colors flex items-center gap-3 px-4"
+                className="w-full h-14 bg-linear-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-200 dark:border-blue-800/50 rounded-lg hover:from-blue-100 hover:to-blue-200 dark:hover:from-blue-900/30 dark:hover:to-blue-800/30 disabled:opacity-50 transition-colors flex items-center gap-3 px-4 cursor-pointer text-foreground"
               >
                 <span className="text-lg">👤</span>
                 <div className="flex flex-col items-start">
-                  <span className="font-semibold">Test User</span>
-                  <span className="text-xs text-gray-500">test@example.com</span>
+                  <span className="font-semibold text-sm">Test User</span>
+                  <span className="text-xs text-default-500">test@example.com</span>
                 </div>
               </button>
               <button
                 type="button"
                 disabled={loading}
                 onClick={() => handleDummyLogin("admin@example.com", "admin123")}
-                className="w-full h-14 bg-linear-to-r from-purple-50 to-purple-100 border border-purple-200 rounded-md hover:from-purple-100 hover:to-purple-200 disabled:bg-gray-100 transition-colors flex items-center gap-3 px-4"
+                className="w-full h-14 bg-linear-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border border-purple-200 dark:border-purple-800/50 rounded-lg hover:from-purple-100 hover:to-purple-200 dark:hover:from-purple-900/30 dark:hover:to-purple-800/30 disabled:opacity-50 transition-colors flex items-center gap-3 px-4 cursor-pointer text-foreground"
               >
                 <span className="text-lg">👑</span>
                 <div className="flex flex-col items-start">
-                  <span className="font-semibold">Admin User</span>
-                  <span className="text-xs text-gray-500">admin@example.com</span>
+                  <span className="font-semibold text-sm">Admin User</span>
+                  <span className="text-xs text-default-500">admin@example.com</span>
                 </div>
               </button>
             </div>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );
