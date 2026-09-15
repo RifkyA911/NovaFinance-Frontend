@@ -22,11 +22,14 @@ export interface Transaction {
   description: string;
   date: string;
   notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface TransactionWithIcon extends Omit<Transaction, 'category'> {
   category: string;
   icon?: React.ReactNode;
+  rawDate?: string;
 }
 
 export interface Category {
@@ -137,9 +140,16 @@ class ApiClient {
   }
 
   // Transactions
-  async getTransactions(workspaceId: string, limit?: number): Promise<{ success: boolean; data: { transactions: Transaction[] } }> {
+  async getTransactions(
+    workspaceId: string,
+    limit?: number,
+    sortBy?: string,
+    order?: string
+  ): Promise<{ success: boolean; data: { transactions: Transaction[]; total?: number } }> {
     const params = new URLSearchParams({ workspaceId });
     if (limit) params.append('limit', limit.toString());
+    if (sortBy) params.append('sortBy', sortBy);
+    if (order) params.append('order', order);
     return this.request(`/api/transactions?${params}`);
   }
 
