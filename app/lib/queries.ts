@@ -8,7 +8,8 @@ import type {
 // Query keys
 export const queryKeys = {
   workspaces: ['workspaces'] as const,
-  transactions: (workspaceId: string) => ['transactions', workspaceId] as const,
+  transactions: (workspaceId: string, limit?: number, sortBy?: string, order?: string) =>
+    ['transactions', workspaceId, limit, sortBy, order] as const,
   categories: (workspaceId?: string) => ['categories', workspaceId] as const,
   accounts: (workspaceId?: string) => ['accounts', workspaceId] as const,
   dashboardSummary: (workspaceId: string) => ['dashboard', 'summary', workspaceId] as const,
@@ -23,7 +24,8 @@ export const queryFunctions = {
   workspaces: () => api.getWorkspaces(),
   
   // Transactions
-  transactions: (workspaceId: string, limit?: number) => api.getTransactions(workspaceId, limit),
+  transactions: (workspaceId: string, limit?: number, sortBy?: string, order?: string) =>
+    api.getTransactions(workspaceId, limit, sortBy, order),
   
   // Categories
   categories: (workspaceId?: string) => api.getCategories(workspaceId),
