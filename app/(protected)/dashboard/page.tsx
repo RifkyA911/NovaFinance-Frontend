@@ -14,7 +14,6 @@ import {
   Dropdown,
   ProgressBar,
   Spinner,
-  Table,
 } from "@heroui/react";
 import {
   Wallet,
@@ -43,13 +42,32 @@ import {
   Brain,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
   RefreshCw,
   AlertTriangle,
   Lightbulb,
   Info,
   ShieldCheck,
   Zap,
+  Calendar,
+  Tag,
+  Coins,
+  Receipt,
 } from "lucide-react";
+import {
+  useLegacyTable,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  type LegacyColumnDef,
+} from "@tanstack/react-table/legacy";
+import { flexRender, type SortingState } from "@tanstack/react-table";
 import {
   AreaChart,
   Area,
@@ -98,6 +116,23 @@ export default function Dashboard() {
   const [attachedDocument, setAttachedDocument] = useState<UploadedDocumentResult | null>(null);
   const [isAiAutoFilled, setIsAiAutoFilled] = useState(false);
 
+  const addAmount = (val: number) => {
+    const current = parseFloat(newTxAmount) || 0;
+    setNewTxAmount(String(current + val));
+  };
+
+  const resetAddForm = () => {
+    setNewTxDescription("");
+    setNewTxAmount("");
+    setNewTxCategory("");
+    setNewTxAccount("");
+    setNewTxNotes("");
+    setAttachedDocument(null);
+    setIsAiAutoFilled(false);
+    setNewTxDate(new Date().toISOString().split("T")[0]);
+    setErrorMessage("");
+  };
+
   // Full Filter Form State
   const [filterType, setFilterType] = useState<"ALL" | "INCOME" | "EXPENSE">("ALL");
   const [filterCategory, setFilterCategory] = useState("");
@@ -133,9 +168,11 @@ export default function Dashboard() {
     enabled: !!selectedWorkspace?.id,
   });
 
+  const [apiSortBy, setApiSortBy] = useState<"createdAt" | "date">("createdAt");
+
   const transactionsQuery = useQuery({
-    queryKey: queryKeys.transactions(selectedWorkspace?.id || ""),
-    queryFn: () => queryFunctions.transactions(selectedWorkspace?.id || "", 50),
+    queryKey: queryKeys.transactions(selectedWorkspace?.id || "", 1000, apiSortBy),
+    queryFn: () => queryFunctions.transactions(selectedWorkspace?.id || "", 1000, apiSortBy),
     enabled: !!selectedWorkspace?.id,
   });
 
@@ -385,7 +422,7 @@ export default function Dashboard() {
 
   const transactions: TransactionWithIcon[] = filteredTransactions.map(
     (
-      tx: { id?: string; category?: unknown; account?: { id: string; name: string; type: string } | unknown; accountId?: string; type: string; date: string; description: string; amount: number | string; notes?: string; isStaging?: boolean },
+      tx: { id?: string; category?: unknown; account?: { id: string; name: string; type: string } | unknown; accountId?: string; type: string; date: string; description: string; amount: number | string; notes?: string; isStaging?: boolean; createdAt?: string },
       index: number
     ) => {
       const categoryName = getCategoryName(tx.category);
@@ -408,8 +445,10 @@ export default function Dashboard() {
         description: tx.description || "",
         category: categoryName,
         date: tx.date
-          ? new Date(tx.date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
+          ? new Date(tx.date).toLocaleDateString("id-ID", { year: "numeric", month: "short", day: "numeric" })
           : "-",
+        rawDate: tx.date,
+        createdAt: tx.createdAt,
         notes: tx.notes,
         icon: isIncome ? (
           <Wallet className="w-3.5 h-3.5 text-green-500" />
@@ -419,6 +458,150 @@ export default function Dashboard() {
       };
     }
   );
+
+  // Helper for generating pagination page numbers
+  const generatePageNumbers = (currentPage: number, totalPages: number): (number | string)[] => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    const current = currentPage + 1;
+    if (current <= 4) {
+      return [1, 2, 3, 4, 5, "...", totalPages];
+    }
+    if (current >= totalPages - 3) {
+      return [1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    }
+    return [1, "...", current - 1, current, current + 1, "...", totalPages];
+  };
+
+  // TanStack Table State
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [jumpPageVal, setJumpPageVal] = useState("");
+
+  // TanStack Table Column Definitions
+  const columns = useMemo<LegacyColumnDef<TransactionWithIcon>[]>(
+    () => [
+      {
+        accessorKey: "description",
+        header: "Transaksi",
+        cell: ({ row }) => {
+          const tx = row.original;
+          const isIncome = tx.type?.toLowerCase() === "income";
+          return (
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div
+                className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${
+                  isIncome ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
+                }`}
+              >
+                {tx.icon}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-xs sm:text-sm truncate text-foreground">{tx.description}</p>
+                {tx.notes && (
+                  <p className="text-[10px] text-default-400 truncate max-w-xs">{tx.notes}</p>
+                )}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "category",
+        header: "Kategori",
+        cell: ({ row }) => {
+          const tx = row.original;
+          return (
+            <span
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium shrink-0"
+              style={{
+                backgroundColor: `${getCategoryColor(tx.category)}18`,
+                color: getCategoryColor(tx.category),
+              }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getCategoryColor(tx.category) }} />
+              <span className="truncate max-w-[120px]">{getCategoryName(tx.category)}</span>
+            </span>
+          );
+        },
+      },
+      {
+        id: "account",
+        header: "Dompet / Rekening",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1.5 text-xs text-default-600 dark:text-default-400">
+            <Building2 className="w-3.5 h-3.5 text-default-400 shrink-0" />
+            <span className="truncate max-w-[140px]">{getAccountName(row.original)}</span>
+          </div>
+        ),
+      },
+      {
+        id: "date",
+        accessorKey: "rawDate",
+        header: "Tanggal",
+        cell: ({ row }) => (
+          <span className="text-default-400 text-xs font-mono">{row.original.date}</span>
+        ),
+      },
+      {
+        accessorKey: "amount",
+        header: () => <div className="text-right w-full">Nominal</div>,
+        cell: ({ row }) => {
+          const tx = row.original;
+          const isIncome = tx.type?.toLowerCase() === "income";
+          return (
+            <div className="text-right font-mono font-semibold text-xs sm:text-sm">
+              <span className={isIncome ? "text-success" : "text-danger"}>
+                {isIncome ? "+" : "-"}{formatCurrency(tx.amount)}
+              </span>
+            </div>
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: () => <div className="text-right w-full">Aksi</div>,
+        enableSorting: false,
+        cell: ({ row }) => {
+          const tx = row.original;
+          return (
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={() => handleDeleteTransaction(tx.id)}
+                disabled={deletingTxId === tx.id}
+                className="p-1 text-default-400 hover:text-danger rounded hover:bg-danger/10 transition-colors cursor-pointer"
+                title="Hapus transaksi"
+              >
+                {deletingTxId === tx.id ? <Spinner size="sm" /> : <Trash2 className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          );
+        },
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [deletingTxId]
+  );
+
+  const table = useLegacyTable({
+    data: transactions,
+    columns,
+    state: {
+      pagination,
+      sorting,
+    },
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
 
   const monthlyData = trends || [];
   const spendingCategories = categories || [];
@@ -630,7 +813,7 @@ export default function Dashboard() {
       }
 
       // 4. Invalidate related queries to refresh dashboard seamlessly
-      queryClient.invalidateQueries({ queryKey: queryKeys.transactions(selectedWorkspace.id) });
+      queryClient.invalidateQueries({ queryKey: ['transactions', selectedWorkspace.id] });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboardSummary(selectedWorkspace.id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboardTrends(selectedWorkspace.id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboardCategories(selectedWorkspace.id) });
@@ -664,7 +847,7 @@ export default function Dashboard() {
     setDeletingTxId(id);
     try {
       await mutationFunctions.deleteTransaction(id);
-      queryClient.invalidateQueries({ queryKey: queryKeys.transactions(selectedWorkspace.id) });
+      queryClient.invalidateQueries({ queryKey: ['transactions', selectedWorkspace.id] });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboardSummary(selectedWorkspace.id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboardTrends(selectedWorkspace.id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboardCategories(selectedWorkspace.id) });
@@ -1538,25 +1721,60 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Recent Transactions Table */}
+      {/* Transaction Journal: Full TanStack Table DataTable */}
       <Card className="rounded-xl border border-default-200/80 dark:border-default-800 shadow-2xs overflow-hidden">
-        <Card.Header className="p-3.5 sm:p-4 border-b border-default-100 dark:border-default-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-          <div>
-            <Card.Title className="text-sm font-semibold text-foreground">Transaction Journal</Card.Title>
+        <Card.Header className="p-3.5 sm:p-4 border-b border-default-100 dark:border-default-800/80 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <Card.Title className="text-sm font-semibold text-foreground">Transaction Journal</Card.Title>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                TanStack DataTable
+              </span>
+            </div>
             <Card.Description className="text-xs text-default-500">
-              Showing {transactions.length} record{transactions.length !== 1 ? "s" : ""}
-              {activeFiltersCount > 0 ? ` (filtered from ${rawTransactions.length})` : ""}
+              Total {transactions.length} entri termuat
+              {activeFiltersCount > 0 ? ` (difilter dari ${rawTransactions.length} total)` : ""}
             </Card.Description>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="relative w-44 sm:w-56">
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Sort Order Selector (Created At vs Transaction Date) */}
+            <div className="flex items-center gap-1.5 bg-default-100 dark:bg-default-800 p-0.5 rounded-xl text-xs">
+              <button
+                type="button"
+                onClick={() => setApiSortBy("createdAt")}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  apiSortBy === "createdAt"
+                    ? "bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 shadow-xs"
+                    : "text-default-500 hover:text-foreground"
+                }`}
+                title="Tampilkan transaksi yang paling baru diinput ke sistem"
+              >
+                ✨ Terbaru Diinput
+              </button>
+              <button
+                type="button"
+                onClick={() => setApiSortBy("date")}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  apiSortBy === "date"
+                    ? "bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 shadow-xs"
+                    : "text-default-500 hover:text-foreground"
+                }`}
+                title="Urutkan berdasarkan tanggal pada nota/struk"
+              >
+                📅 Tgl Nota
+              </button>
+            </div>
+
+            {/* Keyword Search */}
+            <div className="relative w-40 sm:w-52">
               <Search className="w-3.5 h-3.5 text-default-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 placeholder="Cari transaksi..."
                 value={filterKeyword}
                 onChange={(e) => setFilterKeyword(e.target.value)}
-                className="w-full h-7.5 pl-8 pr-7 text-xs rounded-lg border border-default-200 dark:border-default-700 bg-transparent text-foreground placeholder:text-default-400 focus:outline-none focus:ring-1.5 focus:ring-blue-500 transition-all"
+                className="w-full h-8 pl-8 pr-7 text-xs rounded-xl border border-default-200 dark:border-default-700 bg-transparent text-foreground placeholder:text-default-400 focus:outline-none focus:ring-1.5 focus:ring-blue-500 transition-all"
               />
               {filterKeyword && (
                 <button
@@ -1568,175 +1786,379 @@ export default function Dashboard() {
                 </button>
               )}
             </div>
+
+            {/* Filter Modal Trigger */}
             <Button
               size="sm"
               variant="outline"
-              className="h-7.5 px-2.5 text-xs flex items-center gap-1 cursor-pointer border-default-200 dark:border-default-700 hover:border-blue-500/40"
+              className="h-8 px-2.5 text-xs flex items-center gap-1 cursor-pointer border-default-200 dark:border-default-700 hover:border-blue-500/40 rounded-xl"
               onPress={() => setIsFilterModalOpen(true)}
             >
               <Filter className="w-3 h-3 text-default-500" />
               <span>Filter</span>
+              {activeFiltersCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center font-bold ml-0.5">
+                  {activeFiltersCount}
+                </span>
+              )}
             </Button>
+
+            {/* View All */}
             <Button
               size="sm"
               variant="ghost"
-              className="text-xs h-7.5 px-2 text-default-500 hover:text-foreground cursor-pointer"
+              className="text-xs h-8 px-2 text-default-500 hover:text-foreground cursor-pointer rounded-xl"
               onPress={() => router.push("/transactions")}
             >
-              View All
+              Semua
             </Button>
           </div>
         </Card.Header>
+
+        {/* TanStack Table Grid */}
         <Card.Content className="p-0">
-          <Table className="w-full">
-            <Table.ScrollContainer className="overflow-x-auto">
-              <Table.Content aria-label="Recent Transactions" className="w-full min-w-160">
-                <Table.Header>
-                  <Table.Column id="transaction" isRowHeader className="text-left py-2.5 px-3.5 text-xs font-semibold text-default-500 bg-default-50/50 dark:bg-default-900/30">
-                    Transaction
-                  </Table.Column>
-                  <Table.Column id="category" className="text-left py-2.5 px-3.5 text-xs font-semibold text-default-500 bg-default-50/50 dark:bg-default-900/30">
-                    Category
-                  </Table.Column>
-                  <Table.Column id="account" className="text-left py-2.5 px-3.5 text-xs font-semibold text-default-500 bg-default-50/50 dark:bg-default-900/30 hidden sm:table-cell">
-                    Wallet / Account
-                  </Table.Column>
-                  <Table.Column id="date" className="text-left py-2.5 px-3.5 text-xs font-semibold text-default-500 bg-default-50/50 dark:bg-default-900/30 hidden md:table-cell">
-                    Date
-                  </Table.Column>
-                  <Table.Column id="amount" className="text-right py-2.5 px-3.5 text-xs font-semibold text-default-500 bg-default-50/50 dark:bg-default-900/30">
-                    Amount
-                  </Table.Column>
-                  <Table.Column id="actions" className="text-right py-2.5 px-3.5 text-xs font-semibold text-default-500 bg-default-50/50 dark:bg-default-900/30">
-                    Action
-                  </Table.Column>
-                </Table.Header>
-                <Table.Body
-                  items={transactions}
-                  renderEmptyState={() => (
-                    <div className="py-10 text-center text-default-500 text-xs">
-                      No transactions match the selected criteria
-                    </div>
-                  )}
-                >
-                  {(tx: TransactionWithIcon) => (
-                    <Table.Row
-                      id={tx.id}
-                      className="border-b border-default-100 dark:border-default-800/60 hover:bg-default-50/50 dark:hover:bg-default-800/40 transition-colors"
-                    >
-                      <Table.Cell className="py-2 px-3.5">
-                        <div className="flex items-center gap-2.5">
-                          <div
-                            className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${
-                              tx.type?.toLowerCase() === "income" ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"
-                            }`}
-                          >
-                            {tx.icon}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-medium text-xs sm:text-sm truncate text-foreground">{tx.description}</p>
-                            {tx.notes && (
-                              <p className="text-[10px] text-default-400 truncate max-w-xs">{tx.notes}</p>
-                            )}
-                          </div>
-                        </div>
-                      </Table.Cell>
-                      <Table.Cell className="py-2 px-3.5">
-                        <span
-                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium"
-                          style={{
-                            backgroundColor: `${getCategoryColor(tx.category)}18`,
-                            color: getCategoryColor(tx.category),
-                          }}
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getCategoryColor(tx.category) }} />
-                          {getCategoryName(tx.category)}
-                        </span>
-                      </Table.Cell>
-                      <Table.Cell className="py-2 px-3.5 hidden sm:table-cell">
-                        <div className="flex items-center gap-1.5 text-xs text-default-600 dark:text-default-400">
-                          <Building2 className="w-3.5 h-3.5 text-default-400" />
-                          <span>{getAccountName(tx)}</span>
-                        </div>
-                      </Table.Cell>
-                      <Table.Cell className="py-2 px-3.5 hidden md:table-cell">
-                        <span className="text-default-400 text-xs">{tx.date}</span>
-                      </Table.Cell>
-                      <Table.Cell className="py-2 px-3.5 text-right">
-                        <span
-                          className={`font-semibold text-xs sm:text-sm font-mono ${
-                            tx.type?.toLowerCase() === "income" ? "text-success" : "text-danger"
+          <div className="w-full overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-160">
+              <thead>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr
+                    key={headerGroup.id}
+                    className="border-b border-default-200 dark:border-default-800 bg-default-50/70 dark:bg-default-900/40"
+                  >
+                    {headerGroup.headers.map((header) => {
+                      const canSort = header.column.getCanSort();
+                      const sorted = header.column.getIsSorted();
+                      return (
+                        <th
+                          key={header.id}
+                          onClick={header.column.getToggleSortingHandler()}
+                          className={`py-3 px-4 text-xs font-semibold text-default-500 uppercase tracking-wider select-none ${
+                            canSort
+                              ? "cursor-pointer hover:text-foreground hover:bg-default-100/60 dark:hover:bg-default-800/60 transition-colors"
+                              : ""
                           }`}
                         >
-                          {tx.type?.toLowerCase() === "income" ? "+" : "-"}{formatCurrency(tx.amount)}
-                        </span>
-                      </Table.Cell>
-                      <Table.Cell className="py-2 px-3.5 text-right">
-                        <button
-                          onClick={() => handleDeleteTransaction(tx.id)}
-                          disabled={deletingTxId === tx.id}
-                          className="p-1 text-default-400 hover:text-danger rounded hover:bg-danger/10 transition-colors cursor-pointer"
-                          title="Delete transaction"
-                        >
-                          {deletingTxId === tx.id ? <Spinner size="sm" /> : <Trash2 className="w-3.5 h-3.5" />}
-                        </button>
-                      </Table.Cell>
-                    </Table.Row>
+                          <div className={`flex items-center gap-1.5 ${header.id === "amount" || header.id === "actions" ? "justify-end" : "justify-start"}`}>
+                            <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
+                            {canSort && (
+                              <span className="text-default-400 shrink-0">
+                                {sorted === "asc" ? (
+                                  <ArrowUp className="w-3.5 h-3.5 text-blue-500" />
+                                ) : sorted === "desc" ? (
+                                  <ArrowDown className="w-3.5 h-3.5 text-blue-500" />
+                                ) : (
+                                  <ArrowUpDown className="w-3 h-3 opacity-30 hover:opacity-100" />
+                                )}
+                              </span>
+                            )}
+                          </div>
+                        </th>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </thead>
+              <tbody className="divide-y divide-default-100 dark:divide-default-800/60">
+                {table.getRowModel().rows.length > 0 ? (
+                  table.getRowModel().rows.map((row) => (
+                    <tr
+                      key={row.id}
+                      className="hover:bg-default-50/70 dark:hover:bg-default-800/40 transition-colors group"
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} className="py-2.5 px-4 text-xs">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={columns.length} className="py-12 text-center text-default-400 text-xs">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Receipt className="w-9 h-9 text-default-300 dark:text-default-600 stroke-[1.5]" />
+                        <p className="font-semibold text-foreground text-sm">Tidak ada transaksi yang cocok</p>
+                        <p className="text-xs text-default-400 max-w-sm">
+                          {filterKeyword || activeFiltersCount > 0
+                            ? "Coba sesuaikan kata kunci pencarian atau bersihkan filter yang aktif."
+                            : "Belum ada transaksi di workspace ini. Klik 'Add Transaction' di atas untuk mencatat transaksi baru."}
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* DataTable Footer: Pagination Controls & Page Jump */}
+          <div className="p-3 sm:p-4 border-t border-default-100 dark:border-default-800/80 bg-default-50/40 dark:bg-default-900/20 flex flex-col lg:flex-row items-center justify-between gap-3 text-xs text-default-500">
+            {/* Left: Entries range info & Page Size Selector */}
+            <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
+              <span>
+                Menampilkan{" "}
+                <strong className="text-foreground font-mono">
+                  {table.getFilteredRowModel().rows.length === 0
+                    ? 0
+                    : pagination.pageIndex * pagination.pageSize + 1}
+                </strong>{" "}
+                -{" "}
+                <strong className="text-foreground font-mono">
+                  {Math.min(
+                    (pagination.pageIndex + 1) * pagination.pageSize,
+                    table.getFilteredRowModel().rows.length
                   )}
-                </Table.Body>
-              </Table.Content>
-            </Table.ScrollContainer>
-          </Table>
+                </strong>{" "}
+                dari{" "}
+                <strong className="text-foreground font-mono">
+                  {table.getFilteredRowModel().rows.length}
+                </strong>{" "}
+                transaksi
+              </span>
+
+              {/* Page size dropdown */}
+              <div className="flex items-center gap-1.5 border-l border-default-200 dark:border-default-700 pl-3">
+                <span className="text-[11px] text-default-400">Baris:</span>
+                <select
+                  value={table.getState().pagination.pageSize}
+                  onChange={(e) => table.setPageSize(Number(e.target.value))}
+                  className="h-7 px-2 rounded-lg border border-default-200 dark:border-default-700 bg-white dark:bg-gray-800 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                >
+                  {[5, 10, 20, 50, 100].map((size) => (
+                    <option key={size} value={size}>
+                      {size} / hal
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Right: Page Navigation & Direct Select / Jump */}
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full lg:w-auto justify-center lg:justify-end">
+              {/* Direct Select Page Dropdown */}
+              <div className="flex items-center gap-1 mr-1">
+                <span className="text-[11px] text-default-400">Halaman:</span>
+                <select
+                  value={table.getState().pagination.pageIndex}
+                  onChange={(e) => table.setPageIndex(Number(e.target.value))}
+                  className="h-7 px-2 rounded-lg border border-default-200 dark:border-default-700 bg-white dark:bg-gray-800 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer font-semibold"
+                >
+                  {Array.from({ length: Math.max(1, table.getPageCount()) }, (_, i) => (
+                    <option key={i} value={i}>
+                      {i + 1} dari {Math.max(1, table.getPageCount())}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* First Page Button */}
+              <button
+                type="button"
+                onClick={() => table.setPageIndex(0)}
+                disabled={!table.getCanPreviousPage()}
+                title="Halaman Pertama"
+                className="h-7 w-7 flex items-center justify-center rounded-lg border border-default-200 dark:border-default-700 text-default-600 dark:text-default-300 hover:bg-default-100 dark:hover:bg-default-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              >
+                <ChevronsLeft className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Previous Page Button */}
+              <button
+                type="button"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+                title="Halaman Sebelumnya"
+                className="h-7 px-2.5 flex items-center gap-1 rounded-lg border border-default-200 dark:border-default-700 text-default-600 dark:text-default-300 hover:bg-default-100 dark:hover:bg-default-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors text-xs font-medium"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Sebelumnya</span>
+              </button>
+
+              {/* Dynamic Numeric Page Buttons */}
+              <div className="flex items-center gap-1">
+                {generatePageNumbers(table.getState().pagination.pageIndex, Math.max(1, table.getPageCount())).map(
+                  (page, idx) => {
+                    if (page === "...") {
+                      return (
+                        <span key={`ellipsis-${idx}`} className="px-1 text-default-400 select-none">
+                          ...
+                        </span>
+                      );
+                    }
+                    const pNum = Number(page) - 1;
+                    const isActive = pNum === table.getState().pagination.pageIndex;
+                    return (
+                      <button
+                        key={`page-${page}`}
+                        type="button"
+                        onClick={() => table.setPageIndex(pNum)}
+                        className={`h-7 min-w-[28px] px-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                          isActive
+                            ? "bg-blue-600 text-white shadow-xs"
+                            : "border border-default-200 dark:border-default-700 text-default-600 dark:text-default-300 hover:bg-default-100 dark:hover:bg-default-800"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  }
+                )}
+              </div>
+
+              {/* Next Page Button */}
+              <button
+                type="button"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+                title="Halaman Berikutnya"
+                className="h-7 px-2.5 flex items-center gap-1 rounded-lg border border-default-200 dark:border-default-700 text-default-600 dark:text-default-300 hover:bg-default-100 dark:hover:bg-default-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors text-xs font-medium"
+              >
+                <span className="hidden sm:inline">Berikutnya</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Last Page Button */}
+              <button
+                type="button"
+                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                disabled={!table.getCanNextPage()}
+                title="Halaman Terakhir"
+                className="h-7 w-7 flex items-center justify-center rounded-lg border border-default-200 dark:border-default-700 text-default-600 dark:text-default-300 hover:bg-default-100 dark:hover:bg-default-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              >
+                <ChevronsRight className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Direct Jump Input */}
+              <div className="flex items-center gap-1 border-l border-default-200 dark:border-default-700 pl-2">
+                <span className="text-[11px] text-default-400 hidden xl:inline">Lompat:</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={Math.max(1, table.getPageCount())}
+                  placeholder="Hal"
+                  value={jumpPageVal}
+                  onChange={(e) => setJumpPageVal(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const val = Number(jumpPageVal);
+                      if (val >= 1 && val <= table.getPageCount()) {
+                        table.setPageIndex(val - 1);
+                        setJumpPageVal("");
+                      }
+                    }
+                  }}
+                  className="w-12 h-7 px-1 text-center text-xs rounded-lg border border-default-200 dark:border-default-700 bg-white dark:bg-gray-800 text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+                />
+              </div>
+            </div>
+          </div>
         </Card.Content>
       </Card>
 
-      {/* WIDE MODAL: Add Transaction Modal (max-w-2xl sm:max-w-3xl) */}
+      {/* WIDE MODAL: Add Transaction Modal (max-w-4xl, 12-Column Responsive Layout) */}
       <Modal isOpen={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <Modal.Backdrop className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <Modal.Container className="w-full max-w-2xl sm:max-w-3xl">
-            <Modal.Dialog className="max-w-2xl sm:max-w-3xl w-full bg-white dark:bg-gray-900 border border-default-200 dark:border-default-800 shadow-2xl rounded-2xl p-0 overflow-hidden outline-none">
+        <Modal.Backdrop className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5">
+          <Modal.Container className="w-full max-w-4xl">
+            <Modal.Dialog className="max-w-4xl w-full bg-white dark:bg-gray-900 border border-default-200 dark:border-default-800 shadow-2xl rounded-2xl p-0 overflow-hidden outline-none">
               <Modal.CloseTrigger />
-              <Modal.Header className="p-5 sm:p-6 border-b border-default-100 dark:border-default-800">
-                <div className="space-y-0.5">
-                  <Modal.Heading className="text-lg font-bold text-foreground">
-                    {newTxType === "INCOME" ? "Record Income Transaction" : "Record Expense Transaction"}
-                  </Modal.Heading>
-                  <p className="text-xs text-default-500">
-                    Add a new entry to <span className="font-semibold text-foreground">{selectedWorkspace.name}</span>
-                  </p>
+              <Modal.Header className="p-5 sm:p-6 border-b border-default-100 dark:border-default-800 bg-default-50/50 dark:bg-default-900/40">
+                <div className="flex items-center justify-between w-full pr-8">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-xs ${
+                      newTxType === "EXPENSE"
+                        ? "bg-red-500/15 text-red-600 dark:text-red-400"
+                        : "bg-green-500/15 text-green-600 dark:text-green-400"
+                    }`}>
+                      {newTxType === "EXPENSE" ? <CreditCard className="w-5 h-5" /> : <Wallet className="w-5 h-5" />}
+                    </div>
+                    <div>
+                      <Modal.Heading className="text-base sm:text-lg font-bold text-foreground">
+                        {newTxType === "EXPENSE" ? "Catat Pengeluaran Baru" : "Catat Pemasukan Baru"}
+                      </Modal.Heading>
+                      <p className="text-xs text-default-500">
+                        Workspace: <span className="font-semibold text-foreground">{selectedWorkspace.name}</span> • Mata Uang: <span className="font-mono font-semibold text-foreground">{selectedWorkspace.currency || "IDR"}</span>
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </Modal.Header>
 
-              <Modal.Body className="p-5 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+              <Modal.Body className="p-5 sm:p-6 space-y-5 max-h-[78vh] overflow-y-auto">
                 {errorMessage && (
-                  <div className="p-3 rounded-xl bg-danger/10 border border-danger/20 text-danger text-xs font-medium">
-                    {errorMessage}
+                  <div className="p-3.5 rounded-xl bg-danger/10 border border-danger/20 text-danger text-xs font-medium flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span>{errorMessage}</span>
                   </div>
                 )}
 
-                {/* Gemini RAG Receipt / Invoice Scanner */}
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-foreground">Attach Receipt / Invoice (AI Auto-Fill)</Label>
+                {/* 1. Transaction Type Toggle - Rich Segmented Control */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold text-foreground uppercase tracking-wider">Arah Transaksi</Label>
+                    <span className="text-[11px] text-default-400">Pilih jenis arus dana</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 p-1.5 bg-default-100/80 dark:bg-default-800/60 rounded-2xl border border-default-200/60 dark:border-default-700/60">
+                    <button
+                      type="button"
+                      onClick={() => setNewTxType("EXPENSE")}
+                      className={`py-3 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-3 ${
+                        newTxType === "EXPENSE"
+                          ? "bg-linear-to-r from-red-500 to-rose-600 text-white shadow-md shadow-red-500/25 ring-2 ring-red-500/20"
+                          : "text-default-600 hover:text-foreground hover:bg-default-200/60 dark:hover:bg-default-700/60"
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${newTxType === "EXPENSE" ? "bg-white/20 text-white" : "bg-red-500/10 text-red-500"}`}>
+                        <ArrowDownRight className="w-4 h-4" />
+                      </div>
+                      <div className="text-left min-w-0">
+                        <p className="font-bold text-xs sm:text-sm leading-tight">Pengeluaran (Expense)</p>
+                        <p className={`text-[10px] font-normal leading-tight mt-0.5 ${newTxType === "EXPENSE" ? "text-white/80" : "text-default-400"}`}>Biaya operasional, belanja, konsumsi</p>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewTxType("INCOME")}
+                      className={`py-3 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-3 ${
+                        newTxType === "INCOME"
+                          ? "bg-linear-to-r from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/25 ring-2 ring-emerald-500/20"
+                          : "text-default-600 hover:text-foreground hover:bg-default-200/60 dark:hover:bg-default-700/60"
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${newTxType === "INCOME" ? "bg-white/20 text-white" : "bg-emerald-500/10 text-emerald-500"}`}>
+                        <ArrowUpRight className="w-4 h-4" />
+                      </div>
+                      <div className="text-left min-w-0">
+                        <p className="font-bold text-xs sm:text-sm leading-tight">Pemasukan (Income)</p>
+                        <p className={`text-[10px] font-normal leading-tight mt-0.5 ${newTxType === "INCOME" ? "text-white/80" : "text-default-400"}`}>Gaji, omset penjualan, piutang, dividen</p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Drag & Drop Receipt/Invoice Scanner (Gemini Vision AI) */}
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold text-foreground flex items-center gap-1.5 uppercase tracking-wider">
+                      <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+                      <span>Lampirkan Struk / Nota (OCR Gemini AI)</span>
+                    </Label>
+                    <span className="text-[11px] text-default-400">Otomatis ekstrak nominal, merchant & tanggal</span>
+                  </div>
                   <DocumentUpload
                     workspaceId={selectedWorkspace.id}
                     onMetadataExtracted={handleMetadataExtracted}
-                    compact={true}
+                    compact={false}
                   />
                   {isAiAutoFilled && (
-                    <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 text-xs font-medium">
-                      <span>✨ Nilai otomatis diisi oleh Gemini Vision AI dari struk Anda.</span>
+                    <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 text-xs font-medium animate-fadeIn">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                        <span>✨ Data struk berhasil diisi otomatis ke form oleh Gemini Vision AI.</span>
+                      </div>
                       <button
                         type="button"
-                        onClick={() => {
-                          setAttachedDocument(null);
-                          setIsAiAutoFilled(false);
-                          setNewTxDescription("");
-                          setNewTxAmount("");
-                          setNewTxCategory("");
-                          setNewTxNotes("");
-                          setNewTxDate(new Date().toISOString().split("T")[0]);
-                        }}
-                        className="underline text-[11px] ml-2 cursor-pointer text-danger"
+                        onClick={resetAddForm}
+                        className="underline text-[11px] ml-2 cursor-pointer text-danger font-semibold hover:text-danger/80"
                       >
                         Reset Form
                       </button>
@@ -1744,113 +2166,140 @@ export default function Dashboard() {
                   )}
                 </div>
 
-                {/* Transaction Type Tabs */}
-                <div>
-                  <Label className="text-xs font-semibold mb-1.5 block text-foreground">Transaction Type</Label>
-                  <div className="grid grid-cols-2 gap-2 p-1 bg-default-100 dark:bg-default-800/70 rounded-xl max-w-md">
-                    <button
-                      type="button"
-                      onClick={() => setNewTxType("EXPENSE")}
-                      className={`py-2 px-4 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                        newTxType === "EXPENSE"
-                          ? "bg-red-500 text-white shadow-xs"
-                          : "text-default-600 hover:text-foreground"
-                      }`}
-                    >
-                      <CreditCard className="w-3.5 h-3.5" />
-                      <span>Expense</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setNewTxType("INCOME")}
-                      className={`py-2 px-4 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                        newTxType === "INCOME"
-                          ? "bg-green-500 text-white shadow-xs"
-                          : "text-default-600 hover:text-foreground"
-                      }`}
-                    >
-                      <TrendingUp className="w-3.5 h-3.5" />
-                      <span>Income</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* 2-Column Responsive Form Fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Description / Title */}
-                  <TextField className="w-full space-y-1">
-                    <Label className="text-xs font-semibold text-foreground">Description / Title *</Label>
-                    <Input
-                      type="text"
-                      placeholder="e.g. Server hosting, Monthly salary, Coffee"
-                      value={newTxDescription}
-                      onChange={(e) => setNewTxDescription(e.target.value)}
-                      required
-                    />
-                  </TextField>
-
-                  {/* Amount */}
-                  <TextField className="w-full space-y-1">
-                    <Label className="text-xs font-semibold text-foreground">
-                      Amount ({selectedWorkspace.currency || "IDR"}) *
+                {/* 3. 12-Column Responsive Form Fields */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5 pt-2">
+                  {/* Description / Title (col-span-7) */}
+                  <div className="md:col-span-7 space-y-1.5">
+                    <Label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                      <span>Deskripsi / Judul Transaksi *</span>
+                      <span className="text-[10px] text-default-400 font-normal">Wajib diisi</span>
                     </Label>
                     <Input
-                      type="number"
-                      placeholder="e.g. 150000"
-                      min="0"
-                      step="any"
-                      value={newTxAmount}
-                      onChange={(e) => setNewTxAmount(e.target.value)}
+                      type="text"
+                      placeholder="cth. Langganan Server Cloud, Makan Siang Tim, Gaji Pokok"
+                      value={newTxDescription}
+                      onChange={(e) => setNewTxDescription(e.target.value)}
+                      className="h-10 px-3.5 rounded-xl text-xs w-full"
                       required
                     />
-                  </TextField>
+                  </div>
 
-                  {/* Account / Wallet */}
-                  <div className="space-y-1">
+                  {/* Amount / Nominal (col-span-5) */}
+                  <div className="md:col-span-5 space-y-1.5">
+                    <Label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                      <span>Nominal ({selectedWorkspace.currency || "IDR"}) *</span>
+                      <span className="text-[10px] text-default-400 font-normal">Wajib diisi</span>
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        min="0"
+                        step="any"
+                        value={newTxAmount}
+                        onChange={(e) => setNewTxAmount(e.target.value)}
+                        className={`h-10 px-3.5 rounded-xl text-xs w-full font-mono font-semibold ${
+                          newTxType === "EXPENSE"
+                            ? "focus:border-red-500"
+                            : "focus:border-green-500"
+                        }`}
+                        required
+                      />
+                    </div>
+
+                    {/* Quick Amount Adder Chips */}
+                    <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                      <span className="text-[10px] text-default-400 font-medium mr-0.5">+Cepat:</span>
+                      {[
+                        { label: "+10rb", val: 10000 },
+                        { label: "+50rb", val: 50000 },
+                        { label: "+100rb", val: 100000 },
+                        { label: "+500rb", val: 500000 },
+                        { label: "+1jt", val: 1000000 },
+                      ].map((chip) => (
+                        <button
+                          key={chip.label}
+                          type="button"
+                          onClick={() => addAmount(chip.val)}
+                          className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-default-100 dark:bg-default-800 hover:bg-default-200 dark:hover:bg-default-700 text-default-700 dark:text-default-300 border border-default-200 dark:border-default-700 transition-colors cursor-pointer"
+                        >
+                          {chip.label}
+                        </button>
+                      ))}
+                      {newTxAmount && (
+                        <button
+                          type="button"
+                          onClick={() => setNewTxAmount("")}
+                          className="px-1.5 py-0.5 rounded-md text-[10px] text-danger hover:underline cursor-pointer font-medium ml-auto"
+                        >
+                          Reset
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Live Formatted Rupiah Preview */}
+                    {newTxAmount && !isNaN(Number(newTxAmount)) && Number(newTxAmount) > 0 && (
+                      <div className={`flex items-center gap-1.5 text-xs font-mono font-bold px-2.5 py-1 rounded-lg ${
+                        newTxType === "EXPENSE"
+                          ? "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20"
+                          : "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20"
+                      }`}>
+                        <span>{newTxType === "EXPENSE" ? "Pengeluaran: - " : "Pemasukan: + "}</span>
+                        <span>{formatCurrency(newTxAmount)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Wallet / Account Selection (col-span-6) - Overflow Proof */}
+                  <div className="md:col-span-6 space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <Label className="text-xs font-semibold text-foreground">Wallet / Account *</Label>
+                      <Label className="text-xs font-semibold text-foreground">Dompet / Rekening *</Label>
                       {workspaceAccounts.length === 0 && (
-                        <span className="text-[10px] text-blue-500 font-medium">(Auto-creates Cash wallet)</span>
+                        <span className="text-[10px] text-blue-500 font-medium">(Otomatis buat Kas)</span>
                       )}
                     </div>
                     <Select
-                      placeholder={workspaceAccounts.length > 0 ? "Select account" : "Main Cash (Auto)"}
+                      placeholder={workspaceAccounts.length > 0 ? "Pilih akun/dompet" : "Kas Utama (Default)"}
                       selectedKey={newTxAccount || (workspaceAccounts[0]?.id ?? null)}
                       onSelectionChange={(key) => setNewTxAccount(key ? String(key) : "")}
                       className="w-full"
                     >
-                      <Select.Trigger className="w-full justify-between h-9 px-3 rounded-xl border border-default-200 dark:border-default-700 bg-transparent text-xs font-medium">
-                        <Select.Value />
-                        <Select.Indicator />
+                      <Select.Trigger className="w-full justify-between h-10 px-3.5 rounded-xl border border-default-200 dark:border-default-700 bg-transparent text-xs font-medium focus:ring-2 focus:ring-blue-500/20 overflow-hidden">
+                        <Select.Value className="truncate text-left" />
+                        <Select.Indicator className="shrink-0 ml-2" />
                       </Select.Trigger>
-                      <Select.Popover className="min-w-64 z-50 p-1 bg-white dark:bg-gray-900 border border-default-200 dark:border-default-800 rounded-xl shadow-xl">
+                      <Select.Popover className="w-(--trigger-width) min-w-[280px] max-w-md z-50 p-1 bg-white dark:bg-gray-900 border border-default-200 dark:border-default-800 rounded-xl shadow-2xl overflow-hidden">
                         <ListBox>
                           {workspaceAccounts.length > 0 ? (
                             workspaceAccounts.map((acc) => (
                               <ListBox.Item
                                 key={acc.id}
                                 id={acc.id}
-                                textValue={acc.name}
-                                className="px-3 py-2 rounded-lg text-xs hover:bg-default-100 dark:hover:bg-default-800 cursor-pointer flex items-center justify-between"
+                                textValue={`${acc.name} (${acc.type})`}
+                                className="px-3 py-2.5 rounded-lg text-xs hover:bg-default-100 dark:hover:bg-default-800 cursor-pointer flex items-center justify-between gap-2 overflow-hidden"
                               >
-                                <div className="flex items-center gap-2">
-                                  <Building2 className="w-4 h-4 text-default-400" />
-                                  <div>
-                                    <p className="font-semibold text-foreground">{acc.name}</p>
-                                    <p className="text-[10px] text-default-400 uppercase">{acc.type} • {formatCurrency(acc.balance)}</p>
+                                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                  <div className="w-7 h-7 rounded-lg bg-default-100 dark:bg-default-800 flex items-center justify-center text-default-500 shrink-0">
+                                    <Building2 className="w-3.5 h-3.5" />
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-semibold text-foreground truncate">{acc.name}</p>
+                                    <p className="text-[10px] text-default-400 uppercase font-mono truncate">
+                                      {acc.type} • Saldo: {formatCurrency(acc.balance)}
+                                    </p>
                                   </div>
                                 </div>
-                                <ListBox.ItemIndicator className="text-blue-500" />
+                                <ListBox.ItemIndicator className="text-blue-500 shrink-0" />
                               </ListBox.Item>
                             ))
                           ) : (
                             <ListBox.Item
                               key="default-cash"
                               id="default-cash"
-                              textValue="Main Cash (Default)"
+                              textValue="Kas Utama (Default)"
                               className="px-3 py-2 rounded-lg text-xs"
                             >
-                              Main Cash (Default)
+                              Kas Utama (Default)
                               <ListBox.ItemIndicator className="text-blue-500" />
                             </ListBox.Item>
                           )}
@@ -1859,33 +2308,41 @@ export default function Dashboard() {
                     </Select>
                   </div>
 
-                  {/* Category Selection */}
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-foreground">Category</Label>
+                  {/* Category Selection (col-span-6) - Overflow Proof */}
+                  <div className="md:col-span-6 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-semibold text-foreground">Kategori Transaksi</Label>
+                      <span className="text-[10px] text-default-400">Pengelompokan analitik</span>
+                    </div>
                     <Select
-                      placeholder="Select category"
+                      placeholder="Pilih kategori"
                       selectedKey={newTxCategory || null}
                       onSelectionChange={(key) => setNewTxCategory(key ? String(key) : "")}
                       className="w-full"
                     >
-                      <Select.Trigger className="w-full justify-between h-9 px-3 rounded-xl border border-default-200 dark:border-default-700 bg-transparent text-xs font-medium">
-                        <Select.Value />
-                        <Select.Indicator />
+                      <Select.Trigger className="w-full justify-between h-10 px-3.5 rounded-xl border border-default-200 dark:border-default-700 bg-transparent text-xs font-medium focus:ring-2 focus:ring-blue-500/20 overflow-hidden">
+                        <Select.Value className="truncate text-left" />
+                        <Select.Indicator className="shrink-0 ml-2" />
                       </Select.Trigger>
-                      <Select.Popover className="min-w-64 z-50 p-1 bg-white dark:bg-gray-900 border border-default-200 dark:border-default-800 rounded-xl shadow-xl">
+                      <Select.Popover className="w-(--trigger-width) min-w-[280px] max-w-md z-50 p-1 bg-white dark:bg-gray-900 border border-default-200 dark:border-default-800 rounded-xl shadow-2xl overflow-hidden max-h-64">
                         <ListBox>
-                          {allCategories.map((cat: { id: string; name: string; color?: string }) => (
+                          {allCategories.map((cat: { id: string; name: string; color?: string; type?: string }) => (
                             <ListBox.Item
                               key={cat.id || cat.name}
                               id={cat.name}
                               textValue={cat.name}
-                              className="px-3 py-2 rounded-lg text-xs hover:bg-default-100 dark:hover:bg-default-800 cursor-pointer flex items-center justify-between"
+                              className="px-3 py-2 rounded-lg text-xs hover:bg-default-100 dark:hover:bg-default-800 cursor-pointer flex items-center justify-between gap-2 overflow-hidden"
                             >
-                              <div className="flex items-center gap-2">
-                                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: cat.color || "#3b82f6" }} />
-                                <span>{cat.name}</span>
+                              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                <span className="w-3 h-3 rounded-full shrink-0 shadow-2xs" style={{ backgroundColor: cat.color || "#3b82f6" }} />
+                                <span className="truncate font-medium text-foreground">{cat.name}</span>
+                                {cat.type && (
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded uppercase bg-default-100 dark:bg-default-800 text-default-500 ml-auto shrink-0">
+                                    {cat.type}
+                                  </span>
+                                )}
                               </div>
-                              <ListBox.ItemIndicator className="text-blue-500" />
+                              <ListBox.ItemIndicator className="text-blue-500 shrink-0 ml-1" />
                             </ListBox.Item>
                           ))}
                         </ListBox>
@@ -1893,48 +2350,128 @@ export default function Dashboard() {
                     </Select>
                   </div>
 
-                  {/* Date */}
-                  <TextField className="w-full space-y-1">
-                    <Label className="text-xs font-semibold text-foreground">Date of Transaction *</Label>
+                  {/* Transaction Date (col-span-6) */}
+                  <div className="md:col-span-6 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-semibold text-foreground">Tanggal Transaksi *</Label>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setNewTxDate(new Date().toISOString().split("T")[0])}
+                          className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-colors cursor-pointer ${
+                            newTxDate === new Date().toISOString().split("T")[0]
+                              ? "bg-blue-500/15 border-blue-500/30 text-blue-600 dark:text-blue-400"
+                              : "bg-default-100 dark:bg-default-800 border-default-200 dark:border-default-700 text-default-600 hover:bg-default-200"
+                          }`}
+                        >
+                          Hari Ini
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const d = new Date();
+                            d.setDate(d.getDate() - 1);
+                            setNewTxDate(d.toISOString().split("T")[0]);
+                          }}
+                          className="px-2 py-0.5 rounded text-[10px] font-semibold bg-default-100 dark:bg-default-800 border border-default-200 dark:border-default-700 text-default-600 hover:bg-default-200 cursor-pointer"
+                        >
+                          Kemarin
+                        </button>
+                      </div>
+                    </div>
                     <Input
                       type="date"
                       value={newTxDate}
                       onChange={(e) => setNewTxDate(e.target.value)}
+                      className="h-10 px-3.5 rounded-xl text-xs w-full font-medium"
                       required
                     />
-                  </TextField>
+                  </div>
 
-                  {/* Notes / Remarks */}
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-foreground">Notes / Reference (Optional)</Label>
+                  {/* Quick Category Suggestion Chips (col-span-6) */}
+                  <div className="md:col-span-6 space-y-1.5">
+                    <Label className="text-xs font-semibold text-foreground">Kategori Populer</Label>
+                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                      {(newTxType === "EXPENSE"
+                        ? ["Makanan", "Transportasi", "Tagihan & Utilitas", "Belanja", "Hiburan"]
+                        : ["Gaji", "Penjualan", "Investasi", "Bonus", "Freelance"]
+                      ).map((catName) => (
+                        <button
+                          key={catName}
+                          type="button"
+                          onClick={() => setNewTxCategory(catName)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                            newTxCategory === catName
+                              ? "bg-blue-500 text-white border-blue-500 shadow-2xs"
+                              : "bg-default-100 dark:bg-default-800 hover:bg-default-200 dark:hover:bg-default-700 text-default-700 dark:text-default-300 border-default-200 dark:border-default-700"
+                          }`}
+                        >
+                          {catName}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Notes / Reference - FULL 12 COLUMNS (col-span-12) */}
+                  <div className="md:col-span-12 space-y-1.5">
+                    <Label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                      <span>Catatan / Keterangan Tambahan (Opsional)</span>
+                      <span className="text-[10px] text-default-400 font-normal">Nomor invoice, nama vendor, rincian nota, atau memo</span>
+                    </Label>
                     <textarea
-                      rows={2}
-                      placeholder="Invoice number, tax receipt, memo, etc."
+                      rows={3}
+                      placeholder="Tuliskan catatan detail transaksi, nomor invoice/kuitansi, rekanan terkait, atau memo pengingat..."
                       value={newTxNotes}
                       onChange={(e) => setNewTxNotes(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-xl border border-default-200 dark:border-default-700 bg-transparent text-foreground placeholder:text-default-400 focus:outline-none focus:ring-1.5 focus:ring-blue-500 transition-colors"
+                      className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-default-200 dark:border-default-700 bg-transparent text-foreground placeholder:text-default-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors resize-y min-h-[76px]"
                     />
                   </div>
                 </div>
               </Modal.Body>
 
-              <Modal.Footer className="p-5 sm:p-6 pt-3 flex items-center justify-end gap-2.5 border-t border-default-100 dark:border-default-800">
+              <Modal.Footer className="p-5 sm:p-6 pt-3 flex items-center justify-between border-t border-default-100 dark:border-default-800 bg-default-50/50 dark:bg-default-900/40">
                 <Button
                   variant="ghost"
                   size="sm"
-                  onPress={() => setIsAddModalOpen(false)}
+                  type="button"
+                  onPress={resetAddForm}
+                  className="text-xs text-default-500 hover:text-danger cursor-pointer"
                   isDisabled={isSubmitting}
                 >
-                  Cancel
+                  Reset Form
                 </Button>
-                <Button
-                  size="sm"
-                  className="bg-linear-to-r from-blue-500 to-purple-600 text-white shadow-xs cursor-pointer font-medium px-5"
-                  onPress={handleAddTransaction}
-                  isDisabled={isSubmitting}
-                >
-                  {isSubmitting ? <Spinner size="sm" /> : "Save Transaction"}
-                </Button>
+                <div className="flex items-center gap-2.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    onPress={() => setIsAddModalOpen(false)}
+                    isDisabled={isSubmitting}
+                    className="cursor-pointer"
+                  >
+                    Batal
+                  </Button>
+                  <Button
+                    size="sm"
+                    type="button"
+                    className={`shadow-xs cursor-pointer font-semibold px-5 text-white ${
+                      newTxType === "EXPENSE"
+                        ? "bg-linear-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700"
+                        : "bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700"
+                    }`}
+                    onPress={handleAddTransaction}
+                    isDisabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <Spinner size="sm" />
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4 mr-1" />
+                        <span>{newTxType === "EXPENSE" ? "Simpan Pengeluaran" : "Simpan Pemasukan"}</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
               </Modal.Footer>
             </Modal.Dialog>
           </Modal.Container>
