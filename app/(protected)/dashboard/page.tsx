@@ -84,6 +84,8 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TransactionWithIcon } from "../../lib/api";
 import { queryKeys, queryFunctions, mutationFunctions } from "../../lib/queries";
+import { ExpenseBreakdown } from "./components/ExpenseBreakdown";
+import { TransactionsTable } from "./components/TransactionsTable";
 import { DocumentUpload, type DocumentMetadata, type UploadedDocumentResult } from "../components/DocumentUpload";
 
 export default function Dashboard() {
@@ -571,8 +573,7 @@ export default function Dashboard() {
           const tx = row.original;
           return (
             <div className="text-right">
-              <button
-                type="button"
+              <button aria-label="button Action" type="button"
                 onClick={() => handleDeleteTransaction(tx.id)}
                 disabled={deletingTxId === tx.id}
                 className="p-1 text-default-400 hover:text-danger rounded hover:bg-danger/10 transition-colors cursor-pointer"
@@ -694,13 +695,14 @@ export default function Dashboard() {
     rawTransactions.length,
   ]);
 
-  // Trigger AI analysis on workspace mount/change
+  // Removed auto-trigger AI analysis on workspace mount/change as requested
+  // AI analysis will now only trigger manually via the 'Mulai Menganalisis' button
   useEffect(() => {
     if (selectedWorkspace?.id && lastAnalyzedWorkspaceId.current !== selectedWorkspace.id) {
       lastAnalyzedWorkspaceId.current = selectedWorkspace.id;
-      fetchAiSuggestion(false);
+      // fetchAiSuggestion(false); // Disabled auto-fetch
     }
-  }, [selectedWorkspace?.id, fetchAiSuggestion]);
+  }, [selectedWorkspace?.id]);
 
   // Export handlers
   const handleExportCsv = () => {
@@ -748,7 +750,7 @@ export default function Dashboard() {
     try {
       // 1. Resolve or provision accountId (Backend schema requires accountId)
       let accountId = newTxAccount;
-      if (!accountId) {
+      if (!accountId || accountId === "cash" || accountId === "default-cash") {
         if (workspaceAccounts.length > 0) {
           accountId = workspaceAccounts[0].id;
         } else {
@@ -767,7 +769,7 @@ export default function Dashboard() {
         }
       }
 
-      if (!accountId) {
+      if (!accountId || accountId === "cash" || accountId === "default-cash") {
         setErrorMessage("Please select or create an account first.");
         setIsSubmitting(false);
         return;
@@ -884,8 +886,7 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="pt-2">
-            <Button
-              size="sm"
+            <Button aria-label="Button Action" size="sm"
               className="w-full bg-linear-to-r from-blue-500 to-purple-600 text-white shadow-xs cursor-pointer font-medium"
               onPress={() => router.push("/workspaces")}
             >
@@ -904,7 +905,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-2 px-3.5 py-2.5 bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 rounded-xl text-xs font-medium animate-fadeIn">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
           <span>{successMessage}</span>
-          <button onClick={() => setSuccessMessage("")} className="ml-auto text-green-600 hover:text-green-800">
+          <button aria-label="button Action" onClick={() => setSuccessMessage("")} className="ml-auto text-green-600 hover:text-green-800">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -931,8 +932,7 @@ export default function Dashboard() {
 
         <div className="flex items-center gap-2 shrink-0">
           {/* Filter Button with Count Badge */}
-          <Button
-            variant="outline"
+          <Button aria-label="Button Action" variant="outline"
             size="sm"
             onPress={() => setIsFilterModalOpen(true)}
             className="h-8 px-3 text-xs flex items-center gap-1.5 cursor-pointer relative"
@@ -947,13 +947,9 @@ export default function Dashboard() {
           </Button>
 
           {/* Add Transaction Button */}
-          <Button
-            size="sm"
+          <Button aria-label="Button Action" size="sm"
             className="h-8 px-3.5 text-xs bg-linear-to-r from-blue-500 to-purple-600 text-white shadow-xs cursor-pointer flex items-center gap-1.5 font-medium"
-            onPress={() => {
-              setErrorMessage("");
-              setIsAddModalOpen(true);
-            }}
+            onPress={() => router.push("/transactions/new")}
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Transaction</span>
@@ -1093,6 +1089,353 @@ export default function Dashboard() {
         </Card>
       </div>
 
+      {/* Quick Wallets Strip */}
+      {workspaceAccounts.length > 0 && (
+        <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
+          <span className="text-[11px] font-semibold text-default-400 uppercase tracking-wider shrink-0 mr-1">
+            Wallets:
+          </span>
+          <div
+            onClick={() => {
+              setFilterAccount("");
+              setFilterCategory("");
+            }}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs border transition-all cursor-pointer shrink-0 ${
+              filterAccount === ""
+                ? "border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold"
+                : "border-default-200/80 dark:border-default-800 bg-white/60 dark:bg-gray-900/60 hover:bg-default-100/70 text-foreground"
+            }`}
+          >
+            <span>All Wallets</span>
+          </div>
+          {workspaceAccounts.map((acc) => (
+            <div
+              key={acc.id}
+              onClick={() => {
+                setFilterAccount(acc.id);
+                setFilterCategory("");
+              }}
+              className={`flex items-center gap-2 px-2.5 py-1 rounded-xl text-xs border transition-all cursor-pointer shrink-0 ${
+                filterAccount === acc.id
+                  ? "border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold"
+                  : "border-default-200/80 dark:border-default-800 bg-white/60 dark:bg-gray-900/60 hover:bg-default-100/70 text-foreground"
+              }`}
+            >
+              <Banknote className="w-3.5 h-3.5 text-default-400" />
+              <span className="font-medium">{acc.name}</span>
+              <span className="font-mono text-default-500 text-[11px]">{formatCurrency(acc.balance)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Main Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
+        {/* Income vs Expenses Cashflow Chart */}
+        <div className="lg:col-span-2">
+          <Card className="rounded-xl border border-default-200/80 dark:border-default-800 shadow-2xs p-3.5 sm:p-4">
+            <Card.Header className="flex items-center justify-between p-0 pb-3">
+              <div>
+                <Card.Title className="text-sm font-semibold text-foreground">Cashflow Performance (6 Months)</Card.Title>
+                <Card.Description className="text-xs text-default-500">Historical comparison between Inflow and Outflow</Card.Description>
+              </div>
+              <div className="flex items-center gap-1 bg-default-100 dark:bg-default-800 p-0.5 rounded-lg text-xs">
+                <button aria-label="button Action" onClick={() => setChartMode("area")}
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                    chartMode === "area" ? "bg-white dark:bg-gray-900 text-foreground shadow-2xs" : "text-default-500"
+                  }`}
+                >
+                  <Layers className="w-3 h-3 inline mr-1" />
+                  Area
+                </button>
+                <button aria-label="button Action" onClick={() => setChartMode("bar")}
+                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
+                    chartMode === "bar" ? "bg-white dark:bg-gray-900 text-foreground shadow-2xs" : "text-default-500"
+                  }`}
+                >
+                  <BarChart3 className="w-3 h-3 inline mr-1" />
+                  Bar
+                </button>
+              </div>
+            </Card.Header>
+            <Card.Content className="p-0">
+              {monthlyData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={220}>
+                  {chartMode === "area" ? (
+                    <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.15} />
+                      <XAxis dataKey="month" stroke="#9ca3af" fontSize={11} tickLine={false} />
+                      <YAxis
+                        stroke="#9ca3af"
+                        fontSize={11}
+                        tickLine={false}
+                        tickFormatter={(val) => `${(val / 1000000).toFixed(0)}M`}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#1f2937",
+                          border: "none",
+                          borderRadius: "0.5rem",
+                          color: "#fff",
+                          fontSize: "11px",
+                        }}
+                        formatter={(val: unknown) => [formatCurrency(Number(val) || 0), ""]}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="income"
+                        stroke="#10b981"
+                        strokeWidth={2}
+                        fillOpacity={1}
+                        fill="url(#incomeGradient)"
+                        name="Income"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="expense"
+                        stroke="#ef4444"
+                        strokeWidth={2}
+                        fillOpacity={1}
+                        fill="url(#expenseGradient)"
+                        name="Expense"
+                      />
+                    </AreaChart>
+                  ) : (
+                    <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.15} />
+                      <XAxis dataKey="month" stroke="#9ca3af" fontSize={11} tickLine={false} />
+                      <YAxis
+                        stroke="#9ca3af"
+                        fontSize={11}
+                        tickLine={false}
+                        tickFormatter={(val) => `${(val / 1000000).toFixed(0)}M`}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#1f2937",
+                          border: "none",
+                          borderRadius: "0.5rem",
+                          color: "#fff",
+                          fontSize: "11px",
+                        }}
+                        formatter={(val: unknown) => [formatCurrency(Number(val) || 0), ""]}
+                      />
+                      <Bar dataKey="income" fill="#10b981" radius={[3, 3, 0, 0]} name="Income" />
+                      <Bar dataKey="expense" fill="#ef4444" radius={[3, 3, 0, 0]} name="Expense" />
+                    </BarChart>
+                  )}
+                </ResponsiveContainer>
+              ) : (
+                <div className="w-full h-52 flex flex-col items-center justify-center text-default-500 text-xs gap-1">
+                  <p>No historical trends recorded yet</p>
+                  <p className="text-[11px] text-default-400">Save your first transaction to generate cashflow charts</p>
+                </div>
+              )}
+            </Card.Content>
+          </Card>
+        </div>
+
+        {/* Asset Breakdown by Account */}
+        <Card className="rounded-xl border border-default-200/80 dark:border-default-800 shadow-2xs p-3.5 sm:p-4">
+          <Card.Header className="flex items-center justify-between p-0 pb-3">
+            <div>
+              <Card.Title className="text-sm font-semibold text-foreground">Asset Breakdown</Card.Title>
+              <Card.Description className="text-xs text-default-500">Distribution across connected wallets</Card.Description>
+            </div>
+            <Button aria-label="Button Action" size="sm"
+              variant="ghost"
+              className="text-xs h-6 px-2 text-default-500"
+              onPress={() => router.push("/portfolio")}
+            >
+              Portfolio
+            </Button>
+          </Card.Header>
+          <Card.Content className="p-0">
+            {portfolioData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={portfolioData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.15} />
+                  <XAxis dataKey="name" stroke="#9ca3af" fontSize={11} tickLine={false} />
+                  <YAxis
+                    stroke="#9ca3af"
+                    fontSize={11}
+                    tickLine={false}
+                    tickFormatter={(val) => `${(val / 1000000).toFixed(0)}M`}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#1f2937",
+                      border: "none",
+                      borderRadius: "0.5rem",
+                      color: "#fff",
+                      fontSize: "11px",
+                    }}
+                    formatter={(val: unknown) => [formatCurrency(Number(val) || 0), ""]}
+                  />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                    {portfolioData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color || "#3b82f6"} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="w-full h-52 flex flex-col items-center justify-center text-default-500 text-xs gap-1">
+                <p>No active accounts found</p>
+                <Button aria-label="Button Action" size="sm"
+                  variant="outline"
+                  className="text-xs h-7 mt-2"
+                  onPress={() => router.push("/portfolio")}
+                >
+                  Configure Accounts
+                </Button>
+              </div>
+            )}
+          </Card.Content>
+        </Card>
+      </div>
+
+      {/* Categories Breakdown & Quick Actions Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
+        <section aria-label="Expense Breakdown" className="lg:col-span-2">
+          <ExpenseBreakdown
+            categoryViewType={categoryViewType}
+            setCategoryViewType={setCategoryViewType}
+            spendingCategories={spendingCategories}
+            formatCurrency={formatCurrency}
+          />
+        </section>
+        {/* Quick Operations Widget */}
+        <div className="space-y-3 flex flex-col justify-between">
+          <Card
+            className="p-3.5 rounded-xl border border-default-200/80 dark:border-default-800 hover:border-green-500/40 hover:bg-default-50/50 dark:hover:bg-default-800/30 transition-all cursor-pointer flex flex-row items-center gap-3 shadow-2xs"
+            onClick={() => router.push("/transactions/new?type=income")}
+          >
+            <div className="w-9 h-9 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0 text-green-500">
+              <Plus className="w-4.5 h-4.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-foreground truncate">Record Income</p>
+              <p className="text-[11px] text-default-400 truncate">Log revenue, salary, or client payment</p>
+            </div>
+          </Card>
+
+          <Card
+            className="p-3.5 rounded-xl border border-default-200/80 dark:border-default-800 hover:border-red-500/40 hover:bg-default-50/50 dark:hover:bg-default-800/30 transition-all cursor-pointer flex flex-row items-center gap-3 shadow-2xs"
+            onClick={() => router.push("/transactions/new?type=expense")}
+          >
+            <div className="w-9 h-9 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0 text-red-500">
+              <CreditCard className="w-4.5 h-4.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-foreground truncate">Record Expense</p>
+              <p className="text-[11px] text-default-400 truncate">Log operational costs or personal spend</p>
+            </div>
+          </Card>
+
+          <Card
+            className="p-3.5 rounded-xl border border-default-200/80 dark:border-default-800 hover:border-purple-500/40 hover:bg-default-50/50 dark:hover:bg-default-800/30 transition-all cursor-pointer flex flex-row items-center gap-3 shadow-2xs"
+            onClick={() => router.push("/analytics")}
+          >
+            <div className="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0 text-purple-500">
+              <PieChart className="w-4.5 h-4.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-foreground truncate">Deep Analytics</p>
+              <p className="text-[11px] text-default-400 truncate">View monthly cashflow & categories</p>
+            </div>
+          </Card>
+
+          <Card
+            className="p-3.5 rounded-xl border border-default-200/80 dark:border-default-800 hover:border-blue-500/40 hover:bg-default-50/50 dark:hover:bg-default-800/30 transition-all cursor-pointer flex flex-row items-center gap-3 shadow-2xs"
+            onClick={() => router.push("/portfolio")}
+          >
+            <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0 text-blue-500">
+              <Target className="w-4.5 h-4.5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-foreground truncate">Wallets & Assets</p>
+              <p className="text-[11px] text-default-400 truncate">Manage bank accounts, cash & e-wallets</p>
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      {/* Active Filter Chips Row */}
+      {activeFiltersCount > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 p-2.5 bg-default-100/70 dark:bg-default-800/40 rounded-xl text-xs">
+          <span className="text-[11px] font-semibold text-default-500 mr-1">Active filters:</span>
+          {filterType !== "ALL" && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-medium">
+              Type: {filterType}
+              <X className="w-3 h-3 cursor-pointer" onClick={() => setFilterType("ALL")} />
+            </span>
+          )}
+          {filterCategory && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-medium">
+              Category: {filterCategory}
+              <X className="w-3 h-3 cursor-pointer" onClick={() => setFilterCategory("")} />
+            </span>
+          )}
+          {filterAccount && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-medium">
+              Account: {workspaceAccounts.find(a => a.id === filterAccount)?.name || filterAccount}
+              <X className="w-3 h-3 cursor-pointer" onClick={() => setFilterAccount("")} />
+            </span>
+          )}
+          {(filterStartDate || filterEndDate) && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-medium">
+              Date: {filterStartDate || "Start"} → {filterEndDate || "End"}
+              <X className="w-3 h-3 cursor-pointer" onClick={() => { setFilterStartDate(""); setFilterEndDate(""); }} />
+            </span>
+          )}
+          {(filterMinAmount || filterMaxAmount) && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-medium">
+              Amount: {filterMinAmount ? formatCurrency(filterMinAmount) : "0"} - {filterMaxAmount ? formatCurrency(filterMaxAmount) : "∞"}
+              <X className="w-3 h-3 cursor-pointer" onClick={() => { setFilterMinAmount(""); setFilterMaxAmount(""); }} />
+            </span>
+          )}
+          {filterKeyword && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-medium">
+              Keyword: &quot;{filterKeyword}&quot;
+              <X className="w-3 h-3 cursor-pointer" onClick={() => setFilterKeyword("")} />
+            </span>
+          )}
+          <button aria-label="button Action" onClick={resetFilters}
+            className="text-[11px] text-danger hover:underline ml-auto font-medium cursor-pointer"
+          >
+            Clear all
+          </button>
+        </div>
+      )}
+
+      <section aria-label="Transactions Table">
+        <TransactionsTable
+          table={table}
+          transactions={transactions}
+          rawTransactions={rawTransactions}
+          activeFiltersCount={activeFiltersCount}
+          apiSortBy={apiSortBy}
+          setApiSortBy={setApiSortBy}
+          filterKeyword={filterKeyword}
+          setFilterKeyword={setFilterKeyword}
+          setIsFilterModalOpen={setIsFilterModalOpen}
+          generatePageNumbers={generatePageNumbers}
+          jumpPageVal={jumpPageVal}
+          setJumpPageVal={setJumpPageVal}
+          columns={columns}
+        />
+      </section>
       {/* AI Financial Intelligence & Synthesis Section */}
       <Card className="rounded-2xl border border-purple-500/25 dark:border-purple-500/30 bg-linear-to-br from-purple-500/5 via-blue-500/5 to-transparent backdrop-blur-md shadow-2xs overflow-hidden transition-all duration-300">
         <div className="p-3.5 sm:p-4 border-b border-default-200/60 dark:border-default-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -1130,8 +1473,7 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
-            <Button
-              size="sm"
+            <Button aria-label="Button Action" size="sm"
               variant="outline"
               className="h-7 px-2.5 text-xs flex items-center gap-1.5 border-default-200 dark:border-default-700 hover:border-purple-500/40 text-foreground cursor-pointer"
               onPress={() => fetchAiSuggestion(true)}
@@ -1140,8 +1482,7 @@ export default function Dashboard() {
               <RefreshCw className={`w-3 h-3 text-purple-500 ${isAiLoading ? "animate-spin" : ""}`} />
               <span>{isAiLoading ? "Menganalisis..." : "Refresh Diagnosis"}</span>
             </Button>
-            <button
-              onClick={() => setIsAiExpanded(!isAiExpanded)}
+            <button onClick={() => setIsAiExpanded(!isAiExpanded)}
               aria-label={isAiExpanded ? "Collapse AI Section" : "Expand AI Section"}
               className="h-7 w-7 flex items-center justify-center rounded-lg border border-default-200 dark:border-default-700 text-default-500 hover:text-foreground cursor-pointer transition-colors"
             >
@@ -1170,7 +1511,24 @@ export default function Dashboard() {
         {/* Expanded Content View */}
         {isAiExpanded && (
           <div className="p-3.5 sm:p-4 space-y-3.5">
-            {isAiLoading && !aiData ? (
+            {!aiData && !isAiLoading && !aiError ? (
+              <div className="py-12 flex flex-col items-center justify-center text-center space-y-4 bg-default-50/50 dark:bg-default-900/20 rounded-xl border border-dashed border-default-200 dark:border-default-800">
+                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full flex items-center justify-center">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-semibold text-foreground">Siap Menganalisis Finansial Anda?</h4>
+                  <p className="text-xs text-default-500 max-w-sm mx-auto">
+                    Klik tombol di bawah ini untuk memulai analisis arus kas dan jurnal transaksi Anda menggunakan AI.
+                  </p>
+                </div>
+                <Button aria-label="Button Action" className="shadow-md bg-linear-to-r from-purple-600 to-blue-600 text-white font-medium text-sm px-6"
+                  onPress={() => fetchAiSuggestion(true)}
+                >
+                  Mulai Menganalisis
+                </Button>
+              </div>
+            ) : isAiLoading && !aiData ? (
               <div className="py-8 flex flex-col items-center justify-center text-center space-y-2">
                 <Spinner size="sm" />
                 <p className="text-xs text-default-500">
@@ -1180,7 +1538,7 @@ export default function Dashboard() {
             ) : aiError && !aiData ? (
               <div className="p-3 rounded-xl bg-danger/10 border border-danger/20 text-danger text-xs flex items-center justify-between">
                 <span>{aiError}</span>
-                <Button size="sm" variant="outline" className="h-7 text-xs" onPress={() => fetchAiSuggestion(true)}>
+                <Button aria-label="Button Action" size="sm" variant="outline" className="h-7 text-xs" onPress={() => fetchAiSuggestion(true)}>
                   Coba Lagi
                 </Button>
               </div>
@@ -1310,751 +1668,6 @@ export default function Dashboard() {
         )}
       </Card>
 
-      {/* Quick Wallets Strip */}
-      {workspaceAccounts.length > 0 && (
-        <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
-          <span className="text-[11px] font-semibold text-default-400 uppercase tracking-wider shrink-0 mr-1">
-            Wallets:
-          </span>
-          <div
-            onClick={() => {
-              setFilterAccount("");
-              setFilterCategory("");
-            }}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs border transition-all cursor-pointer shrink-0 ${
-              filterAccount === ""
-                ? "border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold"
-                : "border-default-200/80 dark:border-default-800 bg-white/60 dark:bg-gray-900/60 hover:bg-default-100/70 text-foreground"
-            }`}
-          >
-            <span>All Wallets</span>
-          </div>
-          {workspaceAccounts.map((acc) => (
-            <div
-              key={acc.id}
-              onClick={() => {
-                setFilterAccount(acc.id);
-                setFilterCategory("");
-              }}
-              className={`flex items-center gap-2 px-2.5 py-1 rounded-xl text-xs border transition-all cursor-pointer shrink-0 ${
-                filterAccount === acc.id
-                  ? "border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold"
-                  : "border-default-200/80 dark:border-default-800 bg-white/60 dark:bg-gray-900/60 hover:bg-default-100/70 text-foreground"
-              }`}
-            >
-              <Banknote className="w-3.5 h-3.5 text-default-400" />
-              <span className="font-medium">{acc.name}</span>
-              <span className="font-mono text-default-500 text-[11px]">{formatCurrency(acc.balance)}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Main Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
-        {/* Income vs Expenses Cashflow Chart */}
-        <div className="lg:col-span-2">
-          <Card className="rounded-xl border border-default-200/80 dark:border-default-800 shadow-2xs p-3.5 sm:p-4">
-            <Card.Header className="flex items-center justify-between p-0 pb-3">
-              <div>
-                <Card.Title className="text-sm font-semibold text-foreground">Cashflow Performance (6 Months)</Card.Title>
-                <Card.Description className="text-xs text-default-500">Historical comparison between Inflow and Outflow</Card.Description>
-              </div>
-              <div className="flex items-center gap-1 bg-default-100 dark:bg-default-800 p-0.5 rounded-lg text-xs">
-                <button
-                  onClick={() => setChartMode("area")}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                    chartMode === "area" ? "bg-white dark:bg-gray-900 text-foreground shadow-2xs" : "text-default-500"
-                  }`}
-                >
-                  <Layers className="w-3 h-3 inline mr-1" />
-                  Area
-                </button>
-                <button
-                  onClick={() => setChartMode("bar")}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                    chartMode === "bar" ? "bg-white dark:bg-gray-900 text-foreground shadow-2xs" : "text-default-500"
-                  }`}
-                >
-                  <BarChart3 className="w-3 h-3 inline mr-1" />
-                  Bar
-                </button>
-              </div>
-            </Card.Header>
-            <Card.Content className="p-0">
-              {monthlyData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={220}>
-                  {chartMode === "area" ? (
-                    <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.15} />
-                      <XAxis dataKey="month" stroke="#9ca3af" fontSize={11} tickLine={false} />
-                      <YAxis
-                        stroke="#9ca3af"
-                        fontSize={11}
-                        tickLine={false}
-                        tickFormatter={(val) => `${(val / 1000000).toFixed(0)}M`}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "#1f2937",
-                          border: "none",
-                          borderRadius: "0.5rem",
-                          color: "#fff",
-                          fontSize: "11px",
-                        }}
-                        formatter={(val: unknown) => [formatCurrency(Number(val) || 0), ""]}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="income"
-                        stroke="#10b981"
-                        strokeWidth={2}
-                        fillOpacity={1}
-                        fill="url(#incomeGradient)"
-                        name="Income"
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="expense"
-                        stroke="#ef4444"
-                        strokeWidth={2}
-                        fillOpacity={1}
-                        fill="url(#expenseGradient)"
-                        name="Expense"
-                      />
-                    </AreaChart>
-                  ) : (
-                    <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.15} />
-                      <XAxis dataKey="month" stroke="#9ca3af" fontSize={11} tickLine={false} />
-                      <YAxis
-                        stroke="#9ca3af"
-                        fontSize={11}
-                        tickLine={false}
-                        tickFormatter={(val) => `${(val / 1000000).toFixed(0)}M`}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "#1f2937",
-                          border: "none",
-                          borderRadius: "0.5rem",
-                          color: "#fff",
-                          fontSize: "11px",
-                        }}
-                        formatter={(val: unknown) => [formatCurrency(Number(val) || 0), ""]}
-                      />
-                      <Bar dataKey="income" fill="#10b981" radius={[3, 3, 0, 0]} name="Income" />
-                      <Bar dataKey="expense" fill="#ef4444" radius={[3, 3, 0, 0]} name="Expense" />
-                    </BarChart>
-                  )}
-                </ResponsiveContainer>
-              ) : (
-                <div className="w-full h-52 flex flex-col items-center justify-center text-default-500 text-xs gap-1">
-                  <p>No historical trends recorded yet</p>
-                  <p className="text-[11px] text-default-400">Save your first transaction to generate cashflow charts</p>
-                </div>
-              )}
-            </Card.Content>
-          </Card>
-        </div>
-
-        {/* Asset Breakdown by Account */}
-        <Card className="rounded-xl border border-default-200/80 dark:border-default-800 shadow-2xs p-3.5 sm:p-4">
-          <Card.Header className="flex items-center justify-between p-0 pb-3">
-            <div>
-              <Card.Title className="text-sm font-semibold text-foreground">Asset Breakdown</Card.Title>
-              <Card.Description className="text-xs text-default-500">Distribution across connected wallets</Card.Description>
-            </div>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-xs h-6 px-2 text-default-500"
-              onPress={() => router.push("/portfolio")}
-            >
-              Portfolio
-            </Button>
-          </Card.Header>
-          <Card.Content className="p-0">
-            {portfolioData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={portfolioData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.15} />
-                  <XAxis dataKey="name" stroke="#9ca3af" fontSize={11} tickLine={false} />
-                  <YAxis
-                    stroke="#9ca3af"
-                    fontSize={11}
-                    tickLine={false}
-                    tickFormatter={(val) => `${(val / 1000000).toFixed(0)}M`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#1f2937",
-                      border: "none",
-                      borderRadius: "0.5rem",
-                      color: "#fff",
-                      fontSize: "11px",
-                    }}
-                    formatter={(val: unknown) => [formatCurrency(Number(val) || 0), ""]}
-                  />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                    {portfolioData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color || "#3b82f6"} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="w-full h-52 flex flex-col items-center justify-center text-default-500 text-xs gap-1">
-                <p>No active accounts found</p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-xs h-7 mt-2"
-                  onPress={() => router.push("/portfolio")}
-                >
-                  Configure Accounts
-                </Button>
-              </div>
-            )}
-          </Card.Content>
-        </Card>
-      </div>
-
-      {/* Categories Breakdown & Quick Actions Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
-        {/* Spending & Inflow by Category */}
-        <div className="lg:col-span-2">
-          <Card className="rounded-xl border border-default-200/80 dark:border-default-800 shadow-2xs p-3.5 sm:p-4">
-            <Card.Header className="flex items-center justify-between p-0 pb-3">
-              <div>
-                <Card.Title className="text-sm font-semibold text-foreground">
-                  {categoryViewType === "expense" ? "Expense Breakdown" : "Income Breakdown"}
-                </Card.Title>
-                <Card.Description className="text-xs text-default-500">
-                  Distribution by category this month
-                </Card.Description>
-              </div>
-              <div className="flex items-center gap-1 bg-default-100 dark:bg-default-800 p-0.5 rounded-lg text-xs">
-                <button
-                  onClick={() => setCategoryViewType("expense")}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                    categoryViewType === "expense" ? "bg-red-500 text-white shadow-2xs" : "text-default-500"
-                  }`}
-                >
-                  Expenses
-                </button>
-                <button
-                  onClick={() => setCategoryViewType("income")}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                    categoryViewType === "income" ? "bg-green-500 text-white shadow-2xs" : "text-default-500"
-                  }`}
-                >
-                  Income
-                </button>
-              </div>
-            </Card.Header>
-            <Card.Content className="space-y-3 p-0">
-              {spendingCategories.length > 0 ? (
-                spendingCategories.map((category, index) => {
-                  const categoryName =
-                    typeof category === "object" && category.name
-                      ? category.name
-                      : typeof category === "string"
-                      ? category
-                      : `Category ${index}`;
-                  const percentageNum = Number(category.percentage) || 0;
-                  const catColor = (category as { color?: string }).color || "#3b82f6";
-                  return (
-                    <div key={categoryName || index} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: catColor }} />
-                          <span className="font-medium text-foreground">{categoryName}</span>
-                        </div>
-                        <span className="text-default-500 font-mono">
-                          {category.value ? formatCurrency(category.value) : ""}
-                          {category.percentage ? ` (${category.percentage}%)` : ""}
-                        </span>
-                      </div>
-                      {category.percentage && (
-                        <ProgressBar value={percentageNum} aria-label={categoryName}>
-                          <ProgressBar.Track className="h-1.5 rounded-full bg-default-100 dark:bg-default-800">
-                            <ProgressBar.Fill
-                              className="rounded-full transition-all duration-500"
-                              style={{ backgroundColor: catColor }}
-                            />
-                          </ProgressBar.Track>
-                        </ProgressBar>
-                      )}
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="py-6 text-center text-default-400 text-xs">
-                  No {categoryViewType} recorded for this period
-                </div>
-              )}
-            </Card.Content>
-          </Card>
-        </div>
-
-        {/* Quick Operations Widget */}
-        <div className="space-y-3 flex flex-col justify-between">
-          <Card
-            className="p-3.5 rounded-xl border border-default-200/80 dark:border-default-800 hover:border-green-500/40 hover:bg-default-50/50 dark:hover:bg-default-800/30 transition-all cursor-pointer flex flex-row items-center gap-3 shadow-2xs"
-            onClick={() => {
-              setNewTxType("INCOME");
-              setErrorMessage("");
-              setIsAddModalOpen(true);
-            }}
-          >
-            <div className="w-9 h-9 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0 text-green-500">
-              <Plus className="w-4.5 h-4.5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-foreground truncate">Record Income</p>
-              <p className="text-[11px] text-default-400 truncate">Log revenue, salary, or client payment</p>
-            </div>
-          </Card>
-
-          <Card
-            className="p-3.5 rounded-xl border border-default-200/80 dark:border-default-800 hover:border-red-500/40 hover:bg-default-50/50 dark:hover:bg-default-800/30 transition-all cursor-pointer flex flex-row items-center gap-3 shadow-2xs"
-            onClick={() => {
-              setNewTxType("EXPENSE");
-              setErrorMessage("");
-              setIsAddModalOpen(true);
-            }}
-          >
-            <div className="w-9 h-9 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0 text-red-500">
-              <CreditCard className="w-4.5 h-4.5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-foreground truncate">Record Expense</p>
-              <p className="text-[11px] text-default-400 truncate">Log operational costs or personal spend</p>
-            </div>
-          </Card>
-
-          <Card
-            className="p-3.5 rounded-xl border border-default-200/80 dark:border-default-800 hover:border-purple-500/40 hover:bg-default-50/50 dark:hover:bg-default-800/30 transition-all cursor-pointer flex flex-row items-center gap-3 shadow-2xs"
-            onClick={() => router.push("/analytics")}
-          >
-            <div className="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0 text-purple-500">
-              <PieChart className="w-4.5 h-4.5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-foreground truncate">Deep Analytics</p>
-              <p className="text-[11px] text-default-400 truncate">View monthly cashflow & categories</p>
-            </div>
-          </Card>
-
-          <Card
-            className="p-3.5 rounded-xl border border-default-200/80 dark:border-default-800 hover:border-blue-500/40 hover:bg-default-50/50 dark:hover:bg-default-800/30 transition-all cursor-pointer flex flex-row items-center gap-3 shadow-2xs"
-            onClick={() => router.push("/portfolio")}
-          >
-            <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0 text-blue-500">
-              <Target className="w-4.5 h-4.5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-foreground truncate">Wallets & Assets</p>
-              <p className="text-[11px] text-default-400 truncate">Manage bank accounts, cash & e-wallets</p>
-            </div>
-          </Card>
-        </div>
-      </div>
-
-      {/* Active Filter Chips Row */}
-      {activeFiltersCount > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5 p-2.5 bg-default-100/70 dark:bg-default-800/40 rounded-xl text-xs">
-          <span className="text-[11px] font-semibold text-default-500 mr-1">Active filters:</span>
-          {filterType !== "ALL" && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-medium">
-              Type: {filterType}
-              <X className="w-3 h-3 cursor-pointer" onClick={() => setFilterType("ALL")} />
-            </span>
-          )}
-          {filterCategory && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-medium">
-              Category: {filterCategory}
-              <X className="w-3 h-3 cursor-pointer" onClick={() => setFilterCategory("")} />
-            </span>
-          )}
-          {filterAccount && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-medium">
-              Account: {workspaceAccounts.find(a => a.id === filterAccount)?.name || filterAccount}
-              <X className="w-3 h-3 cursor-pointer" onClick={() => setFilterAccount("")} />
-            </span>
-          )}
-          {(filterStartDate || filterEndDate) && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-medium">
-              Date: {filterStartDate || "Start"} → {filterEndDate || "End"}
-              <X className="w-3 h-3 cursor-pointer" onClick={() => { setFilterStartDate(""); setFilterEndDate(""); }} />
-            </span>
-          )}
-          {(filterMinAmount || filterMaxAmount) && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-medium">
-              Amount: {filterMinAmount ? formatCurrency(filterMinAmount) : "0"} - {filterMaxAmount ? formatCurrency(filterMaxAmount) : "∞"}
-              <X className="w-3 h-3 cursor-pointer" onClick={() => { setFilterMinAmount(""); setFilterMaxAmount(""); }} />
-            </span>
-          )}
-          {filterKeyword && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-medium">
-              Keyword: &quot;{filterKeyword}&quot;
-              <X className="w-3 h-3 cursor-pointer" onClick={() => setFilterKeyword("")} />
-            </span>
-          )}
-          <button
-            onClick={resetFilters}
-            className="text-[11px] text-danger hover:underline ml-auto font-medium cursor-pointer"
-          >
-            Clear all
-          </button>
-        </div>
-      )}
-
-      {/* Transaction Journal: Full TanStack Table DataTable */}
-      <Card className="rounded-xl border border-default-200/80 dark:border-default-800 shadow-2xs overflow-hidden">
-        <Card.Header className="p-3.5 sm:p-4 border-b border-default-100 dark:border-default-800/80 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-2">
-              <Card.Title className="text-sm font-semibold text-foreground">Transaction Journal</Card.Title>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                TanStack DataTable
-              </span>
-            </div>
-            <Card.Description className="text-xs text-default-500">
-              Total {transactions.length} entri termuat
-              {activeFiltersCount > 0 ? ` (difilter dari ${rawTransactions.length} total)` : ""}
-            </Card.Description>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Sort Order Selector (Created At vs Transaction Date) */}
-            <div className="flex items-center gap-1.5 bg-default-100 dark:bg-default-800 p-0.5 rounded-xl text-xs">
-              <button
-                type="button"
-                onClick={() => setApiSortBy("createdAt")}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  apiSortBy === "createdAt"
-                    ? "bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 shadow-xs"
-                    : "text-default-500 hover:text-foreground"
-                }`}
-                title="Tampilkan transaksi yang paling baru diinput ke sistem"
-              >
-                ✨ Terbaru Diinput
-              </button>
-              <button
-                type="button"
-                onClick={() => setApiSortBy("date")}
-                className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  apiSortBy === "date"
-                    ? "bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 shadow-xs"
-                    : "text-default-500 hover:text-foreground"
-                }`}
-                title="Urutkan berdasarkan tanggal pada nota/struk"
-              >
-                📅 Tgl Nota
-              </button>
-            </div>
-
-            {/* Keyword Search */}
-            <div className="relative w-40 sm:w-52">
-              <Search className="w-3.5 h-3.5 text-default-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                placeholder="Cari transaksi..."
-                value={filterKeyword}
-                onChange={(e) => setFilterKeyword(e.target.value)}
-                className="w-full h-8 pl-8 pr-7 text-xs rounded-xl border border-default-200 dark:border-default-700 bg-transparent text-foreground placeholder:text-default-400 focus:outline-none focus:ring-1.5 focus:ring-blue-500 transition-all"
-              />
-              {filterKeyword && (
-                <button
-                  type="button"
-                  onClick={() => setFilterKeyword("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-default-400 hover:text-foreground cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-
-            {/* Filter Modal Trigger */}
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 px-2.5 text-xs flex items-center gap-1 cursor-pointer border-default-200 dark:border-default-700 hover:border-blue-500/40 rounded-xl"
-              onPress={() => setIsFilterModalOpen(true)}
-            >
-              <Filter className="w-3 h-3 text-default-500" />
-              <span>Filter</span>
-              {activeFiltersCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center font-bold ml-0.5">
-                  {activeFiltersCount}
-                </span>
-              )}
-            </Button>
-
-            {/* View All */}
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-xs h-8 px-2 text-default-500 hover:text-foreground cursor-pointer rounded-xl"
-              onPress={() => router.push("/transactions")}
-            >
-              Semua
-            </Button>
-          </div>
-        </Card.Header>
-
-        {/* TanStack Table Grid */}
-        <Card.Content className="p-0">
-          <div className="w-full overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-160">
-              <thead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr
-                    key={headerGroup.id}
-                    className="border-b border-default-200 dark:border-default-800 bg-default-50/70 dark:bg-default-900/40"
-                  >
-                    {headerGroup.headers.map((header) => {
-                      const canSort = header.column.getCanSort();
-                      const sorted = header.column.getIsSorted();
-                      return (
-                        <th
-                          key={header.id}
-                          onClick={header.column.getToggleSortingHandler()}
-                          className={`py-3 px-4 text-xs font-semibold text-default-500 uppercase tracking-wider select-none ${
-                            canSort
-                              ? "cursor-pointer hover:text-foreground hover:bg-default-100/60 dark:hover:bg-default-800/60 transition-colors"
-                              : ""
-                          }`}
-                        >
-                          <div className={`flex items-center gap-1.5 ${header.id === "amount" || header.id === "actions" ? "justify-end" : "justify-start"}`}>
-                            <span>{flexRender(header.column.columnDef.header, header.getContext())}</span>
-                            {canSort && (
-                              <span className="text-default-400 shrink-0">
-                                {sorted === "asc" ? (
-                                  <ArrowUp className="w-3.5 h-3.5 text-blue-500" />
-                                ) : sorted === "desc" ? (
-                                  <ArrowDown className="w-3.5 h-3.5 text-blue-500" />
-                                ) : (
-                                  <ArrowUpDown className="w-3 h-3 opacity-30 hover:opacity-100" />
-                                )}
-                              </span>
-                            )}
-                          </div>
-                        </th>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </thead>
-              <tbody className="divide-y divide-default-100 dark:divide-default-800/60">
-                {table.getRowModel().rows.length > 0 ? (
-                  table.getRowModel().rows.map((row) => (
-                    <tr
-                      key={row.id}
-                      className="hover:bg-default-50/70 dark:hover:bg-default-800/40 transition-colors group"
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <td key={cell.id} className="py-2.5 px-4 text-xs">
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={columns.length} className="py-12 text-center text-default-400 text-xs">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <Receipt className="w-9 h-9 text-default-300 dark:text-default-600 stroke-[1.5]" />
-                        <p className="font-semibold text-foreground text-sm">Tidak ada transaksi yang cocok</p>
-                        <p className="text-xs text-default-400 max-w-sm">
-                          {filterKeyword || activeFiltersCount > 0
-                            ? "Coba sesuaikan kata kunci pencarian atau bersihkan filter yang aktif."
-                            : "Belum ada transaksi di workspace ini. Klik 'Add Transaction' di atas untuk mencatat transaksi baru."}
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* DataTable Footer: Pagination Controls & Page Jump */}
-          <div className="p-3 sm:p-4 border-t border-default-100 dark:border-default-800/80 bg-default-50/40 dark:bg-default-900/20 flex flex-col lg:flex-row items-center justify-between gap-3 text-xs text-default-500">
-            {/* Left: Entries range info & Page Size Selector */}
-            <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
-              <span>
-                Menampilkan{" "}
-                <strong className="text-foreground font-mono">
-                  {table.getFilteredRowModel().rows.length === 0
-                    ? 0
-                    : pagination.pageIndex * pagination.pageSize + 1}
-                </strong>{" "}
-                -{" "}
-                <strong className="text-foreground font-mono">
-                  {Math.min(
-                    (pagination.pageIndex + 1) * pagination.pageSize,
-                    table.getFilteredRowModel().rows.length
-                  )}
-                </strong>{" "}
-                dari{" "}
-                <strong className="text-foreground font-mono">
-                  {table.getFilteredRowModel().rows.length}
-                </strong>{" "}
-                transaksi
-              </span>
-
-              {/* Page size dropdown */}
-              <div className="flex items-center gap-1.5 border-l border-default-200 dark:border-default-700 pl-3">
-                <span className="text-[11px] text-default-400">Baris:</span>
-                <select
-                  value={table.getState().pagination.pageSize}
-                  onChange={(e) => table.setPageSize(Number(e.target.value))}
-                  className="h-7 px-2 rounded-lg border border-default-200 dark:border-default-700 bg-white dark:bg-gray-800 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-                >
-                  {[5, 10, 20, 50, 100].map((size) => (
-                    <option key={size} value={size}>
-                      {size} / hal
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Right: Page Navigation & Direct Select / Jump */}
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 w-full lg:w-auto justify-center lg:justify-end">
-              {/* Direct Select Page Dropdown */}
-              <div className="flex items-center gap-1 mr-1">
-                <span className="text-[11px] text-default-400">Halaman:</span>
-                <select
-                  value={table.getState().pagination.pageIndex}
-                  onChange={(e) => table.setPageIndex(Number(e.target.value))}
-                  className="h-7 px-2 rounded-lg border border-default-200 dark:border-default-700 bg-white dark:bg-gray-800 text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer font-semibold"
-                >
-                  {Array.from({ length: Math.max(1, table.getPageCount()) }, (_, i) => (
-                    <option key={i} value={i}>
-                      {i + 1} dari {Math.max(1, table.getPageCount())}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* First Page Button */}
-              <button
-                type="button"
-                onClick={() => table.setPageIndex(0)}
-                disabled={!table.getCanPreviousPage()}
-                title="Halaman Pertama"
-                className="h-7 w-7 flex items-center justify-center rounded-lg border border-default-200 dark:border-default-700 text-default-600 dark:text-default-300 hover:bg-default-100 dark:hover:bg-default-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
-              >
-                <ChevronsLeft className="w-3.5 h-3.5" />
-              </button>
-
-              {/* Previous Page Button */}
-              <button
-                type="button"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-                title="Halaman Sebelumnya"
-                className="h-7 px-2.5 flex items-center gap-1 rounded-lg border border-default-200 dark:border-default-700 text-default-600 dark:text-default-300 hover:bg-default-100 dark:hover:bg-default-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors text-xs font-medium"
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Sebelumnya</span>
-              </button>
-
-              {/* Dynamic Numeric Page Buttons */}
-              <div className="flex items-center gap-1">
-                {generatePageNumbers(table.getState().pagination.pageIndex, Math.max(1, table.getPageCount())).map(
-                  (page, idx) => {
-                    if (page === "...") {
-                      return (
-                        <span key={`ellipsis-${idx}`} className="px-1 text-default-400 select-none">
-                          ...
-                        </span>
-                      );
-                    }
-                    const pNum = Number(page) - 1;
-                    const isActive = pNum === table.getState().pagination.pageIndex;
-                    return (
-                      <button
-                        key={`page-${page}`}
-                        type="button"
-                        onClick={() => table.setPageIndex(pNum)}
-                        className={`h-7 min-w-[28px] px-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                          isActive
-                            ? "bg-blue-600 text-white shadow-xs"
-                            : "border border-default-200 dark:border-default-700 text-default-600 dark:text-default-300 hover:bg-default-100 dark:hover:bg-default-800"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    );
-                  }
-                )}
-              </div>
-
-              {/* Next Page Button */}
-              <button
-                type="button"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-                title="Halaman Berikutnya"
-                className="h-7 px-2.5 flex items-center gap-1 rounded-lg border border-default-200 dark:border-default-700 text-default-600 dark:text-default-300 hover:bg-default-100 dark:hover:bg-default-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors text-xs font-medium"
-              >
-                <span className="hidden sm:inline">Berikutnya</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-
-              {/* Last Page Button */}
-              <button
-                type="button"
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                disabled={!table.getCanNextPage()}
-                title="Halaman Terakhir"
-                className="h-7 w-7 flex items-center justify-center rounded-lg border border-default-200 dark:border-default-700 text-default-600 dark:text-default-300 hover:bg-default-100 dark:hover:bg-default-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
-              >
-                <ChevronsRight className="w-3.5 h-3.5" />
-              </button>
-
-              {/* Direct Jump Input */}
-              <div className="flex items-center gap-1 border-l border-default-200 dark:border-default-700 pl-2">
-                <span className="text-[11px] text-default-400 hidden xl:inline">Lompat:</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={Math.max(1, table.getPageCount())}
-                  placeholder="Hal"
-                  value={jumpPageVal}
-                  onChange={(e) => setJumpPageVal(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      const val = Number(jumpPageVal);
-                      if (val >= 1 && val <= table.getPageCount()) {
-                        table.setPageIndex(val - 1);
-                        setJumpPageVal("");
-                      }
-                    }
-                  }}
-                  className="w-12 h-7 px-1 text-center text-xs rounded-lg border border-default-200 dark:border-default-700 bg-white dark:bg-gray-800 text-foreground focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
-                />
-              </div>
-            </div>
-          </div>
-        </Card.Content>
-      </Card>
-
       {/* WIDE MODAL: Add Transaction Modal (max-w-4xl, 12-Column Responsive Layout) */}
       <Modal isOpen={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <Modal.Backdrop className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5">
@@ -2098,8 +1711,7 @@ export default function Dashboard() {
                     <span className="text-[11px] text-default-400">Pilih jenis arus dana</span>
                   </div>
                   <div className="grid grid-cols-2 gap-3 p-1.5 bg-default-100/80 dark:bg-default-800/60 rounded-2xl border border-default-200/60 dark:border-default-700/60">
-                    <button
-                      type="button"
+                    <button aria-label="button Action" type="button"
                       onClick={() => setNewTxType("EXPENSE")}
                       className={`py-3 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-3 ${
                         newTxType === "EXPENSE"
@@ -2115,8 +1727,7 @@ export default function Dashboard() {
                         <p className={`text-[10px] font-normal leading-tight mt-0.5 ${newTxType === "EXPENSE" ? "text-white/80" : "text-default-400"}`}>Biaya operasional, belanja, konsumsi</p>
                       </div>
                     </button>
-                    <button
-                      type="button"
+                    <button aria-label="button Action" type="button"
                       onClick={() => setNewTxType("INCOME")}
                       className={`py-3 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-3 ${
                         newTxType === "INCOME"
@@ -2155,8 +1766,7 @@ export default function Dashboard() {
                         <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
                         <span>✨ Data struk berhasil diisi otomatis ke form oleh Gemini Vision AI.</span>
                       </div>
-                      <button
-                        type="button"
+                      <button aria-label="button Action" type="button"
                         onClick={resetAddForm}
                         className="underline text-[11px] ml-2 cursor-pointer text-danger font-semibold hover:text-danger/80"
                       >
@@ -2217,8 +1827,7 @@ export default function Dashboard() {
                         { label: "+500rb", val: 500000 },
                         { label: "+1jt", val: 1000000 },
                       ].map((chip) => (
-                        <button
-                          key={chip.label}
+                        <button aria-label="button Action" key={chip.label}
                           type="button"
                           onClick={() => addAmount(chip.val)}
                           className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-default-100 dark:bg-default-800 hover:bg-default-200 dark:hover:bg-default-700 text-default-700 dark:text-default-300 border border-default-200 dark:border-default-700 transition-colors cursor-pointer"
@@ -2227,8 +1836,7 @@ export default function Dashboard() {
                         </button>
                       ))}
                       {newTxAmount && (
-                        <button
-                          type="button"
+                        <button aria-label="button Action" type="button"
                           onClick={() => setNewTxAmount("")}
                           className="px-1.5 py-0.5 rounded-md text-[10px] text-danger hover:underline cursor-pointer font-medium ml-auto"
                         >
@@ -2258,8 +1866,7 @@ export default function Dashboard() {
                         <span className="text-[10px] text-blue-500 font-medium">(Otomatis buat Kas)</span>
                       )}
                     </div>
-                    <Select
-                      placeholder={workspaceAccounts.length > 0 ? "Pilih akun/dompet" : "Kas Utama (Default)"}
+                    <Select aria-label="Select Action" placeholder={workspaceAccounts.length > 0 ? "Pilih akun/dompet" : "Kas Utama (Default)"}
                       selectedKey={newTxAccount || (workspaceAccounts[0]?.id ?? null)}
                       onSelectionChange={(key) => setNewTxAccount(key ? String(key) : "")}
                       className="w-full"
@@ -2314,8 +1921,7 @@ export default function Dashboard() {
                       <Label className="text-xs font-semibold text-foreground">Kategori Transaksi</Label>
                       <span className="text-[10px] text-default-400">Pengelompokan analitik</span>
                     </div>
-                    <Select
-                      placeholder="Pilih kategori"
+                    <Select aria-label="Select Action" placeholder="Pilih kategori"
                       selectedKey={newTxCategory || null}
                       onSelectionChange={(key) => setNewTxCategory(key ? String(key) : "")}
                       className="w-full"
@@ -2355,8 +1961,7 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between">
                       <Label className="text-xs font-semibold text-foreground">Tanggal Transaksi *</Label>
                       <div className="flex items-center gap-1">
-                        <button
-                          type="button"
+                        <button aria-label="button Action" type="button"
                           onClick={() => setNewTxDate(new Date().toISOString().split("T")[0])}
                           className={`px-2 py-0.5 rounded text-[10px] font-semibold border transition-colors cursor-pointer ${
                             newTxDate === new Date().toISOString().split("T")[0]
@@ -2366,8 +1971,7 @@ export default function Dashboard() {
                         >
                           Hari Ini
                         </button>
-                        <button
-                          type="button"
+                        <button aria-label="button Action" type="button"
                           onClick={() => {
                             const d = new Date();
                             d.setDate(d.getDate() - 1);
@@ -2396,8 +2000,7 @@ export default function Dashboard() {
                         ? ["Makanan", "Transportasi", "Tagihan & Utilitas", "Belanja", "Hiburan"]
                         : ["Gaji", "Penjualan", "Investasi", "Bonus", "Freelance"]
                       ).map((catName) => (
-                        <button
-                          key={catName}
+                        <button aria-label="button Action" key={catName}
                           type="button"
                           onClick={() => setNewTxCategory(catName)}
                           className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
@@ -2430,8 +2033,7 @@ export default function Dashboard() {
               </Modal.Body>
 
               <Modal.Footer className="p-5 sm:p-6 pt-3 flex items-center justify-between border-t border-default-100 dark:border-default-800 bg-default-50/50 dark:bg-default-900/40">
-                <Button
-                  variant="ghost"
+                <Button aria-label="Button Action" variant="ghost"
                   size="sm"
                   type="button"
                   onPress={resetAddForm}
@@ -2441,8 +2043,7 @@ export default function Dashboard() {
                   Reset Form
                 </Button>
                 <div className="flex items-center gap-2.5">
-                  <Button
-                    variant="outline"
+                  <Button aria-label="Button Action" variant="outline"
                     size="sm"
                     type="button"
                     onPress={() => setIsAddModalOpen(false)}
@@ -2451,8 +2052,7 @@ export default function Dashboard() {
                   >
                     Batal
                   </Button>
-                  <Button
-                    size="sm"
+                  <Button aria-label="Button Action" size="sm"
                     type="button"
                     className={`shadow-xs cursor-pointer font-semibold px-5 text-white ${
                       newTxType === "EXPENSE"
@@ -2519,8 +2119,7 @@ export default function Dashboard() {
                     <Label className="text-xs font-semibold text-foreground mb-1.5 block">Transaction Type</Label>
                     <div className="grid grid-cols-3 gap-1.5">
                       {(["ALL", "INCOME", "EXPENSE"] as const).map((t) => (
-                        <button
-                          key={t}
+                        <button aria-label="button Action" key={t}
                           type="button"
                           onClick={() => setFilterType(t)}
                           className={`py-2 px-2 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
@@ -2540,8 +2139,7 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <Label className="text-xs font-semibold text-foreground">Category</Label>
-                    <Select
-                      placeholder="All categories"
+                    <Select aria-label="Select Action" placeholder="All categories"
                       selectedKey={filterCategory || null}
                       onSelectionChange={(key) => setFilterCategory(key ? String(key) : "")}
                       className="w-full"
@@ -2569,8 +2167,7 @@ export default function Dashboard() {
 
                   <div className="space-y-1">
                     <Label className="text-xs font-semibold text-foreground">Wallet / Account</Label>
-                    <Select
-                      placeholder="All accounts"
+                    <Select aria-label="Select Action" placeholder="All accounts"
                       selectedKey={filterAccount || null}
                       onSelectionChange={(key) => setFilterAccount(key ? String(key) : "")}
                       className="w-full"
@@ -2602,22 +2199,19 @@ export default function Dashboard() {
                   <div className="flex items-center justify-between">
                     <Label className="text-xs font-semibold text-foreground">Date Range</Label>
                     <div className="flex items-center gap-1">
-                      <button
-                        type="button"
+                      <button aria-label="button Action" type="button"
                         onClick={() => setDatePreset("this-month")}
                         className="text-[11px] px-2 py-0.5 rounded-md bg-default-100 dark:bg-default-800 text-default-600 hover:text-foreground cursor-pointer font-medium"
                       >
                         This Month
                       </button>
-                      <button
-                        type="button"
+                      <button aria-label="button Action" type="button"
                         onClick={() => setDatePreset("last-30")}
                         className="text-[11px] px-2 py-0.5 rounded-md bg-default-100 dark:bg-default-800 text-default-600 hover:text-foreground cursor-pointer font-medium"
                       >
                         Last 30 Days
                       </button>
-                      <button
-                        type="button"
+                      <button aria-label="button Action" type="button"
                         onClick={() => setDatePreset("this-year")}
                         className="text-[11px] px-2 py-0.5 rounded-md bg-default-100 dark:bg-default-800 text-default-600 hover:text-foreground cursor-pointer font-medium"
                       >
@@ -2670,8 +2264,7 @@ export default function Dashboard() {
               </Modal.Body>
 
               <Modal.Footer className="p-5 sm:p-6 pt-3 flex items-center justify-between border-t border-default-100 dark:border-default-800">
-                <Button
-                  variant="ghost"
+                <Button aria-label="Button Action" variant="ghost"
                   size="sm"
                   onPress={resetFilters}
                   className="text-xs flex items-center gap-1.5 text-default-500 hover:text-foreground"
@@ -2680,15 +2273,13 @@ export default function Dashboard() {
                   <span>Reset All</span>
                 </Button>
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
+                  <Button aria-label="Button Action" variant="ghost"
                     size="sm"
                     onPress={() => setIsFilterModalOpen(false)}
                   >
                     Cancel
                   </Button>
-                  <Button
-                    size="sm"
+                  <Button aria-label="Button Action" size="sm"
                     className="bg-linear-to-r from-blue-500 to-purple-600 text-white cursor-pointer px-5"
                     onPress={() => setIsFilterModalOpen(false)}
                   >
@@ -2703,3 +2294,7 @@ export default function Dashboard() {
     </div>
   );
 }
+
+
+
+
