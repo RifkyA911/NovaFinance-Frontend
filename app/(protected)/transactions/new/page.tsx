@@ -25,12 +25,13 @@ import {
   Tabs,
   DatePicker,
   DateField,
+  TimeField,
   Calendar,
 } from "@heroui/react";
 import {
-  parseDate,
-  today,
+  now,
   getLocalTimeZone,
+  parseZonedDateTime,
   type DateValue,
 } from "@internationalized/date";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -106,9 +107,9 @@ export default function NewTransactionPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [selectedDate, setSelectedDate] = useState<DateValue | null>(() => {
+  const [selectedDateTime, setSelectedDateTime] = useState<DateValue | null>(() => {
     try {
-      return today(getLocalTimeZone());
+      return now(getLocalTimeZone());
     } catch {
       return null;
     }
@@ -120,12 +121,21 @@ export default function NewTransactionPage() {
     type: "EXPENSE" as "INCOME" | "EXPENSE",
     account: "",
     category: "",
-    date: selectedDate ? selectedDate.toString() : "",
+    date: selectedDateTime ? (selectedDateTime as any).toDate().toISOString() : new Date().toISOString(),
     notes: "",
     paymentMethod: "cash",
     merchant: "",
     referenceNo: "",
   });
+
+  useEffect(() => {
+    if (selectedDateTime && (selectedDateTime as any).toDate) {
+      setFormData((prev) => ({
+        ...prev,
+        date: (selectedDateTime as any).toDate().toISOString(),
+      }));
+    }
+  }, [selectedDateTime]);
 
   const categoriesQuery = useQuery({
     queryKey: queryKeys.categories(selectedWorkspace?.id),
@@ -204,13 +214,18 @@ export default function NewTransactionPage() {
         }));
       }
 
-      // Date
+      // Date & Time
       if (meta.date) {
         try {
-          const iso = meta.date.slice(0, 10);
-          const parsed = parseDate(iso);
-          setSelectedDate(parsed);
-          setFormData((prev) => ({ ...prev, date: iso }));
+          const tz = getLocalTimeZone();
+          const d = new Date(meta.date);
+          if (!isNaN(d.getTime())) {
+            const pad = (n: number) => String(n).padStart(2, "0");
+            const isoString = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}[${tz}]`;
+            const parsed = parseZonedDateTime(isoString);
+            setSelectedDateTime(parsed);
+            setFormData((prev) => ({ ...prev, date: d.toISOString() }));
+          }
         } catch {
           // ignore parsing error
         }
@@ -264,15 +279,15 @@ export default function NewTransactionPage() {
   const resetForm = () => {
     setAttachedDocuments({});
     setIsAiAutoFilled(false);
-    const t = today(getLocalTimeZone());
-    setSelectedDate(t);
+    const t = now(getLocalTimeZone());
+    setSelectedDateTime(t);
     setFormData({
       description: "",
       amount: "",
       type: "EXPENSE",
       account: "",
       category: "",
-      date: t.toString(),
+      date: t.toDate().toISOString(),
       notes: "",
       paymentMethod: "cash",
       merchant: "",
@@ -382,10 +397,10 @@ export default function NewTransactionPage() {
         }
       }
 
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.transactions(selectedWorkspace.id),
-      });
-      router.push("/transactions");
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      router.push("/dashboard");
     } catch (err: any) {
       console.error("Create transaction error:", err);
       setError(err?.message || "Failed to create transaction.");
@@ -582,76 +597,112 @@ export default function NewTransactionPage() {
               </div>
             </div>
 
-            {/* Date (HeroUI DatePicker) + Wallet / Account */}
+            {/* Date & Time (HeroUI DatePicker with H:M:S) + Wallet / Account */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <DatePicker
                 className="w-full space-y-1.5"
-                value={selectedDate}
+                value={selectedDateTime}
                 onChange={(val) => {
-                  setSelectedDate(val);
-                  if (val) {
-                    setFormData((prev) => ({ ...prev, date: val.toString() }));
+                  setSelectedDateTime(val);
+                  if (val && (val as any).toDate) {
+                    setFormData((prev) => ({
+                      ...prev,
+                      date: (val as any).toDate().toISOString(),
+                    }));
                   }
                 }}
+                granularity="second"
+                hourCycle={24}
+                hideTimeZone
+                shouldForceLeadingZeros
               >
-                <Label className="text-xs font-semibold text-foreground">
-                  Date *
-                </Label>
-                <DateField.Group
-                  fullWidth
-                  className="h-11 px-3 rounded-xl border border-default-200 dark:border-default-700 bg-default-50 hover:bg-default-100 transition-colors flex items-center justify-between"
-                >
-                  <DateField.Input className="flex items-center gap-0.5 text-xs font-medium">
-                    {(segment) => (
-                      <DateField.Segment
-                        segment={segment}
-                        className="px-0.5 rounded outline-none focus:bg-blue-500 focus:text-white"
-                      />
-                    )}
-                  </DateField.Input>
-                  <DateField.Suffix>
-                    <DatePicker.Trigger className="p-1.5 rounded-lg hover:bg-default-200 dark:hover:bg-default-700 text-default-500 cursor-pointer">
-                      <DatePicker.TriggerIndicator />
-                    </DatePicker.Trigger>
-                  </DateField.Suffix>
-                </DateField.Group>
-                <DatePicker.Popover className="p-3 bg-white dark:bg-gray-900 border border-default-200 dark:border-default-800 rounded-2xl shadow-2xl z-50">
-                  <Calendar aria-label="Transaction date">
-                    <Calendar.Header className="flex items-center justify-between pb-2 mb-2 border-b border-default-100 dark:border-default-800">
-                      <Calendar.YearPickerTrigger className="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg hover:bg-default-100 dark:hover:bg-default-800">
-                        <Calendar.YearPickerTriggerHeading />
-                        <Calendar.YearPickerTriggerIndicator />
-                      </Calendar.YearPickerTrigger>
-                      <div className="flex items-center gap-1">
-                        <Calendar.NavButton
-                          slot="previous"
-                          className="p-1 rounded hover:bg-default-100 dark:hover:bg-default-800 cursor-pointer text-xs"
-                        />
-                        <Calendar.NavButton
-                          slot="next"
-                          className="p-1 rounded hover:bg-default-100 dark:hover:bg-default-800 cursor-pointer text-xs"
-                        />
-                      </div>
-                    </Calendar.Header>
-                    <Calendar.Grid className="w-full border-collapse">
-                      <Calendar.GridHeader>
-                        {(day) => (
-                          <Calendar.HeaderCell className="text-[10px] font-medium text-default-400 pb-1 text-center">
-                            {day}
-                          </Calendar.HeaderCell>
-                        )}
-                      </Calendar.GridHeader>
-                      <Calendar.GridBody>
-                        {(date) => (
-                          <Calendar.Cell
-                            date={date}
-                            className="w-8 h-8 text-xs text-center rounded-lg hover:bg-default-100 dark:hover:bg-default-800 cursor-pointer data-[selected=true]:bg-blue-600 data-[selected=true]:text-white font-medium flex items-center justify-center m-0.5"
+                {({ state }) => (
+                  <>
+                    <Label className="text-xs font-semibold text-foreground">
+                      Date & Time (H:M:S) *
+                    </Label>
+                    <DateField.Group
+                      fullWidth
+                      className="h-11 px-3 rounded-xl border border-default-200 dark:border-default-700 bg-default-50 hover:bg-default-100 transition-colors flex items-center justify-between"
+                    >
+                      <DateField.Input className="flex items-center gap-0.5 text-xs font-medium font-mono">
+                        {(segment) => (
+                          <DateField.Segment
+                            segment={segment}
+                            className="px-0.5 rounded outline-none focus:bg-blue-500 focus:text-white"
                           />
                         )}
-                      </Calendar.GridBody>
-                    </Calendar.Grid>
-                  </Calendar>
-                </DatePicker.Popover>
+                      </DateField.Input>
+                      <DateField.Suffix>
+                        <DatePicker.Trigger className="p-1.5 rounded-lg hover:bg-default-200 dark:hover:bg-default-700 text-default-500 cursor-pointer">
+                          <DatePicker.TriggerIndicator />
+                        </DatePicker.Trigger>
+                      </DateField.Suffix>
+                    </DateField.Group>
+                    <DatePicker.Popover className="p-3 bg-white dark:bg-gray-900 border border-default-200 dark:border-default-800 rounded-2xl shadow-2xl z-50 flex flex-col gap-3">
+                      <Calendar aria-label="Transaction date">
+                        <Calendar.Header className="flex items-center justify-between pb-2 mb-2 border-b border-default-100 dark:border-default-800">
+                          <Calendar.YearPickerTrigger className="flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg hover:bg-default-100 dark:hover:bg-default-800">
+                            <Calendar.YearPickerTriggerHeading />
+                            <Calendar.YearPickerTriggerIndicator />
+                          </Calendar.YearPickerTrigger>
+                          <div className="flex items-center gap-1">
+                            <Calendar.NavButton
+                              slot="previous"
+                              className="p-1 rounded hover:bg-default-100 dark:hover:bg-default-800 cursor-pointer text-xs"
+                            />
+                            <Calendar.NavButton
+                              slot="next"
+                              className="p-1 rounded hover:bg-default-100 dark:hover:bg-default-800 cursor-pointer text-xs"
+                            />
+                          </div>
+                        </Calendar.Header>
+                        <Calendar.Grid className="w-full border-collapse">
+                          <Calendar.GridHeader>
+                            {(day) => (
+                              <Calendar.HeaderCell className="text-[10px] font-medium text-default-400 pb-1 text-center">
+                                {day}
+                              </Calendar.HeaderCell>
+                            )}
+                          </Calendar.GridHeader>
+                          <Calendar.GridBody>
+                            {(date) => (
+                              <Calendar.Cell
+                                date={date}
+                                className="w-8 h-8 text-xs text-center rounded-lg hover:bg-default-100 dark:hover:bg-default-800 cursor-pointer data-[selected=true]:bg-blue-600 data-[selected=true]:text-white font-medium flex items-center justify-center m-0.5"
+                              />
+                            )}
+                          </Calendar.GridBody>
+                        </Calendar.Grid>
+                      </Calendar>
+
+                      {/* Time (H:M:S) Controls in Popover */}
+                      <div className="flex items-center justify-between pt-2 border-t border-default-100 dark:border-default-800">
+                        <Label className="text-xs font-semibold text-foreground">
+                          Time (H:M:S)
+                        </Label>
+                        <TimeField
+                          aria-label="Time"
+                          granularity="second"
+                          hourCycle={24}
+                          value={state.timeValue}
+                          onChange={(v) => state.setTimeValue(v as any)}
+                        >
+                          <TimeField.Group className="h-9 px-2 rounded-lg border border-default-200 dark:border-default-700 bg-default-50 flex items-center">
+                            <TimeField.Input className="flex items-center gap-0.5 text-xs font-mono">
+                              {(segment) => (
+                                <TimeField.Segment
+                                  segment={segment}
+                                  className="px-0.5 rounded outline-none focus:bg-blue-500 focus:text-white"
+                                />
+                              )}
+                            </TimeField.Input>
+                          </TimeField.Group>
+                        </TimeField>
+                      </div>
+                    </DatePicker.Popover>
+                  </>
+                )}
               </DatePicker>
 
               <div className="space-y-1.5">
