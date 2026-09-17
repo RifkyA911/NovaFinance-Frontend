@@ -74,8 +74,19 @@ export interface CreateAccountPayload {
   workspaceId: string;
   name: string;
   type: 'bank' | 'cash' | 'ewallet' | 'credit';
-  balance?: string;
+  balance?: string | number;
   currency?: string;
+  accountNumber?: string;
+  bankName?: string;
+}
+
+export interface UpdateAccountPayload {
+  name?: string;
+  type?: 'bank' | 'cash' | 'ewallet' | 'credit';
+  balance?: string | number;
+  currency?: string;
+  accountNumber?: string;
+  bankName?: string;
 }
 
 export interface CreateCategoryPayload {
@@ -206,6 +217,19 @@ class ApiClient {
     return this.request('/api/accounts', {
       method: 'POST',
       body: JSON.stringify(payload),
+    });
+  }
+
+  async updateAccount(id: string, payload: UpdateAccountPayload): Promise<{ success: boolean; data: { account: Account } }> {
+    return this.request(`/api/accounts/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async deleteAccount(id: string): Promise<{ success: boolean }> {
+    return this.request(`/api/accounts/${id}`, {
+      method: 'DELETE',
     });
   }
 

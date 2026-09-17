@@ -2,6 +2,7 @@ import { api } from './api';
 import type {
   CreateTransactionPayload,
   CreateAccountPayload,
+  UpdateAccountPayload,
   CreateCategoryPayload,
 } from './api';
 
@@ -45,6 +46,8 @@ export const mutationFunctions = {
   createTransaction: (payload: CreateTransactionPayload) => api.createTransaction(payload),
   deleteTransaction: (id: string) => api.deleteTransaction(id),
   createAccount: (payload: CreateAccountPayload) => api.createAccount(payload),
+  updateAccount: (id: string, payload: UpdateAccountPayload) => api.updateAccount(id, payload),
+  deleteAccount: (id: string) => api.deleteAccount(id),
   createCategory: (payload: CreateCategoryPayload) => api.createCategory(payload),
   linkDocumentToTransaction: (payload: { documentId: string; transactionId: string }) =>
     api.linkDocumentToTransaction(payload.documentId, payload.transactionId),
