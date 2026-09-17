@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Card,
   Button,
@@ -93,10 +94,92 @@ import CashflowChart from "./components/CashflowChart";
 import FinancialHealthAuditor from "./components/FinancialHealthAuditor";
 import { DocumentUpload, type DocumentMetadata, type UploadedDocumentResult } from "../components/DocumentUpload";
 
+const DASHBOARD_DICT = {
+  en: {
+    loading: "Loading financial data...",
+    noWorkspaceTitle: "No Workspace Selected",
+    noWorkspaceDesc: "Please choose an existing workspace or create a new one to access your financial metrics and transaction journal.",
+    manageWorkspaces: "Manage Workspaces",
+    workspaceSubtitle: "Financial journal & balance overview for this workspace.",
+    filter: "Filter",
+    addTransaction: "Add Transaction",
+    exportCsv: "Export Excel (.csv)",
+    exportPdf: "Export Summary (.pdf)",
+    totalNetBalance: "Total Net Balance",
+    connectedWallets: "connected wallet(s)",
+    view: "View",
+    monthlyInflow: "Monthly Inflow",
+    incoming: "Incoming",
+    thisMonth: "this month",
+    monthlySpending: "Monthly Spending",
+    dailyAvg: "Avg:",
+    savingsRate: "Savings Rate",
+    healthy: "Healthy (≥30%)",
+    moderate: "Moderate (≥15%)",
+    low: "Low (<15%)",
+    deficit: "Deficit",
+    net: "Net:",
+    walletsLabel: "Wallets:",
+    allAccounts: "All Accounts",
+    rbacQuickTitle: "Active Role & Permissions",
+    rbacQuickDesc: "Your workspace privilege is active with double-entry access.",
+  },
+  id: {
+    loading: "Memuat data keuangan...",
+    noWorkspaceTitle: "Belum Ada Workspace Terpilih",
+    noWorkspaceDesc: "Silakan pilih workspace yang tersedia atau buat baru untuk melihat metriks keuangan dan buku transaksi Anda.",
+    manageWorkspaces: "Kelola Workspace",
+    workspaceSubtitle: "Jurnal keuangan & ringkasan saldo untuk workspace ini.",
+    filter: "Filter",
+    addTransaction: "Tambah Transaksi",
+    exportCsv: "Ekspor Excel (.csv)",
+    exportPdf: "Ekspor Ringkasan (.pdf)",
+    totalNetBalance: "Total Saldo Bersih",
+    connectedWallets: "dompet terhubung",
+    view: "Lihat",
+    monthlyInflow: "Pemasukan Bulan Ini",
+    incoming: "Masuk",
+    thisMonth: "bulan ini",
+    monthlySpending: "Pengeluaran Bulan Ini",
+    dailyAvg: "Rata-rata:",
+    savingsRate: "Tingkat Tabungan",
+    healthy: "Sehat (≥30%)",
+    moderate: "Sedang (≥15%)",
+    low: "Rendah (<15%)",
+    deficit: "Defisit",
+    net: "Bersih:",
+    walletsLabel: "Dompet:",
+    allAccounts: "Semua Akun",
+    rbacQuickTitle: "Peran & Hak Akses Aktif",
+    rbacQuickDesc: "Hak akses workspace Anda aktif dengan izin pencatatan ganda.",
+  },
+};
+
 export default function Dashboard() {
   const router = useRouter();
   const { selectedWorkspace } = useWorkspace();
   const queryClient = useQueryClient();
+
+  // Language state for Dashboard
+  const [lang, setLang] = useState<"en" | "id">("en");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("novajournal_lang");
+    if (saved === "en" || saved === "id") setLang(saved);
+
+    const handleLang = () => {
+      const s = localStorage.getItem("novajournal_lang");
+      if (s === "en" || s === "id") setLang(s);
+    };
+    window.addEventListener("novajournal_lang_change", handleLang);
+    window.addEventListener("storage", handleLang);
+    return () => {
+      window.removeEventListener("novajournal_lang_change", handleLang);
+      window.removeEventListener("storage", handleLang);
+    };
+  }, []);
+
+  const dt = DASHBOARD_DICT[lang];
 
   // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -928,7 +1011,7 @@ export default function Dashboard() {
       <div className="min-h-screen bg-background p-4 sm:p-5 flex items-center justify-center">
         <div className="text-center flex flex-col items-center gap-2.5">
           <Spinner size="md" />
-          <p className="text-default-500 text-xs sm:text-sm">Loading financial data...</p>
+          <p className="text-default-500 text-xs sm:text-sm">{dt.loading}</p>
         </div>
       </div>
     );
@@ -942,9 +1025,9 @@ export default function Dashboard() {
             <Wallet className="w-6 h-6" />
           </div>
           <div className="space-y-1">
-            <h2 className="text-lg font-bold text-foreground">No Workspace Selected</h2>
+            <h2 className="text-lg font-bold text-foreground">{dt.noWorkspaceTitle}</h2>
             <p className="text-xs text-default-500 max-w-xs mx-auto">
-              Please choose an existing workspace or create a new one to access your financial metrics and transaction journal.
+              {dt.noWorkspaceDesc}
             </p>
           </div>
           <div className="pt-2">
@@ -952,7 +1035,7 @@ export default function Dashboard() {
               className="w-full bg-linear-to-r from-blue-500 to-purple-600 text-white shadow-xs cursor-pointer font-medium"
               onPress={() => router.push("/workspaces")}
             >
-              Manage Workspaces
+              {dt.manageWorkspaces}
             </Button>
           </div>
         </Card>
@@ -988,7 +1071,7 @@ export default function Dashboard() {
             </span>
           </div>
           <p className="text-xs text-default-500">
-            Financial journal & balance overview for this workspace.
+            {dt.workspaceSubtitle}
           </p>
         </div>
 
@@ -1000,7 +1083,7 @@ export default function Dashboard() {
             className="h-8 px-3 text-xs flex items-center gap-1.5 cursor-pointer relative"
           >
             <Filter className="w-3.5 h-3.5 text-default-500" />
-            <span>Filter</span>
+            <span>{dt.filter}</span>
             {activeFiltersCount > 0 && (
               <span className="w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center font-bold">
                 {activeFiltersCount}
@@ -1014,7 +1097,7 @@ export default function Dashboard() {
             onPress={() => router.push("/transactions/new")}
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Add Transaction</span>
+            <span>{dt.addTransaction}</span>
           </Button>
 
           {/* Export Options Dropdown */}
@@ -1036,11 +1119,11 @@ export default function Dashboard() {
               >
                 <Dropdown.Item id="excel" textValue="Download Excel" className="text-xs flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-default-100 dark:hover:bg-default-800 cursor-pointer outline-none">
                   <FileSpreadsheet className="w-3.5 h-3.5 text-green-600" />
-                  <span>Export Excel (.csv)</span>
+                  <span>{dt.exportCsv}</span>
                 </Dropdown.Item>
                 <Dropdown.Item id="pdf" textValue="Download PDF" className="text-xs flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-default-100 dark:hover:bg-default-800 cursor-pointer outline-none">
                   <FileText className="w-3.5 h-3.5 text-red-600" />
-                  <span>Export Summary (.pdf)</span>
+                  <span>{dt.exportPdf}</span>
                 </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown.Popover>
@@ -1048,13 +1131,32 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Active Role & RBAC Quick Status Pill */}
+      <Link
+        href="/settings#rbac"
+        className="flex items-center gap-2 p-2 px-3.5 rounded-xl border border-indigo-500/25 bg-indigo-500/5 hover:bg-indigo-500/10 transition-colors text-xs select-none group shadow-2xs"
+        title="Inspect workspace access control and member permissions"
+      >
+        <ShieldCheck className="w-4 h-4 text-indigo-500 group-hover:scale-110 transition-transform shrink-0" />
+        <div className="flex items-center gap-1.5">
+          <span className="font-semibold text-foreground">{dt.rbacQuickTitle}:</span>
+          <span className="font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">
+            {((selectedWorkspace as any)?.role || "owner")}
+          </span>
+        </div>
+        <span className="hidden md:inline text-[11px] text-default-500">
+          • {dt.rbacQuickDesc}
+        </span>
+        <ChevronRight className="w-3.5 h-3.5 text-default-400 ml-auto group-hover:translate-x-0.5 transition-transform" />
+      </Link>
+
       {/* Primary Financial Stats Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Total Balance */}
         <Card className="p-3.5 sm:p-4 rounded-xl border border-default-200/80 dark:border-default-800 shadow-2xs hover:border-blue-500/30 transition-all">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-default-500">Total Net Balance</p>
+              <p className="text-xs font-medium text-default-500">{dt.totalNetBalance}</p>
               <p className="text-lg sm:text-xl font-bold text-foreground mt-0.5">
                 {formatCurrency(totalBalance)}
               </p>
@@ -1064,9 +1166,9 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="mt-2.5 flex items-center justify-between text-xs text-default-500 border-t border-default-100 dark:border-default-800/80 pt-2">
-            <span>{workspaceAccounts.length} connected wallet{workspaceAccounts.length !== 1 ? "s" : ""}</span>
+            <span>{workspaceAccounts.length} {dt.connectedWallets}</span>
             <span className="text-blue-500 font-semibold cursor-pointer hover:underline" onClick={() => router.push("/portfolio")}>
-              View
+              {dt.view}
             </span>
           </div>
         </Card>
@@ -1075,7 +1177,7 @@ export default function Dashboard() {
         <Card className="p-3.5 sm:p-4 rounded-xl border border-default-200/80 dark:border-default-800 shadow-2xs hover:border-green-500/30 transition-all">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-default-500">Monthly Inflow</p>
+              <p className="text-xs font-medium text-default-500">{dt.monthlyInflow}</p>
               <p className="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400 mt-0.5">
                 {formatCurrency(monthlyIncome)}
               </p>
@@ -1087,9 +1189,9 @@ export default function Dashboard() {
           <div className="mt-2.5 flex items-center text-xs text-default-500 border-t border-default-100 dark:border-default-800/80 pt-2">
             <span className="text-success font-medium flex items-center mr-1">
               <ArrowUpRight className="w-3.5 h-3.5 mr-0.5" />
-              Incoming
+              {dt.incoming}
             </span>
-            <span>this month</span>
+            <span>{dt.thisMonth}</span>
           </div>
         </Card>
 
@@ -1097,7 +1199,7 @@ export default function Dashboard() {
         <Card className="p-3.5 sm:p-4 rounded-xl border border-default-200/80 dark:border-default-800 shadow-2xs hover:border-red-500/30 transition-all">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-default-500">Monthly Spending</p>
+              <p className="text-xs font-medium text-default-500">{dt.monthlySpending}</p>
               <p className="text-lg sm:text-xl font-bold text-red-600 dark:text-red-400 mt-0.5">
                 {formatCurrency(monthlyExpense)}
               </p>
@@ -1109,7 +1211,7 @@ export default function Dashboard() {
           <div className="mt-2.5 flex items-center text-xs text-default-500 border-t border-default-100 dark:border-default-800/80 pt-2">
             <span className="text-danger font-medium flex items-center mr-1">
               <ArrowDownRight className="w-3.5 h-3.5 mr-0.5" />
-              Avg:
+              {dt.dailyAvg}
             </span>
             <span>{formatCurrency(monthlyExpense / Math.max(1, new Date().getDate()))}/day</span>
           </div>
@@ -1119,7 +1221,7 @@ export default function Dashboard() {
         <Card className="p-3.5 sm:p-4 rounded-xl border border-default-200/80 dark:border-default-800 shadow-2xs hover:border-purple-500/30 transition-all">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium text-default-500">Savings Rate</p>
+              <p className="text-xs font-medium text-default-500">{dt.savingsRate}</p>
               <p className="text-lg sm:text-xl font-bold text-foreground mt-0.5">{savingsRate}%</p>
             </div>
             <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500">
@@ -1139,14 +1241,14 @@ export default function Dashboard() {
               }`}
             >
               {savingsRate >= 30
-                ? "Healthy (≥30%)"
+                ? dt.healthy
                 : savingsRate >= 15
-                ? "Moderate (≥15%)"
+                ? dt.moderate
                 : savingsRate > 0
-                ? "Low (<15%)"
-                : "Deficit"}
+                ? dt.low
+                : dt.deficit}
             </span>
-            <span>Net: {formatCurrency(netMonthly)}</span>
+            <span>{dt.net} {formatCurrency(netMonthly)}</span>
           </div>
         </Card>
       </div>
@@ -1155,7 +1257,7 @@ export default function Dashboard() {
       {workspaceAccounts.length > 0 && (
         <div className="flex items-center gap-2 overflow-x-auto py-1 scrollbar-none">
           <span className="text-[11px] font-semibold text-default-400 uppercase tracking-wider shrink-0 mr-1">
-            Wallets:
+            {dt.walletsLabel}
           </span>
           <div
             onClick={() => {
@@ -1168,7 +1270,7 @@ export default function Dashboard() {
                 : "border-default-200/80 dark:border-default-800 bg-white/60 dark:bg-gray-900/60 hover:bg-default-100/70 text-foreground"
             }`}
           >
-            <span>All Wallets</span>
+            <span>{dt.allAccounts}</span>
           </div>
           {workspaceAccounts.map((acc) => (
             <div

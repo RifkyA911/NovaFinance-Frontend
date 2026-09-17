@@ -79,15 +79,22 @@ export default function RootLayout({
           <AuthProvider>{children}</AuthProvider>
         </Providers>
         <Script
-          id="service-worker"
+          id="service-worker-cleanup"
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                  navigator.serviceWorker.register('/sw.js').then((reg) => {
-                    reg.update();
-                  });
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                  for (var i = 0; i < registrations.length; i++) {
+                    registrations[i].unregister();
+                  }
+                });
+              }
+              if ('caches' in window) {
+                caches.keys().then(function(names) {
+                  for (var i = 0; i < names.length; i++) {
+                    caches.delete(names[i]);
+                  }
                 });
               }
             `,

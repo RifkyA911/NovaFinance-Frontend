@@ -8,6 +8,7 @@ import { Eye, EyeOff, Lock, Mail, User, ArrowRight, ShieldAlert, CheckCircle2 } 
 import { useAuth } from "../../contexts/AuthContext";
 import { signUp } from "@/lib/auth";
 import AuthLayout from "@/components/auth/AuthLayout";
+import FluidWaveTransition from "@/components/transitions/FluidWaveTransition";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -20,12 +21,13 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showWaveTransition, setShowWaveTransition] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && isAuthenticated) {
+    if (!authLoading && isAuthenticated && !showWaveTransition) {
       router.push("/dashboard");
     }
-  }, [isAuthenticated, authLoading, router]);
+  }, [isAuthenticated, authLoading, router, showWaveTransition]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,16 +54,25 @@ export default function RegisterPage() {
 
       if (result.error) {
         setError(result.error.message || "Registration failed. Please try again.");
+        setLoading(false);
       } else {
-        router.push("/dashboard");
+        setShowWaveTransition(true);
       }
     } catch (err) {
       console.error("Registration error:", err);
       setError("An unexpected network error occurred. Please try again.");
-    } finally {
       setLoading(false);
     }
   };
+
+  if (showWaveTransition) {
+    return (
+      <FluidWaveTransition
+        durationSeconds={5}
+        onComplete={() => router.push("/dashboard")}
+      />
+    );
+  }
 
   return (
     <AuthLayout

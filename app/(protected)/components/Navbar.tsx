@@ -121,6 +121,14 @@ const searchMenuItems: SearchMenuItem[] = [
     description: "Visual charts, income vs expense breakdowns",
   },
   {
+    id: "rbac",
+    label: "Roles & RBAC",
+    path: "/settings#rbac",
+    group: "System",
+    icon: ShieldCheck,
+    description: "Role-based access control, permissions matrix, and member privileges",
+  },
+  {
     id: "settings",
     label: "Settings",
     path: "/settings",
@@ -136,6 +144,29 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
   const { workspaces, selectedWorkspace, setSelectedWorkspace, loading, refreshWorkspaces } = useWorkspace();
   const { theme, setTheme } = useTheme();
   const [mounted] = useState(true);
+  const [lang, setLang] = useState<"en" | "id">("en");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("novajournal_lang");
+    if (saved === "en" || saved === "id") setLang(saved);
+
+    const handleLang = () => {
+      const s = localStorage.getItem("novajournal_lang");
+      if (s === "en" || s === "id") setLang(s);
+    };
+    window.addEventListener("novajournal_lang_change", handleLang);
+    window.addEventListener("storage", handleLang);
+    return () => {
+      window.removeEventListener("novajournal_lang_change", handleLang);
+      window.removeEventListener("storage", handleLang);
+    };
+  }, []);
+
+  const switchLang = (target: "en" | "id") => {
+    setLang(target);
+    localStorage.setItem("novajournal_lang", target);
+    window.dispatchEvent(new Event("novajournal_lang_change"));
+  };
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -423,6 +454,32 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
             </div>
           );
         })()}
+
+        {/* Quick Language Switcher */}
+        <div className="flex items-center bg-default-100/80 dark:bg-default-800/60 p-0.5 rounded-lg border border-default-200/60 dark:border-default-700/60 text-[10px] font-bold select-none">
+          <button
+            type="button"
+            onClick={() => switchLang("en")}
+            className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
+              lang === "en"
+                ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-2xs"
+                : "text-default-400 hover:text-foreground"
+            }`}
+          >
+            EN
+          </button>
+          <button
+            type="button"
+            onClick={() => switchLang("id")}
+            className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
+              lang === "id"
+                ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-2xs"
+                : "text-default-400 hover:text-foreground"
+            }`}
+          >
+            ID
+          </button>
+        </div>
 
         {/* Quick Theme Switcher */}
         {mounted && (

@@ -20,6 +20,10 @@ import {
   ExternalLink,
   Layers,
   ArrowRight,
+  ShieldCheck,
+  Users,
+  Check,
+  Lock,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
@@ -591,6 +595,82 @@ export default function Settings() {
                 <div className="w-9 h-5 bg-default-200 dark:bg-default-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
               </label>
             </div>
+          </div>
+        </Card>
+
+        {/* Role-Based Access Control (RBAC) & Team Privileges */}
+        <Card id="rbac" className="p-4 sm:p-5 rounded-xl border border-default-200/80 dark:border-default-800 bg-white dark:bg-gray-900 shadow-2xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-default-100 dark:border-default-800">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-4 h-4 text-indigo-500" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <span>Access Control & RBAC Matrix</span>
+                  <span className="text-[10px] bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full font-mono font-bold">
+                    ACTIVE WORKSPACE
+                  </span>
+                </h3>
+                <p className="text-[11px] text-default-500">Fine-grained role permissions and privileges across your workspace entities</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-default-500">Current Role:</span>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 uppercase">
+                OWNER
+              </span>
+            </div>
+          </div>
+
+          {/* Granular Permission Matrix */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-default-200/60 dark:border-default-800/60 text-default-400 text-[11px]">
+                  <th className="py-2.5 font-medium">Capability / Module</th>
+                  <th className="py-2.5 text-center font-medium">Owner</th>
+                  <th className="py-2.5 text-center font-medium">Admin</th>
+                  <th className="py-2.5 text-center font-medium">Accountant</th>
+                  <th className="py-2.5 text-center font-medium">Member</th>
+                  <th className="py-2.5 text-center font-medium">Viewer</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-default-100 dark:divide-default-800/50 text-foreground">
+                {[
+                  { cap: "Create, Edit & Delete Transactions", owner: true, admin: true, acc: true, member: true, viewer: false },
+                  { cap: "Double-Entry Ledger Reconciliation", owner: true, admin: true, acc: true, member: false, viewer: false },
+                  { cap: "Master Wallets & Bank Accounts", owner: true, admin: true, acc: false, member: false, viewer: false },
+                  { cap: "Multi-Provider AI OCR & Auditing", owner: true, admin: true, acc: true, member: true, viewer: false },
+                  { cap: "Export Audit-Ready Excel (.xlsx) & PDF", owner: true, admin: true, acc: true, member: true, viewer: true },
+                  { cap: "Workspace Settings & API Keys", owner: true, admin: false, acc: false, member: false, viewer: false },
+                  { cap: "Invite Members & Assign Roles", owner: true, admin: true, acc: false, member: false, viewer: false },
+                ].map((row, idx) => (
+                  <tr key={idx} className="hover:bg-default-50/50 dark:hover:bg-default-800/30 transition-colors">
+                    <td className="py-2 font-medium text-default-700 dark:text-default-300">{row.cap}</td>
+                    <td className="py-2 text-center text-emerald-500 font-bold">{row.owner ? "✓" : "—"}</td>
+                    <td className="py-2 text-center text-emerald-500 font-bold">{row.admin ? "✓" : "—"}</td>
+                    <td className="py-2 text-center text-emerald-500 font-bold">{row.acc ? "✓" : "—"}</td>
+                    <td className="py-2 text-center text-emerald-500 font-bold">{row.member ? "✓" : "—"}</td>
+                    <td className="py-2 text-center text-default-400">{row.viewer ? "✓" : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="p-3 rounded-xl bg-default-50 dark:bg-default-800/40 border border-default-200/60 dark:border-default-800/60 flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-blue-500 shrink-0" />
+              <span className="text-default-600 dark:text-default-400">Team seat allocation: <strong className="text-foreground">1 of 5 seats used</strong></span>
+            </div>
+            <Link
+              href="/workspaces"
+              className="text-blue-600 dark:text-blue-400 font-medium hover:underline flex items-center gap-1"
+            >
+              <span>Manage Workspace Seats</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         </Card>
       </div>

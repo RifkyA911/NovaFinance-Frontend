@@ -9,6 +9,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { signIn } from "@/lib/auth";
 import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 import AuthLayout from "@/components/auth/AuthLayout";
+import FluidWaveTransition from "@/components/transitions/FluidWaveTransition";
 
 function LoginForm() {
   const router = useRouter();
@@ -18,12 +19,13 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showWaveTransition, setShowWaveTransition] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && isAuthenticated) {
+    if (!authLoading && isAuthenticated && !showWaveTransition) {
       router.push("/dashboard");
     }
-  }, [isAuthenticated, authLoading, router]);
+  }, [isAuthenticated, authLoading, router, showWaveTransition]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,13 +40,13 @@ function LoginForm() {
 
       if (result.error) {
         setError(result.error.message || "Invalid email or password combination");
+        setLoading(false);
       } else {
-        router.push("/dashboard");
+        setShowWaveTransition(true);
       }
     } catch (err) {
       console.error("Login error:", err);
       setError("An unexpected network error occurred. Please try again.");
-    } finally {
       setLoading(false);
     }
   };
@@ -63,16 +65,25 @@ function LoginForm() {
 
       if (result.error) {
         setError(result.error.message || "Quick login failed");
+        setLoading(false);
       } else {
-        router.push("/dashboard");
+        setShowWaveTransition(true);
       }
     } catch (err) {
       console.error("Login error:", err);
       setError("An unexpected error occurred during quick sign in.");
-    } finally {
       setLoading(false);
     }
   };
+
+  if (showWaveTransition) {
+    return (
+      <FluidWaveTransition
+        durationSeconds={5}
+        onComplete={() => router.push("/dashboard")}
+      />
+    );
+  }
 
   return (
     <AuthLayout

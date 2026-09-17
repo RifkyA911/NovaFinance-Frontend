@@ -12,6 +12,7 @@ import {
   Landmark,
   PieChart,
   Settings,
+  ShieldCheck,
   ChevronLeft,
   ChevronRight,
   X,
@@ -49,6 +50,7 @@ const menuGroups: MenuGroup[] = [
   {
     title: "System",
     items: [
+      { icon: ShieldCheck, label: "Roles & RBAC", path: "/settings#rbac" },
       { icon: PieChart, label: "Analytics", path: "/analytics" },
       { icon: Settings, label: "Settings", path: "/settings" },
     ],
