@@ -7,6 +7,9 @@ import {
   Wallet,
   Building2,
   TrendingUp,
+  Target,
+  Workflow,
+  Landmark,
   PieChart,
   Settings,
   ChevronLeft,
@@ -31,13 +34,16 @@ const menuGroups: MenuGroup[] = [
     items: [
       { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
       { icon: Wallet, label: "Transactions", path: "/transactions" },
+      { icon: Landmark, label: "Wallets & Accounts", path: "/wallets" },
     ],
   },
   {
-    title: "Management",
+    title: "Planning & Goals",
     items: [
-      { icon: Building2, label: "Workspaces", path: "/workspaces" },
+      { icon: Target, label: "Goals & Wishlist", path: "/goals" },
+      { icon: Workflow, label: "Money Flow", path: "/money-flow" },
       { icon: TrendingUp, label: "Portfolio", path: "/portfolio" },
+      { icon: Building2, label: "Workspaces", path: "/workspaces" },
     ],
   },
   {

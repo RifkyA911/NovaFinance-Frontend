@@ -22,6 +22,12 @@ import {
   PieChart,
   Plus,
   ArrowRight,
+  Target,
+  Workflow,
+  Landmark,
+  ShieldCheck,
+  Zap,
+  User,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -59,6 +65,14 @@ const searchMenuItems: SearchMenuItem[] = [
     description: "View, filter and manage transaction records",
   },
   {
+    id: "wallets",
+    label: "Wallets & Accounts",
+    path: "/wallets",
+    group: "Overview",
+    icon: Landmark,
+    description: "Manage bank accounts, e-wallets, cash, and balances",
+  },
+  {
     id: "new-transaction",
     label: "New Transaction",
     path: "/transactions/new",
@@ -81,6 +95,22 @@ const searchMenuItems: SearchMenuItem[] = [
     group: "Management",
     icon: TrendingUp,
     description: "Track investment assets and performance",
+  },
+  {
+    id: "goals",
+    label: "Goals & Wishlist",
+    path: "/goals",
+    group: "Planning",
+    icon: Target,
+    description: "Financial targets, wishlist and saving plans",
+  },
+  {
+    id: "money-flow",
+    label: "Money Flow",
+    path: "/money-flow",
+    group: "Planning",
+    icon: Workflow,
+    description: "Interactive visual cashflow and budget allocation flow",
   },
   {
     id: "analytics",
@@ -352,8 +382,48 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
         )}
       </div>
 
-      {/* Right - Theme Toggler & Modernized User Dropdown */}
-      <div className="flex items-center gap-1.5 sm:gap-2">
+      {/* Right - Online Status, Role Badge, Theme Toggler & User Dropdown */}
+      <div className="flex items-center gap-2 sm:gap-2.5">
+        {/* Online Status Indicator Badge */}
+        <div
+          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold select-none shadow-2xs"
+          title="Status Akun: Online & Terkoneksi"
+        >
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <span className="text-[10px] tracking-wide">Online</span>
+        </div>
+
+        {/* Role Type UI Badge */}
+        {(() => {
+          const currentRole = ((selectedWorkspace as any)?.role || "owner").toUpperCase();
+          const isOwner = currentRole === "OWNER";
+          const isAdmin = currentRole === "ADMIN";
+          const isStaff = currentRole === "STAFF";
+
+          return (
+            <div
+              className={`hidden md:flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase border shadow-2xs ${
+                isOwner
+                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                  : isAdmin
+                  ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30"
+                  : isStaff
+                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
+                  : "bg-default-100 text-default-600 dark:text-default-400 border-default-200 dark:border-default-700"
+              }`}
+              title={`Role Akses: ${currentRole}`}
+            >
+              {isOwner && <ShieldCheck className="w-3 h-3 text-amber-500" />}
+              {isAdmin && <Zap className="w-3 h-3 text-purple-500" />}
+              {!isOwner && !isAdmin && <User className="w-3 h-3 text-blue-500" />}
+              <span>{currentRole}</span>
+            </div>
+          );
+        })()}
+
         {/* Quick Theme Switcher */}
         {mounted && (
           <Button
@@ -378,9 +448,14 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
             className="flex items-center gap-2 p-1 pl-1.5 pr-2 rounded-lg bg-default-100/70 hover:bg-default-200/70 dark:bg-default-800/50 dark:hover:bg-default-700/60 transition-colors cursor-pointer text-left outline-none border border-transparent hover:border-default-200 dark:hover:border-default-700"
             aria-label="User account menu"
           >
-            <div className="w-6 h-6 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-[11px] font-bold shrink-0 shadow-2xs">
-              {user?.name?.charAt(0)?.toUpperCase() || "U"}
+            {/* Avatar with live green online indicator ring */}
+            <div className="relative shrink-0">
+              <div className="w-6 h-6 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-[11px] font-bold shadow-2xs">
+                {user?.name?.charAt(0)?.toUpperCase() || "U"}
+              </div>
+              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-900 animate-pulse" />
             </div>
+
             <div className="hidden sm:flex flex-col text-left max-w-28">
               <span className="text-xs font-semibold text-foreground truncate leading-tight">
                 {user?.name || "User"}
@@ -394,11 +469,19 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           <Dropdown.Popover className="min-w-56 z-50 p-1.5 shadow-xl bg-white dark:bg-gray-900 rounded-xl border border-default-200/80 dark:border-default-800">
             {/* User Profile Card Header */}
             <div className="flex items-center gap-2.5 p-2 mb-1 rounded-lg bg-default-100/60 dark:bg-default-800/50">
-              <div className="w-7 h-7 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-2xs">
-                {user?.name?.charAt(0)?.toUpperCase() || "U"}
+              <div className="relative shrink-0">
+                <div className="w-7 h-7 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-2xs">
+                  {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                </div>
+                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-900" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-foreground truncate">{user?.name || "User"}</p>
+                <div className="flex items-center justify-between gap-1">
+                  <p className="text-xs font-bold text-foreground truncate">{user?.name || "User"}</p>
+                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 uppercase">
+                    {((selectedWorkspace as any)?.role || "owner").toUpperCase()}
+                  </span>
+                </div>
                 <p className="text-[10px] text-default-500 truncate">{user?.email || ""}</p>
               </div>
             </div>
