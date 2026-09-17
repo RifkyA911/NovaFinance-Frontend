@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Card, Input, Button, Link } from "@heroui/react";
-import { Wallet } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@heroui/react";
+import { Eye, EyeOff, Lock, Mail, User, ArrowRight, ShieldAlert, CheckCircle2 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { signUp } from "@/lib/auth";
+import AuthLayout from "@/components/auth/AuthLayout";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -14,24 +16,32 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Redirect if already authenticated
-  if (!authLoading && isAuthenticated) {
-    router.push("/dashboard");
-  }
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, authLoading, router]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      setLoading(false);
+      setError("Passwords do not match. Please verify both fields.");
       return;
     }
+
+    if (password.length < 6) {
+      setError("Password must contain at least 6 characters.");
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const result = await signUp.email({
@@ -41,106 +51,150 @@ export default function RegisterPage() {
       });
 
       if (result.error) {
-        setError(result.error.message || "Registration failed");
+        setError(result.error.message || "Registration failed. Please try again.");
       } else {
-        // Registration successful, redirect to login
-        router.push("/login");
+        router.push("/dashboard");
       }
     } catch (err) {
       console.error("Registration error:", err);
-      setError("An error occurred. Please try again.");
+      setError("An unexpected network error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <Wallet className="w-8 h-8 text-white" />
+    <AuthLayout
+      title="Create your account"
+      subtitle="Start managing your cash flow, wealth portfolio, and AI bookkeeping in minutes"
+      badgeText="Join NovaJournal Free"
+    >
+      <form onSubmit={handleRegister} className="space-y-3.5">
+        {error && (
+          <div className="flex items-start gap-2.5 p-3 rounded-xl bg-danger-500/10 border border-danger-500/20 text-danger-600 dark:text-danger-400 text-xs animate-in fade-in duration-200">
+            <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
+            <div className="flex-1">{error}</div>
           </div>
-          <h1 className="text-3xl font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            NovaJournal
-          </h1>
-          <p className="text-default-500 mt-2">Create your account</p>
+        )}
+
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-foreground">Full Name</label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-default-400">
+              <User className="w-4 h-4" />
+            </div>
+            <input
+              type="text"
+              className="w-full h-9.5 pl-9 pr-3.5 rounded-xl border border-default-200 dark:border-default-800 bg-default-50/50 dark:bg-default-900/50 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-default-400"
+              placeholder="e.g. John Doe"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
         </div>
 
-        <Card className="p-8 shadow-xl">
-          <form onSubmit={handleRegister} className="space-y-5">
-            <div>
-              <label className="text-sm font-medium mb-2 block text-default-700 dark:text-default-300">
-                Name
-              </label>
-              <Input
-                type="text"
-                placeholder="Enter your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-foreground">Email Address</label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-default-400">
+              <Mail className="w-4 h-4" />
             </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block text-default-700 dark:text-default-300">
-                Email
-              </label>
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block text-default-700 dark:text-default-300">
-                Password
-              </label>
-              <Input
-                type="password"
-                placeholder="Enter your password"
+            <input
+              type="email"
+              className="w-full h-9.5 pl-9 pr-3.5 rounded-xl border border-default-200 dark:border-default-800 bg-default-50/50 dark:bg-default-900/50 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-default-400"
+              placeholder="you@company.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-foreground">Password</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-default-400">
+                <Lock className="w-4 h-4" />
+              </div>
+              <input
+                type={showPassword ? "text" : "password"}
+                className="w-full h-9.5 pl-9 pr-9 rounded-xl border border-default-200 dark:border-default-800 bg-default-50/50 dark:bg-default-900/50 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-default-400"
+                placeholder="Min. 6 chars"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-default-400 hover:text-default-600 transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              </button>
             </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block text-default-700 dark:text-default-300">
-                Confirm Password
-              </label>
-              <Input
-                type="password"
-                placeholder="Confirm your password"
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-foreground">Confirm Password</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-default-400">
+                <Lock className="w-4 h-4" />
+              </div>
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                className="w-full h-9.5 pl-9 pr-9 rounded-xl border border-default-200 dark:border-default-800 bg-default-50/50 dark:bg-default-900/50 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all placeholder:text-default-400"
+                placeholder="Confirm password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 minLength={6}
               />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-default-400 hover:text-default-600 transition-colors"
+                tabIndex={-1}
+              >
+                {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              </button>
             </div>
-            {error && (
-              <div className="text-danger text-sm bg-danger/10 p-3 rounded-lg">
-                {error}
-              </div>
-            )}
-            <Button
-              type="submit"
-              className="w-full bg-linear-to-r from-blue-500 to-purple-600 text-white font-medium shadow-lg"
-              isDisabled={loading}
-            >
-              {loading ? "Creating account..." : "Create Account"}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center text-sm">
-            <span className="text-default-500">Already have an account? </span>
-            <Link href="/login" className="text-blue-600 hover:text-blue-700">
-              Sign in
-            </Link>
           </div>
-        </Card>
+        </div>
+
+        <div className="p-2.5 rounded-lg bg-default-100/60 dark:bg-default-800/40 text-[11px] text-default-500 flex items-center gap-1.5">
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+          <span>Includes free personal workspace & standard AI OCR tier.</span>
+        </div>
+
+        <Button
+          type="submit"
+          className="w-full h-10 bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 text-white text-xs font-semibold rounded-xl shadow-md hover:opacity-95 transition-opacity mt-2 cursor-pointer"
+          isDisabled={loading}
+        >
+          {loading ? (
+            <span className="flex items-center gap-2">
+              <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              <span>Creating your workspace...</span>
+            </span>
+          ) : (
+            <span className="flex items-center justify-center gap-1.5">
+              <span>Create Account</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </span>
+          )}
+        </Button>
+      </form>
+
+      <div className="mt-5 text-center text-xs text-default-500">
+        Already have an account?{" "}
+        <Link href="/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+          Sign in here
+        </Link>
       </div>
-    </div>
+    </AuthLayout>
   );
 }
