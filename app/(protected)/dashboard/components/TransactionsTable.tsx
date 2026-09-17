@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { Card, Button, Spinner } from "@heroui/react";
+import { Card, Button } from "@heroui/react";
 import { Search, Filter, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUp, ArrowDown, ArrowUpDown, Receipt } from "lucide-react";
 import { flexRender } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
@@ -20,6 +20,7 @@ interface TransactionsTableProps {
   jumpPageVal: string;
   setJumpPageVal: (val: string) => void;
   columns: any[];
+  showViewAll?: boolean;
 }
 
 export function TransactionsTable({
@@ -35,7 +36,8 @@ export function TransactionsTable({
   generatePageNumbers,
   jumpPageVal,
   setJumpPageVal,
-  columns
+  columns,
+  showViewAll = true,
 }: TransactionsTableProps) {
   const router = useRouter();
 
@@ -118,12 +120,14 @@ export function TransactionsTable({
               )}
             </Button>
 
-            {/* View All */}
-            <Button aria-label="View All Transactions" size="sm" variant="ghost" className="text-xs h-8 px-2 text-default-500 hover:text-foreground cursor-pointer rounded-xl"
-              onPress={() => router.push("/transactions")}
-            >
-              Semua
-            </Button>
+            {/* View All (only if showViewAll is true) */}
+            {showViewAll && (
+              <Button aria-label="View All Transactions" size="sm" variant="ghost" className="text-xs h-8 px-2 text-default-500 hover:text-foreground cursor-pointer rounded-xl"
+                onPress={() => router.push("/transactions")}
+              >
+                Semua
+              </Button>
+            )}
           </div>
         </Card.Header>
 
@@ -367,7 +371,3 @@ export function TransactionsTable({
     </section>
   );
 }
-
-
-
-

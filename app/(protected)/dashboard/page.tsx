@@ -86,6 +86,11 @@ import type { TransactionWithIcon } from "../../lib/api";
 import { queryKeys, queryFunctions, mutationFunctions } from "../../lib/queries";
 import { ExpenseBreakdown } from "./components/ExpenseBreakdown";
 import { TransactionsTable } from "./components/TransactionsTable";
+import { QuickActionBar } from "./components/QuickActionBar";
+import { AssetBreakdown } from "./components/AssetBreakdown";
+import { GoalsQuickWidget } from "./components/GoalsQuickWidget";
+import CashflowChart from "./components/CashflowChart";
+import FinancialHealthAuditor from "./components/FinancialHealthAuditor";
 import { DocumentUpload, type DocumentMetadata, type UploadedDocumentResult } from "../components/DocumentUpload";
 
 export default function Dashboard() {
@@ -621,11 +626,68 @@ export default function Dashboard() {
           : "#8b5cf6"),
     })) || [];
 
-  const totalBalance = summary?.totalBalance || 0;
-  const monthlyIncome = summary?.monthlyIncome || 0;
-  const monthlyExpense = summary?.monthlyExpense || 0;
+  // Dynamic live-synchronized financial metrics
+  const totalBalance = useMemo(() => {
+    if (summary?.totalBalance !== undefined && summary.totalBalance > 0) {
+      return summary.totalBalance;
+    }
+    const accSum = workspaceAccounts.reduce((sum, a) => sum + (Number(a.balance) || 0), 0);
+    if (accSum > 0) return accSum;
+    return rawTransactions.reduce((acc: number, t: any) => {
+      const amt = Number(t.amount) || 0;
+      return t.type?.toLowerCase() === "income" ? acc + amt : acc - amt;
+    }, 0);
+  }, [summary?.totalBalance, workspaceAccounts, rawTransactions]);
+
+  const monthlyIncome = useMemo(() => {
+    if (summary?.monthlyIncome !== undefined && summary.monthlyIncome > 0) {
+      return summary.monthlyIncome;
+    }
+    const now = new Date();
+    const curMonth = now.getMonth();
+    const curYear = now.getFullYear();
+    const thisMonthIncome = rawTransactions
+      .filter((t: any) => {
+        if (!t.date || t.type?.toLowerCase() !== "income") return false;
+        const d = new Date(t.date);
+        return d.getMonth() === curMonth && d.getFullYear() === curYear;
+      })
+      .reduce((sum: number, t: any) => sum + (Number(t.amount) || 0), 0);
+
+    if (thisMonthIncome > 0) return thisMonthIncome;
+
+    return rawTransactions
+      .filter((t: any) => t.type?.toLowerCase() === "income")
+      .reduce((sum: number, t: any) => sum + (Number(t.amount) || 0), 0);
+  }, [summary?.monthlyIncome, rawTransactions]);
+
+  const monthlyExpense = useMemo(() => {
+    if (summary?.monthlyExpense !== undefined && summary.monthlyExpense > 0) {
+      return summary.monthlyExpense;
+    }
+    const now = new Date();
+    const curMonth = now.getMonth();
+    const curYear = now.getFullYear();
+    const thisMonthExpense = rawTransactions
+      .filter((t: any) => {
+        if (!t.date || t.type?.toLowerCase() !== "expense") return false;
+        const d = new Date(t.date);
+        return d.getMonth() === curMonth && d.getFullYear() === curYear;
+      })
+      .reduce((sum: number, t: any) => sum + (Number(t.amount) || 0), 0);
+
+    if (thisMonthExpense > 0) return thisMonthExpense;
+
+    return rawTransactions
+      .filter((t: any) => t.type?.toLowerCase() === "expense")
+      .reduce((sum: number, t: any) => sum + (Number(t.amount) || 0), 0);
+  }, [summary?.monthlyExpense, rawTransactions]);
+
   const netMonthly = monthlyIncome - monthlyExpense;
-  const savingsRate = summary?.savingsRate || 0;
+  const savingsRate = useMemo(() => {
+    if (monthlyIncome <= 0) return 0;
+    return parseFloat(((monthlyIncome - monthlyExpense) / monthlyIncome * 100).toFixed(1));
+  }, [monthlyIncome, monthlyExpense]);
 
   // AI Financial Advisor State
   interface AiInsight {
@@ -1129,185 +1191,30 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Main Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
-        {/* Income vs Expenses Cashflow Chart */}
-        <div className="lg:col-span-2">
-          <Card className="rounded-xl border border-default-200/80 dark:border-default-800 shadow-2xs p-3.5 sm:p-4">
-            <Card.Header className="flex items-center justify-between p-0 pb-3">
-              <div>
-                <Card.Title className="text-sm font-semibold text-foreground">Cashflow Performance (6 Months)</Card.Title>
-                <Card.Description className="text-xs text-default-500">Historical comparison between Inflow and Outflow</Card.Description>
-              </div>
-              <div className="flex items-center gap-1 bg-default-100 dark:bg-default-800 p-0.5 rounded-lg text-xs">
-                <button aria-label="button Action" onClick={() => setChartMode("area")}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                    chartMode === "area" ? "bg-white dark:bg-gray-900 text-foreground shadow-2xs" : "text-default-500"
-                  }`}
-                >
-                  <Layers className="w-3 h-3 inline mr-1" />
-                  Area
-                </button>
-                <button aria-label="button Action" onClick={() => setChartMode("bar")}
-                  className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                    chartMode === "bar" ? "bg-white dark:bg-gray-900 text-foreground shadow-2xs" : "text-default-500"
-                  }`}
-                >
-                  <BarChart3 className="w-3 h-3 inline mr-1" />
-                  Bar
-                </button>
-              </div>
-            </Card.Header>
-            <Card.Content className="p-0">
-              {monthlyData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={220}>
-                  {chartMode === "area" ? (
-                    <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.15} />
-                      <XAxis dataKey="month" stroke="#9ca3af" fontSize={11} tickLine={false} />
-                      <YAxis
-                        stroke="#9ca3af"
-                        fontSize={11}
-                        tickLine={false}
-                        tickFormatter={(val) => `${(val / 1000000).toFixed(0)}M`}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "#1f2937",
-                          border: "none",
-                          borderRadius: "0.5rem",
-                          color: "#fff",
-                          fontSize: "11px",
-                        }}
-                        formatter={(val: unknown) => [formatCurrency(Number(val) || 0), ""]}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="income"
-                        stroke="#10b981"
-                        strokeWidth={2}
-                        fillOpacity={1}
-                        fill="url(#incomeGradient)"
-                        name="Income"
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="expense"
-                        stroke="#ef4444"
-                        strokeWidth={2}
-                        fillOpacity={1}
-                        fill="url(#expenseGradient)"
-                        name="Expense"
-                      />
-                    </AreaChart>
-                  ) : (
-                    <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.15} />
-                      <XAxis dataKey="month" stroke="#9ca3af" fontSize={11} tickLine={false} />
-                      <YAxis
-                        stroke="#9ca3af"
-                        fontSize={11}
-                        tickLine={false}
-                        tickFormatter={(val) => `${(val / 1000000).toFixed(0)}M`}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "#1f2937",
-                          border: "none",
-                          borderRadius: "0.5rem",
-                          color: "#fff",
-                          fontSize: "11px",
-                        }}
-                        formatter={(val: unknown) => [formatCurrency(Number(val) || 0), ""]}
-                      />
-                      <Bar dataKey="income" fill="#10b981" radius={[3, 3, 0, 0]} name="Income" />
-                      <Bar dataKey="expense" fill="#ef4444" radius={[3, 3, 0, 0]} name="Expense" />
-                    </BarChart>
-                  )}
-                </ResponsiveContainer>
-              ) : (
-                <div className="w-full h-52 flex flex-col items-center justify-center text-default-500 text-xs gap-1">
-                  <p>No historical trends recorded yet</p>
-                  <p className="text-[11px] text-default-400">Save your first transaction to generate cashflow charts</p>
-                </div>
-              )}
-            </Card.Content>
-          </Card>
-        </div>
-
-        {/* Asset Breakdown by Account */}
-        <Card className="rounded-xl border border-default-200/80 dark:border-default-800 shadow-2xs p-3.5 sm:p-4">
-          <Card.Header className="flex items-center justify-between p-0 pb-3">
-            <div>
-              <Card.Title className="text-sm font-semibold text-foreground">Asset Breakdown</Card.Title>
-              <Card.Description className="text-xs text-default-500">Distribution across connected wallets</Card.Description>
-            </div>
-            <Button aria-label="Button Action" size="sm"
-              variant="ghost"
-              className="text-xs h-6 px-2 text-default-500"
-              onPress={() => router.push("/portfolio")}
-            >
-              Portfolio
-            </Button>
-          </Card.Header>
-          <Card.Content className="p-0">
-            {portfolioData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={portfolioData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.15} />
-                  <XAxis dataKey="name" stroke="#9ca3af" fontSize={11} tickLine={false} />
-                  <YAxis
-                    stroke="#9ca3af"
-                    fontSize={11}
-                    tickLine={false}
-                    tickFormatter={(val) => `${(val / 1000000).toFixed(0)}M`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "#1f2937",
-                      border: "none",
-                      borderRadius: "0.5rem",
-                      color: "#fff",
-                      fontSize: "11px",
-                    }}
-                    formatter={(val: unknown) => [formatCurrency(Number(val) || 0), ""]}
-                  />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                    {portfolioData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color || "#3b82f6"} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="w-full h-52 flex flex-col items-center justify-center text-default-500 text-xs gap-1">
-                <p>No active accounts found</p>
-                <Button aria-label="Button Action" size="sm"
-                  variant="outline"
-                  className="text-xs h-7 mt-2"
-                  onPress={() => router.push("/portfolio")}
-                >
-                  Configure Accounts
-                </Button>
-              </div>
-            )}
-          </Card.Content>
-        </Card>
+      {/* Scalable Cashflow Trends Chart (Cashflow Performance) */}
+      <div className="w-full">
+        <CashflowChart
+          rawTransactions={rawTransactions}
+          backendTrends={trends}
+          currency={selectedWorkspace?.currency}
+        />
       </div>
 
-      {/* Categories Breakdown & Quick Actions Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
-        <section aria-label="Expense Breakdown" className="lg:col-span-2">
+      {/* Dedicated Quick Operation Hub */}
+      <QuickActionBar />
+
+      {/* Asset & Portfolio Breakdown - Dedicated Full-Width Row */}
+      <section aria-label="Asset & Portfolio Breakdown" className="w-full">
+        <AssetBreakdown
+          accounts={portfolioData}
+          formatCurrency={formatCurrency}
+          currency={selectedWorkspace?.currency}
+        />
+      </section>
+
+      {/* Spending Breakdown & Financial Goals Row (Balanced Equal Heights) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+        <section aria-label="Expense Breakdown" className="h-full">
           <ExpenseBreakdown
             categoryViewType={categoryViewType}
             setCategoryViewType={setCategoryViewType}
@@ -1315,61 +1222,25 @@ export default function Dashboard() {
             formatCurrency={formatCurrency}
           />
         </section>
-        {/* Quick Operations Widget */}
-        <div className="space-y-3 flex flex-col justify-between">
-          <Card
-            className="p-3.5 rounded-xl border border-default-200/80 dark:border-default-800 hover:border-green-500/40 hover:bg-default-50/50 dark:hover:bg-default-800/30 transition-all cursor-pointer flex flex-row items-center gap-3 shadow-2xs"
-            onClick={() => router.push("/transactions/new?type=income")}
-          >
-            <div className="w-9 h-9 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0 text-green-500">
-              <Plus className="w-4.5 h-4.5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-foreground truncate">Record Income</p>
-              <p className="text-[11px] text-default-400 truncate">Log revenue, salary, or client payment</p>
-            </div>
-          </Card>
-
-          <Card
-            className="p-3.5 rounded-xl border border-default-200/80 dark:border-default-800 hover:border-red-500/40 hover:bg-default-50/50 dark:hover:bg-default-800/30 transition-all cursor-pointer flex flex-row items-center gap-3 shadow-2xs"
-            onClick={() => router.push("/transactions/new?type=expense")}
-          >
-            <div className="w-9 h-9 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0 text-red-500">
-              <CreditCard className="w-4.5 h-4.5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-foreground truncate">Record Expense</p>
-              <p className="text-[11px] text-default-400 truncate">Log operational costs or personal spend</p>
-            </div>
-          </Card>
-
-          <Card
-            className="p-3.5 rounded-xl border border-default-200/80 dark:border-default-800 hover:border-purple-500/40 hover:bg-default-50/50 dark:hover:bg-default-800/30 transition-all cursor-pointer flex flex-row items-center gap-3 shadow-2xs"
-            onClick={() => router.push("/analytics")}
-          >
-            <div className="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0 text-purple-500">
-              <PieChart className="w-4.5 h-4.5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-foreground truncate">Deep Analytics</p>
-              <p className="text-[11px] text-default-400 truncate">View monthly cashflow & categories</p>
-            </div>
-          </Card>
-
-          <Card
-            className="p-3.5 rounded-xl border border-default-200/80 dark:border-default-800 hover:border-blue-500/40 hover:bg-default-50/50 dark:hover:bg-default-800/30 transition-all cursor-pointer flex flex-row items-center gap-3 shadow-2xs"
-            onClick={() => router.push("/portfolio")}
-          >
-            <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0 text-blue-500">
-              <Target className="w-4.5 h-4.5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-foreground truncate">Wallets & Assets</p>
-              <p className="text-[11px] text-default-400 truncate">Manage bank accounts, cash & e-wallets</p>
-            </div>
-          </Card>
-        </div>
+        <section aria-label="Financial Goals & Wishlist" className="h-full">
+          <GoalsQuickWidget
+            workspaceId={selectedWorkspace?.id}
+            formatCurrency={formatCurrency}
+            currency={selectedWorkspace?.currency}
+          />
+        </section>
       </div>
+
+      {/* AI Financial Health & Spending Leakage Auditor (Groq, Gemini, DeepSeek, Claude) */}
+      <FinancialHealthAuditor
+        totalBalance={totalBalance}
+        monthlyIncome={monthlyIncome}
+        monthlyExpense={monthlyExpense}
+        savingsRate={savingsRate}
+        spendingCategories={spendingCategories}
+        transactionCount={rawTransactions.length}
+        currency={selectedWorkspace?.currency}
+      />
 
       {/* Active Filter Chips Row */}
       {activeFiltersCount > 0 && (
