@@ -26,30 +26,44 @@ NovaJournal is a powerful financial management application that helps you track 
 
 - **💳 Transaction Management**
   - Track income, expenses, and transfers with full CRUD operations
-  - Recurring transactions with smart reminders
-  - Transaction splitting across multiple categories
-  - Import from CSV, Excel, and bank statements
+  - Full **TanStack Table v8** integration with multi-column sorting, search, pagination, and multi-condition filtering
+  - Ergonomic transaction form (`/transactions/new`) with segmented type controls, quick nominal increments (+50k, +100k, reset), and category auto-creation presets
+  - Multi-file drag-and-drop receipt/document upload with manual per-file AI extraction
+  - Recurring transactions and status tracking
   - Export to PDF, CSV, Excel formats
-  - Receipt scanning with OCR support
-  - Voice input for quick entry
 
-- **📊 Budget Planning**
-  - Set and monitor budgets for categories
-  - Real-time progress tracking with visual indicators
-  - Budget rollover to next period
-  - Smart budget suggestions based on spending history
-  - Budget alerts via email and push notifications
-  - Zero-based budgeting support
-  - Budget comparison with previous periods
+- **🏦 Master Wallets & Accounts Management (`/wallets`)**
+  - Full CRUD management of liquidity sources
+  - Support for multiple account types: Bank, E-Wallet, Cash, Credit Card, and Investments
+  - Color-coding, balance adjustments, and real-time aggregation
 
-- **🎯 Financial Goals**
-  - Create and track savings goals
-  - Milestone celebrations with achievements
-  - Automatic contribution from linked accounts
-  - Goal sharing with accountability partners
-  - Goal templates (emergency fund, vacation, home)
-  - Progress visualization with charts and timelines
-  - AI-powered goal suggestions
+- **🌊 Interactive Money Flow Visualization (`/money-flow`)**
+  - Sankey / topological flow diagram mapping cash inflows and outflows
+  - Visual trace: Income Sources ➔ Liquidity Wallets ➔ Expense Categories
+  - Dynamic nodes and link summaries
+
+- **🎯 Financial Goals & Wishlist (`/goals`)**
+  - Track target milestones, deadlines, and current progress
+  - Real-time progress bars and remaining duration metrics
+  - Integrated AI Feasibility Assessment & Action Plan recommendations
+
+- **📊 Modernized Interactive Dashboard**
+  - Dedicated **QuickActionBar** for rapid navigation to all key workflows
+  - Full-width **CashflowChart** with 6 scale options: 1 Day, 1 Week, 1 Month, 1 Year, 5 Years, and Custom ranges
+  - High-polish **ExpenseBreakdown** category cards with distribution percentages
+  - Interactive **AssetBreakdown** featuring 3 view modes (Donut chart, Bar chart, Detailed list), asset category filter pills, and liquidity stats
+
+- **🤖 Multi-Provider AI Engine (`/settings` & `/api/ai/*`)**
+  - Centralized primary provider selection in `/settings`:
+    - **Google Gemini**: `gemini-1.5-flash`, `gemini-1.5-pro`, `gemini-2.0-flash`
+    - **Groq**: `llama-3.3-70b-versatile`, `mixtral-8x7b-32768`
+    - **DeepSeek**: `deepseek-chat`, `deepseek-coder`
+    - **Anthropic Claude**: `claude-3-5-sonnet`, `claude-3-haiku`
+  - Per-feature secondary fallback overrides for 4 intelligent features:
+    1. Transaction & Receipt OCR AI Extraction
+    2. Financial Health Audit & Anomaly Detection
+    3. Intelligent Cashflow & Spending Suggestions
+    4. Goal Feasibility & Action Plan Predictor
 
 - **📈 Investment Portfolio**
   - Monitor investments with real-time price updates
@@ -605,26 +619,25 @@ For testing purposes, use these dummy accounts:
 
 ```
 novajournal-fe/
-├── app/                      # Next.js app directory
+├── app/                      # Next.js 16 app router directory
 │   ├── (protected)/         # Protected route group
-│   │   ├── components/       # Shared components (Sidebar)
-│   │   ├── dashboard/       # Dashboard page
-│   │   ├── transactions/    # Transactions page
+│   │   ├── components/       # Shared layout components (Sidebar, Navbar with status & role badges)
+│   │   ├── dashboard/       # Dashboard (QuickActionBar, CashflowChart, AssetBreakdown, ExpenseBreakdown)
+│   │   ├── transactions/    # Transactions list (TanStack Table) & /new form
+│   │   ├── wallets/         # Wallets & Accounts Master Management
+│   │   ├── money-flow/      # Money Flow topological visualizer
+│   │   ├── goals/           # Financial Goals & Wishlist with AI Feasibility
 │   │   ├── portfolio/       # Portfolio page
 │   │   ├── analytics/       # Analytics page
-│   │   └── settings/        # Settings page
+│   │   └── settings/        # Centralized Multi-Provider AI config & user settings
+│   ├── api/ai/              # Next.js API Routes for AI (parse, audit, suggestion, goal-feasibility)
 │   ├── login/               # Login page
 │   ├── register/            # Registration page
 │   ├── forgot-password/     # Forgot password page
-│   └── page.tsx             # Home page
-├── contexts/                # React contexts
-│   └── AuthContext.tsx      # Authentication context
-├── lib/                     # Utility libraries
-│   └── api.ts               # API client
-├── docs/                    # Documentation
-│   ├── CHANGELOG.md
-│   └── CRUD_CONCEPT.md
-└── public/                  # Static assets
+│   └── page.tsx             # Landing / Home page
+├── contexts/                # React contexts (AuthContext, etc.)
+├── lib/                     # Utility libraries (api.ts, ai-config.ts, queries.ts)
+└── public/                  # PWA manifest, service worker & static assets
 ```
 
 ## Contributing
