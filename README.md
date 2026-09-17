@@ -65,14 +65,15 @@ NovaJournal is a powerful financial management application that helps you track 
     3. Intelligent Cashflow & Spending Suggestions
     4. Goal Feasibility & Action Plan Predictor
 
-- **📈 Investment Portfolio**
-  - Monitor investments with real-time price updates
-  - Portfolio diversification analysis
-  - Performance metrics (ROI, annualized return)
-  - Dividend tracking
-  - Tax lot tracking (FIFO, LIFO)
-  - Investment comparison with benchmarks
-  - Automatic portfolio rebalancing suggestions
+- **📈 Wealth & Investment Portfolio (`/portfolio`)**
+  - Global Market Indices Ticker supporting **IHSG (IDX Composite 🇮🇩)** as default, S&P 500, NASDAQ, Nikkei 225, Hang Seng, FTSE, DAX, Gold, Crypto
+  - Executive KPI cards: Total Value, Modal Beli, Unrealized PnL (Rp & %), Annual Passive Income / Dividends, and Diversification Score (1-100)
+  - Finviz / S&P-style interactive **Portfolio Heatmap & Treemap** with return-based color scaling
+  - **Monte Carlo Wealth Projector** & Compound Interest forecasting (5 to 20 years, monthly DCA, expected CAGR)
+  - Modern Portfolio Theory **Smart Rebalancing Engine** (Actual vs Target allocation with 1-click buy/sell advice)
+  - **Dividend & Passive Income Calendar** with monthly payout distributions
+  - Full **Holdings Table** with search, asset class filters, mini 7-day sparklines, and modal CRUD with ticker presets
+  - Integrated **AI Portfolio Strategist** for risk analysis and tactical recommendations
 
 - **📉 Advanced Analytics**
   - Income statement reports
