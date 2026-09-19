@@ -4,8 +4,306 @@
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-theme-primary: var(--primary-color, #2563eb);
+  --color-theme-hover: var(--primary-hover, #1d4ed8);
 }
 
 body {
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ==========================================================================
+   DYNAMIC THEME PALETTES (HeroUI / Nova Accent Engine)
+   ========================================================================== */
+:root,
+[data-palette="blue"] {
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-gradient: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+  --primary-ring: rgba(37, 99, 235, 0.35);
+  --primary-subtle: rgba(37, 99, 235, 0.1);
+  --primary-glow: 0 4px 14px 0 rgba(37, 99, 235, 0.39);
+}
+
+[data-palette="violet"] {
+  --primary-color: #7c3aed;
+  --primary-hover: #6d28d9;
+  --primary-gradient: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
+  --primary-ring: rgba(124, 58, 237, 0.35);
+  --primary-subtle: rgba(124, 58, 237, 0.1);
+  --primary-glow: 0 4px 14px 0 rgba(124, 58, 237, 0.39);
+}
+
+[data-palette="emerald"] {
+  --primary-color: #059669;
+  --primary-hover: #047857;
+  --primary-gradient: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+  --primary-ring: rgba(5, 150, 105, 0.35);
+  --primary-subtle: rgba(5, 150, 105, 0.1);
+  --primary-glow: 0 4px 14px 0 rgba(5, 150, 105, 0.39);
+}
+
+[data-palette="amber"] {
+  --primary-color: #d97706;
+  --primary-hover: #b45309;
+  --primary-gradient: linear-gradient(135deg, #d97706 0%, #ea580c 100%);
+  --primary-ring: rgba(217, 119, 6, 0.35);
+  --primary-subtle: rgba(217, 119, 6, 0.1);
+  --primary-glow: 0 4px 14px 0 rgba(217, 119, 6, 0.39);
+}
+
+[data-palette="rose"] {
+  --primary-color: #e11d48;
+  --primary-hover: #be123c;
+  --primary-gradient: linear-gradient(135deg, #e11d48 0%, #c026d3 100%);
+  --primary-ring: rgba(225, 29, 72, 0.35);
+  --primary-subtle: rgba(225, 29, 72, 0.1);
+  --primary-glow: 0 4px 14px 0 rgba(225, 29, 72, 0.39);
+}
+
+[data-palette="slate"] {
+  --primary-color: #475569;
+  --primary-hover: #334155;
+  --primary-gradient: linear-gradient(135deg, #475569 0%, #1e293b 100%);
+  --primary-ring: rgba(71, 85, 105, 0.35);
+  --primary-subtle: rgba(71, 85, 105, 0.1);
+  --primary-glow: 0 4px 14px 0 rgba(71, 85, 105, 0.39);
+}
+
+/* Palette Helper Classes */
+.bg-theme-primary {
+  background-color: var(--primary-color, #2563eb) !important;
+  color: #ffffff !important;
+}
+.hover\:bg-theme-primary-hover:hover {
+  background-color: var(--primary-hover) !important;
+}
+.bg-theme-gradient {
+  background: var(--primary-gradient) !important;
+}
+.text-theme-primary {
+  color: var(--primary-color) !important;
+}
+.border-theme-primary {
+  border-color: var(--primary-color) !important;
+}
+.ring-theme-primary {
+  --tw-ring-color: var(--primary-ring) !important;
+}
+.shadow-theme-primary {
+  box-shadow: var(--primary-glow) !important;
+}
+
+/* ==========================================================================
+   GLOBAL RANGE SLIDER TRACK & THUMB SYSTEM
+   Fixes disappearing stripe / track placeholders across all browsers
+   ========================================================================== */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 9999px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.dark input[type="range"] {
+  background: #334155;
+}
+
+/* WebKit (Chrome, Edge, Safari) Track */
+input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 8px;
+  background: #cbd5e1;
+  border-radius: 9999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dark input[type="range"]::-webkit-slider-runnable-track {
+  background: #475569;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* WebKit Thumb */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: var(--primary-color, #2563eb);
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25), 0 0 0 2px var(--primary-ring, rgba(37, 99, 235, 0.25));
+  margin-top: -6px; /* center thumb vertically */
+  cursor: grab;
+  transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.12s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3), 0 0 0 4px var(--primary-ring, rgba(37, 99, 235, 0.35));
+}
+
+input[type="range"]::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 0 5px var(--primary-ring, rgba(37, 99, 235, 0.4));
+}
+
+/* Mozilla Firefox Track */
+input[type="range"]::-moz-range-track {
+  width: 100%;
+  height: 8px;
+  background: #cbd5e1;
+  border-radius: 9999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dark input[type="range"]::-moz-range-track {
+  background: #475569;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Mozilla Firefox Thumb */
+input[type="range"]::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: var(--primary-color, #2563eb);
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+  cursor: grab;
+  transition: transform 0.12s ease;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.15);
+}
+
+/* ==========================================================================
+   HIGH-CONTRAST SWITCH ENGINE
+   Ensures uncheck track & knob have crystal-clear contrast in light & dark mode
+   Affects both <button role="switch"> and peer-based checkbox toggles
+   ========================================================================== */
+button[role="switch"][aria-checked="false"],
+button[role="switch"]:not([aria-checked="true"]) {
+  background-color: #94a3b8 !important; /* slate-400 - prominent contrast against white */
+  border: 1.5px solid #64748b !important; /* slate-500 strong border */
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.18) !important;
+}
+
+button[role="switch"][aria-checked="false"] span,
+button[role="switch"]:not([aria-checked="true"]) span {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35) !important;
+}
+
+.dark button[role="switch"][aria-checked="false"],
+.dark button[role="switch"]:not([aria-checked="true"]) {
+  background-color: #334155 !important;
+  border-color: #475569 !important;
+}
+
+.peer + div,
+label .peer ~ div {
+  background-color: #94a3b8 !important; /* slate-400 */
+  border: 1.5px solid #64748b !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.18) !important;
+}
+
+.peer + div::after,
+label .peer ~ div::after {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35) !important;
+}
+
+.dark .peer + div,
+.dark label .peer ~ div {
+  background-color: #334155 !important;
+  border-color: #475569 !important;
+}
+
+button[role="switch"][aria-checked="true"] {
+  background-color: var(--primary-color, #2563eb) !important;
+  border-color: var(--primary-color, #2563eb) !important;
+  box-shadow: 0 2px 5px var(--primary-ring, rgba(37, 99, 235, 0.25)) !important;
+}
+
+.peer:checked + div,
+label .peer:checked ~ div {
+  background-color: var(--primary-color, #2563eb) !important;
+  border-color: var(--primary-color, #2563eb) !important;
+  box-shadow: 0 2px 5px var(--primary-ring, rgba(37, 99, 235, 0.25)) !important;
+}
+
+/* ==========================================================================
+   UI DENSITY ENGINE (GLOBAL & GRANULAR: SIDEBAR, NAVBAR, LAYOUT)
+   ========================================================================== */
+html[data-density="compact"],
+html[data-density-layout="compact"] {
+  --density-card-p: 0.75rem;
+  --density-gap: 0.5rem;
+  --density-btn-py: 0.35rem;
+  font-size: 13.5px;
+}
+
+html[data-density="standard"],
+html[data-density-layout="standard"] {
+  --density-card-p: 1.25rem;
+  --density-gap: 0.875rem;
+  --density-btn-py: 0.5rem;
+  font-size: 14px;
+}
+
+html[data-density="spacious"],
+html[data-density-layout="spacious"] {
+  --density-card-p: 1.75rem;
+  --density-gap: 1.25rem;
+  --density-btn-py: 0.65rem;
+  font-size: 14.5px;
+}
+
+/* Sidebar Granular Density */
+html[data-density-sidebar="compact"] aside:not(.w-14) {
+  width: 13.5rem !important;
+}
+html[data-density-sidebar="standard"] aside:not(.w-14) {
+  width: 15rem !important;
+}
+html[data-density-sidebar="spacious"] aside:not(.w-14) {
+  width: 17rem !important;
+}
+
+/* Navbar Granular Density */
+html[data-density-navbar="compact"] header,
+html[data-density-navbar="compact"] nav {
+  min-height: 3.25rem !important;
+}
+html[data-density-navbar="standard"] header,
+html[data-density-navbar="standard"] nav {
+  min-height: 3.75rem !important;
+}
+html[data-density-navbar="spacious"] header,
+html[data-density-navbar="spacious"] nav {
+  min-height: 4.5rem !important;
+}
+
+/* ==========================================================================
+   AMBIENT NEBULA GLOW BACKGROUND
+   ========================================================================== */
+body.enable-nebula-glow,
+html.enable-nebula-glow body {
+  background-image: 
+    radial-gradient(ellipse 60% 40% at 20% 10%, rgba(99, 102, 241, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 30% at 85% 30%, rgba(168, 85, 247, 0.10) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 50% 90%, rgba(59, 130, 246, 0.08) 0%, transparent 60%);
+  background-attachment: fixed;
+}
+
