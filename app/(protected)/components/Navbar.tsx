@@ -28,11 +28,93 @@ import {
   ShieldCheck,
   Zap,
   User,
+  Users,
+  Lock,
+  Check,
+  Bell,
+  BellRing,
+  AlertCircle,
+  CheckCheck,
+  Clock,
+  Palette,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useTheme } from "next-themes";
+import { getEffectiveRole, ROLES } from "@/app/lib/rbac";
+import { playNovaThemeSound, playSoftChime, playNovaSpaceSound } from "@/app/lib/sound";
+
+const NAVBAR_PALETTES = [
+  { id: "blue", name: "Modern Blue", hex: "#2563eb" },
+  { id: "violet", name: "Cyber Violet", hex: "#7c3aed" },
+  { id: "emerald", name: "Emerald Growth", hex: "#059669" },
+  { id: "amber", name: "Amber Wealth", hex: "#d97706" },
+  { id: "rose", name: "Crimson Alpha", hex: "#e11d48" },
+  { id: "slate", name: "Slate Corporate", hex: "#475569" },
+] as const;
+
+const CURRENCY_FIAT_MAP: Record<string, { symbol: string; flag: string; name: string }> = {
+  IDR: { symbol: "Rp", flag: "🇮🇩", name: "Rupiah" },
+  USD: { symbol: "$", flag: "🇺🇸", name: "US Dollar" },
+  EUR: { symbol: "€", flag: "🇪🇺", name: "Euro" },
+  SGD: { symbol: "S$", flag: "🇸🇬", name: "SG Dollar" },
+  JPY: { symbol: "¥", flag: "🇯🇵", name: "Yen" },
+};
+
+function getCurrencyFiat(curr?: string) {
+  const c = (curr || "IDR").toUpperCase();
+  return CURRENCY_FIAT_MAP[c] || { symbol: c, flag: "🌐", name: c };
+}
+
+interface NotificationItem {
+  id: string;
+  title: string;
+  description: string;
+  category: "alert" | "finance" | "system";
+  timestamp: string;
+  unread: boolean;
+  actionUrl?: string;
+}
+
+const INITIAL_NOTIFICATIONS: NotificationItem[] = [
+  {
+    id: "notif-1",
+    title: "Tagihan Cicilan KPR Rumah",
+    description: "Pembayaran cicilan KPR sebesar Rp 5.250.000 jatuh tempo dalam 3 hari (22 Sep 2026).",
+    category: "alert",
+    timestamp: "10m lalu",
+    unread: true,
+    actionUrl: "/liabilities",
+  },
+  {
+    id: "notif-2",
+    title: "Dividen Saham BBCA Masuk",
+    description: "Dividen tunai sebesar Rp 450.000 telah masuk ke RDN Mandiri Sekuritas.",
+    category: "finance",
+    timestamp: "2 jam lalu",
+    unread: true,
+    actionUrl: "/portfolio",
+  },
+  {
+    id: "notif-3",
+    title: "Peringatan Budget Dining 82%",
+    description: "Pengeluaran kategori Makanan & Resto telah mencapai 82% dari pagu budget bulanan Anda.",
+    category: "alert",
+    timestamp: "5 jam lalu",
+    unread: true,
+    actionUrl: "/transactions",
+  },
+  {
+    id: "notif-4",
+    title: "LPS Guarantee Limit Check",
+    description: "Saldo likuiditas di Bank BCA (Rp 84.5jt) aman di bawah plafon penjaminan LPS Rp 2 Miliar.",
+    category: "system",
+    timestamp: "1 hari lalu",
+    unread: false,
+    actionUrl: "/wallets",
+  },
+];
 
 interface NavbarProps {
   onToggleSidebar?: () => void;
@@ -122,11 +204,11 @@ const searchMenuItems: SearchMenuItem[] = [
   },
   {
     id: "rbac",
-    label: "Roles & RBAC",
-    path: "/settings#rbac",
+    label: "Users & RBAC",
+    path: "/users",
     group: "System",
-    icon: ShieldCheck,
-    description: "Role-based access control, permissions matrix, and member privileges",
+    icon: Users,
+    description: "Workspace team members, role privileges, and RBAC matrix",
   },
   {
     id: "settings",
@@ -142,9 +224,82 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
   const router = useRouter();
   const { user, logout } = useAuth();
   const { workspaces, selectedWorkspace, setSelectedWorkspace, loading, refreshWorkspaces } = useWorkspace();
-  const { theme, setTheme } = useTheme();
-  const [mounted] = useState(true);
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  const isDarkTheme = mounted && (resolvedTheme === "dark" || theme === "dark");
   const [lang, setLang] = useState<"en" | "id">("en");
+
+  // Notifications Prototype State
+  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
+  const [notifFilter, setNotifFilter] = useState<"all" | "unread" | "alert">("all");
+  const unreadCount = notifications.filter((n) => n.unread).length;
+
+  // Custom Avatar (supports animated GIF, WebP, PNG)
+  const [customAvatar, setCustomAvatar] = useState<string | null>(null);
+
+  useEffect(() => {
+    const updateAvatar = () => {
+      try {
+        const av = localStorage.getItem("novajournal_user_avatar");
+        setCustomAvatar(av);
+      } catch {}
+    };
+    updateAvatar();
+    window.addEventListener("novajournal_avatar_changed", updateAvatar);
+    window.addEventListener("storage", updateAvatar);
+    return () => {
+      window.removeEventListener("novajournal_avatar_changed", updateAvatar);
+      window.removeEventListener("storage", updateAvatar);
+    };
+  }, []);
+
+  // Theme Palette Selection State & Sync
+  const [activePalette, setActivePalette] = useState("blue");
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("novajournal_theme_palette");
+      if (saved) setActivePalette(saved);
+    } catch {}
+
+    const onPaletteChanged = (e: any) => {
+      if (e.detail) setActivePalette(e.detail);
+    };
+    window.addEventListener("novajournal_palette_changed", onPaletteChanged);
+    return () => window.removeEventListener("novajournal_palette_changed", onPaletteChanged);
+  }, []);
+
+  const handleSelectPalette = (palId: string) => {
+    playNovaSpaceSound();
+    setActivePalette(palId);
+    try {
+      localStorage.setItem("novajournal_theme_palette", palId);
+      document.documentElement.setAttribute("data-palette", palId);
+      window.dispatchEvent(new CustomEvent("novajournal_palette_changed", { detail: palId }));
+    } catch {}
+  };
+
+  const markAllAsRead = () => {
+    playSoftChime();
+    setNotifications((prev) => prev.map((n) => ({ ...n, unread: false })));
+  };
+
+  const markOneAsRead = (id: string, url?: string) => {
+    playSoftChime();
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, unread: false } : n))
+    );
+    if (url) router.push(url);
+  };
+
+  const filteredNotifications = notifications.filter((n) => {
+    if (notifFilter === "unread") return n.unread;
+    if (notifFilter === "alert") return n.category === "alert";
+    return true;
+  });
 
   useEffect(() => {
     const saved = localStorage.getItem("novajournal_lang");
@@ -161,6 +316,17 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
       window.removeEventListener("storage", handleLang);
     };
   }, []);
+
+  const [activeRole, setActiveRole] = useState<string>("owner");
+  useEffect(() => {
+    const syncRole = () => {
+      const r = getEffectiveRole((selectedWorkspace as any)?.role);
+      setActiveRole(r);
+    };
+    syncRole();
+    window.addEventListener("novajournal_role_change", syncRole);
+    return () => window.removeEventListener("novajournal_role_change", syncRole);
+  }, [selectedWorkspace]);
 
   const switchLang = (target: "en" | "id") => {
     setLang(target);
@@ -282,41 +448,109 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           <Menu className="w-4 h-4" />
         </Button>
 
-        {/* HeroUI Compound Select for Workspace (No '+' button) */}
+        {/* Workspace Selector Dropdown with Fiat Currency & Audio Feedback */}
         <div className="flex items-center">
           {workspaces.length > 0 ? (
-            <Select
-              aria-label="Select Workspace"
-              placeholder="Select Workspace"
-              selectedKey={selectedWorkspace?.id || null}
-              onSelectionChange={(key) => {
-                if (!key) return;
-                const selected = workspaces.find((w) => w.id === String(key));
-                if (selected) setSelectedWorkspace(selected);
-              }}
-              isDisabled={loading}
-              className="w-40 sm:w-48"
-            >
-              <Select.Trigger className="h-7.5 px-2.5 rounded-lg border border-default-200/80 dark:border-default-700/80 bg-default-100/70 dark:bg-default-800/60 text-xs font-medium text-foreground hover:bg-default-200/60 dark:hover:bg-default-700/60 transition-colors flex items-center justify-between gap-1.5 focus:outline-none focus:ring-1.5 focus:ring-blue-500 cursor-pointer">
-                <Select.Value className="truncate text-xs font-medium" />
-                <Select.Indicator className="text-default-400 shrink-0" />
-              </Select.Trigger>
-              <Select.Popover className="min-w-48 z-50 p-1 shadow-xl bg-white dark:bg-gray-900 rounded-xl border border-default-200 dark:border-default-800">
-                <ListBox className="outline-none space-y-0.5">
-                  {workspaces.map((workspace) => (
-                    <ListBox.Item
-                      key={workspace.id}
-                      id={workspace.id}
-                      textValue={workspace.name}
-                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs cursor-pointer hover:bg-default-100 dark:hover:bg-default-800 text-foreground transition-colors outline-none data-selected:bg-blue-500/10 data-selected:text-blue-600 dark:data-selected:text-blue-400 font-medium"
-                    >
-                      <span className="truncate">{workspace.name}</span>
-                      <ListBox.ItemIndicator className="text-blue-500" />
-                    </ListBox.Item>
-                  ))}
-                </ListBox>
-              </Select.Popover>
-            </Select>
+            <Dropdown>
+              <Dropdown.Trigger
+                className="h-7.5 px-2.5 rounded-lg border border-default-200/80 dark:border-default-700/80 bg-default-100/70 hover:bg-default-200/60 dark:bg-default-800/60 dark:hover:bg-default-700/60 transition-colors flex items-center gap-1.5 focus:outline-none focus:ring-1.5 focus:ring-blue-500 cursor-pointer text-left max-w-56"
+                aria-label="Pilih Workspace"
+              >
+                <div
+                  className={`w-2 h-2 rounded-full shrink-0 ${
+                    selectedWorkspace?.type === "personal"
+                      ? "bg-blue-500"
+                      : selectedWorkspace?.type === "umkm"
+                      ? "bg-emerald-500"
+                      : "bg-purple-500"
+                  }`}
+                />
+                <span className="truncate text-xs font-semibold text-foreground max-w-[100px] sm:max-w-[120px]">
+                  {selectedWorkspace?.name || "Pilih Workspace"}
+                </span>
+                {/* Fiat Badge */}
+                {(() => {
+                  const fiat = getCurrencyFiat(selectedWorkspace?.currency);
+                  return (
+                    <span className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-mono font-medium bg-default-200/60 dark:bg-default-700/60 text-default-600 dark:text-default-300 shrink-0">
+                      <span>{fiat.flag}</span>
+                      <span>{selectedWorkspace?.currency || "IDR"}</span>
+                    </span>
+                  );
+                })()}
+                <ChevronDown className="w-3 h-3 text-default-400 shrink-0 ml-0.5" />
+              </Dropdown.Trigger>
+              <Dropdown.Popover className="min-w-64 z-50 p-1.5 shadow-xl bg-white dark:bg-gray-900 rounded-xl border border-default-200/80 dark:border-default-800">
+                <div className="px-2.5 py-1.5 mb-1 text-[10px] font-bold text-default-400 uppercase tracking-wider border-b border-default-100 dark:border-default-800 flex items-center justify-between">
+                  <span>Pilih Entitas Workspace</span>
+                  <span className="text-[9px] font-normal normal-case font-mono">{workspaces.length} entitas</span>
+                </div>
+
+                <div className="space-y-0.5 max-h-60 overflow-y-auto">
+                  {workspaces.map((ws) => {
+                    const isSelected = selectedWorkspace?.id === ws.id;
+                    const fiat = getCurrencyFiat(ws.currency);
+                    return (
+                      <button
+                        key={ws.id}
+                        type="button"
+                        onClick={() => {
+                          if (!isSelected) {
+                            playSoftChime();
+                            setSelectedWorkspace(ws);
+                          }
+                        }}
+                        className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs cursor-pointer transition-colors text-left ${
+                          isSelected
+                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold"
+                            : "hover:bg-default-100 dark:hover:bg-default-800 text-foreground"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <div
+                            className={`w-2 h-2 rounded-full shrink-0 ${
+                              ws.type === "personal"
+                                ? "bg-blue-500"
+                                : ws.type === "umkm"
+                                ? "bg-emerald-500"
+                                : "bg-purple-500"
+                            }`}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-xs">{ws.name}</p>
+                            <div className="flex items-center gap-1.5 text-[10px] text-default-400">
+                              <span className="capitalize">{ws.type}</span>
+                              <span>•</span>
+                              <span className="font-mono text-default-500">
+                                {fiat.flag} {ws.currency} ({fiat.symbol})
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 ml-1.5" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Bottom action: Add New Workspace */}
+                <div className="mt-1.5 pt-1.5 border-t border-default-100 dark:border-default-800">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playSoftChime();
+                      router.push("/workspaces");
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>+ Add New Workspace</span>
+                  </button>
+                </div>
+              </Dropdown.Popover>
+            </Dropdown>
           ) : (
             <Button
               size="sm"
@@ -429,10 +663,11 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
 
         {/* Role Type UI Badge */}
         {(() => {
-          const currentRole = ((selectedWorkspace as any)?.role || "owner").toUpperCase();
+          const currentRole = (activeRole || "owner").toUpperCase();
           const isOwner = currentRole === "OWNER";
           const isAdmin = currentRole === "ADMIN";
           const isStaff = currentRole === "STAFF";
+          const isViewer = currentRole === "VIEWER";
 
           return (
             <div
@@ -445,11 +680,12 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                   ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
                   : "bg-default-100 text-default-600 dark:text-default-400 border-default-200 dark:border-default-700"
               }`}
-              title={`Role Akses: ${currentRole}`}
+              title={`Role Akses: ${currentRole} (Click Users & RBAC to manage)`}
             >
               {isOwner && <ShieldCheck className="w-3 h-3 text-amber-500" />}
               {isAdmin && <Zap className="w-3 h-3 text-purple-500" />}
-              {!isOwner && !isAdmin && <User className="w-3 h-3 text-blue-500" />}
+              {isStaff && <User className="w-3 h-3 text-blue-500" />}
+              {isViewer && <Lock className="w-3 h-3 text-default-400" />}
               <span>{currentRole}</span>
             </div>
           );
@@ -481,13 +717,124 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           </button>
         </div>
 
+        {/* Notification Bell Dropdown (Prototype) */}
+        <Dropdown>
+          <Dropdown.Trigger
+            className="h-7.5 w-7.5 relative inline-flex items-center justify-center rounded-lg border border-default-200/80 dark:border-default-700/80 bg-default-100/70 hover:bg-default-200/60 dark:bg-default-800/60 dark:hover:bg-default-700/60 transition-colors cursor-pointer text-default-600 hover:text-foreground outline-none"
+            aria-label="Notifikasi Keuangan"
+          >
+            <Bell className="w-3.5 h-3.5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[9px] font-bold text-white shadow-xs animate-pulse">
+                {unreadCount}
+              </span>
+            )}
+          </Dropdown.Trigger>
+
+          <Dropdown.Popover className="w-80 sm:w-96 z-50 p-0 shadow-2xl bg-white dark:bg-gray-900 rounded-2xl border border-default-200/80 dark:border-default-800 overflow-hidden">
+            {/* Header */}
+            <div className="p-3 border-b border-default-100 dark:border-default-800 flex items-center justify-between bg-default-50/50 dark:bg-default-900/50">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  <BellRing className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-foreground">Notifikasi Keuangan</h4>
+                  <p className="text-[10px] text-default-400 font-mono">
+                    {unreadCount} belum dibaca • Prototype
+                  </p>
+                </div>
+              </div>
+
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  onClick={markAllAsRead}
+                  className="flex items-center gap-1 text-[10px] font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                >
+                  <CheckCheck className="w-3 h-3" />
+                  <span>Tandai Semua</span>
+                </button>
+              )}
+            </div>
+
+            {/* Filter Pills */}
+            <div className="p-2 border-b border-default-100 dark:border-default-800 flex items-center gap-1.5 text-[10px]">
+              {(["all", "unread", "alert"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setNotifFilter(tab)}
+                  className={`px-2.5 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
+                    notifFilter === tab
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "bg-default-100 hover:bg-default-200 dark:bg-default-800 text-default-500"
+                  }`}
+                >
+                  {tab === "all" ? "Semua" : tab === "unread" ? "Belum Dibaca" : "Tagihan & Alert"}
+                </button>
+              ))}
+            </div>
+
+            {/* Notifications List */}
+            <div className="max-h-72 overflow-y-auto divide-y divide-default-100 dark:divide-default-800/60 p-1">
+              {filteredNotifications.length === 0 ? (
+                <div className="p-6 text-center text-xs text-default-400">
+                  Tidak ada notifikasi aktif
+                </div>
+              ) : (
+                filteredNotifications.map((n) => (
+                  <div
+                    key={n.id}
+                    onClick={() => markOneAsRead(n.id, n.actionUrl)}
+                    className={`p-2.5 rounded-xl transition-colors cursor-pointer flex items-start gap-2.5 ${
+                      n.unread
+                        ? "bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                        : "hover:bg-default-100 dark:hover:bg-default-800"
+                    }`}
+                  >
+                    <div
+                      className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+                        n.unread ? "bg-blue-500 animate-pulse" : "bg-transparent"
+                      }`}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <p className="text-xs font-bold text-foreground truncate">{n.title}</p>
+                        <span className="text-[9px] text-default-400 font-mono shrink-0 flex items-center gap-0.5">
+                          <Clock className="w-2.5 h-2.5" />
+                          {n.timestamp}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-default-500 mt-0.5 leading-snug">
+                        {n.description}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-2 border-t border-default-100 dark:border-default-800 text-center bg-default-50/30 dark:bg-default-900/30">
+              <span className="text-[10px] text-default-400">
+                Notifikasi otomatis terhubung dengan jadwal liabilities & target portfolio.
+              </span>
+            </div>
+          </Dropdown.Popover>
+        </Dropdown>
+
         {/* Quick Theme Switcher */}
         {mounted && (
           <Button
             size="sm"
             variant="ghost"
             isIconOnly
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            onClick={() => {
+              const nextTheme = theme === "dark" ? "light" : "dark";
+              playNovaThemeSound(nextTheme === "dark");
+              setTheme(nextTheme);
+            }}
             className="h-7.5 w-7.5 cursor-pointer text-default-600 hover:text-foreground"
             aria-label="Toggle Theme"
           >
@@ -507,8 +854,13 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           >
             {/* Avatar with live green online indicator ring */}
             <div className="relative shrink-0">
-              <div className="w-6 h-6 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-[11px] font-bold shadow-2xs">
-                {user?.name?.charAt(0)?.toUpperCase() || "U"}
+              <div className="w-6 h-6 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-[11px] font-bold shadow-2xs overflow-hidden">
+                {customAvatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={customAvatar} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  user?.name?.charAt(0)?.toUpperCase() || "U"
+                )}
               </div>
               <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-900 animate-pulse" />
             </div>
@@ -523,23 +875,110 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
             </div>
             <ChevronDown className="w-3 h-3 text-default-400 shrink-0 ml-0.5" />
           </Dropdown.Trigger>
-          <Dropdown.Popover className="min-w-56 z-50 p-1.5 shadow-xl bg-white dark:bg-gray-900 rounded-xl border border-default-200/80 dark:border-default-800">
+          <Dropdown.Popover className="min-w-64 sm:min-w-72 z-50 p-2 shadow-2xl bg-white dark:bg-gray-900 rounded-2xl border border-default-200/80 dark:border-default-800">
             {/* User Profile Card Header */}
-            <div className="flex items-center gap-2.5 p-2 mb-1 rounded-lg bg-default-100/60 dark:bg-default-800/50">
-              <div className="relative shrink-0">
-                <div className="w-7 h-7 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold shadow-2xs">
-                  {user?.name?.charAt(0)?.toUpperCase() || "U"}
+            {(() => {
+              const userRoleKey = ((selectedWorkspace as any)?.role || "owner").toLowerCase() as keyof typeof ROLES;
+              const roleConfig = ROLES[userRoleKey] || ROLES.owner;
+
+              return (
+                <div className="p-3 mb-2 rounded-xl bg-default-100/70 dark:bg-default-800/60 border border-default-200/60 dark:border-default-700/50 space-y-2.5">
+                  <div className="flex items-center gap-3">
+                    {/* Enlarged 3x Avatar (~w-16 h-16) */}
+                    <div className="relative shrink-0">
+                      <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-blue-500 to-purple-600 p-0.5 shadow-md shadow-blue-500/20">
+                        <div className="w-full h-full rounded-[14px] bg-default-100 dark:bg-default-800 overflow-hidden flex items-center justify-center">
+                          {customAvatar ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={customAvatar} alt="Profile" className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-xl font-black text-blue-600 dark:text-blue-400">
+                              {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-900 animate-pulse" />
+                    </div>
+
+                    {/* Name, Email & Role Tag */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <p className="text-sm font-bold text-foreground truncate">{user?.name || "Alexander Vance"}</p>
+                        <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border uppercase ${roleConfig.badgeBg} ${roleConfig.badgeText} ${roleConfig.badgeBorder}`}>
+                          {roleConfig.label}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-default-500 truncate mt-0.5">{user?.email || "alexander@novajournal.io"}</p>
+                      <div className="mt-1.5 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+                        <span className="text-[10px] text-default-400 truncate">
+                          WS: <strong className="text-foreground">{selectedWorkspace?.name || "Utama"}</strong>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Role Privilege & Capabilities Overview */}
+                  <div className="pt-2 border-t border-default-200/50 dark:border-default-700/40 text-[10px] text-default-500 flex items-start gap-1.5 leading-relaxed">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                    <span>{roleConfig.description}</span>
+                  </div>
                 </div>
-                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-900" />
+              );
+            })()}
+
+            {/* Color Palette Selector in Profile Popup */}
+            <div className="p-2.5 mb-1.5 rounded-xl bg-default-100/70 dark:bg-default-800/60 border border-default-200/50 dark:border-default-700/40 select-none space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-foreground flex items-center gap-1.5">
+                  <Palette className="w-3.5 h-3.5 text-theme-primary" />
+                  <span>Palet Warna HeroUI</span>
+                </span>
+                <span className="text-[10px] font-mono uppercase text-default-400 font-semibold">
+                  {activePalette}
+                </span>
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-1">
-                  <p className="text-xs font-bold text-foreground truncate">{user?.name || "User"}</p>
-                  <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 uppercase">
-                    {((selectedWorkspace as any)?.role || "owner").toUpperCase()}
-                  </span>
-                </div>
-                <p className="text-[10px] text-default-500 truncate">{user?.email || ""}</p>
+
+              {/* 6 Palette Swatches */}
+              <div className="flex items-center justify-between gap-1.5 pt-0.5">
+                {NAVBAR_PALETTES.map((pal) => (
+                  <button
+                    key={pal.id}
+                    type="button"
+                    title={pal.name}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelectPalette(pal.id);
+                    }}
+                    className={`w-6 h-6 rounded-full flex items-center justify-center transition-all cursor-pointer border-2 ${
+                      activePalette === pal.id
+                        ? "border-white dark:border-default-100 scale-115 shadow-md shadow-black/20"
+                        : "border-transparent hover:scale-105 opacity-80 hover:opacity-100"
+                    }`}
+                    style={{
+                      backgroundColor: pal.hex,
+                    }}
+                  >
+                    {activePalette === pal.id && <Check className="w-3 h-3 text-white stroke-[3]" />}
+                  </button>
+                ))}
+              </div>
+
+              {/* Shortcut to Settings Appearance Anchor */}
+              <div className="pt-1.5 border-t border-default-200/40 dark:border-default-700/40 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    playSoftChime();
+                    router.push("/settings#section-appearance");
+                  }}
+                  className="text-[11px] font-semibold text-theme-primary hover:underline flex items-center gap-1 cursor-pointer w-full justify-between"
+                >
+                  <span>Atur Tampilan & Mode Gelap</span>
+                  <span>&rarr;</span>
+                </button>
               </div>
             </div>
 
@@ -548,8 +987,11 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
               onAction={(key) => {
                 if (key === "settings") router.push("/settings");
                 else if (key === "workspaces") router.push("/workspaces");
-                else if (key === "theme") setTheme(theme === "dark" ? "light" : "dark");
-                else if (key === "logout") {
+                else if (key === "theme") {
+                  const nextTheme = theme === "dark" ? "light" : "dark";
+                  playNovaThemeSound(nextTheme === "dark");
+                  setTheme(nextTheme);
+                } else if (key === "logout") {
                   logout();
                   router.push("/login");
                 }
