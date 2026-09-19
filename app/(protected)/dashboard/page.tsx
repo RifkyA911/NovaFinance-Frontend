@@ -93,6 +93,8 @@ import { GoalsQuickWidget } from "./components/GoalsQuickWidget";
 import CashflowChart from "./components/CashflowChart";
 import FinancialHealthAuditor from "./components/FinancialHealthAuditor";
 import { DocumentUpload, type DocumentMetadata, type UploadedDocumentResult } from "../components/DocumentUpload";
+import { exportToExcel, exportToPdf } from "./lib/exportUtils";
+import { playSoftChime } from "@/app/lib/sound";
 
 const DASHBOARD_DICT = {
   en: {
@@ -476,11 +478,20 @@ export default function Dashboard() {
   const formatCurrency = (val: number | string) => {
     const num = typeof val === "string" ? parseFloat(val) : val;
     if (isNaN(num)) return "Rp 0";
-    return new Intl.NumberFormat("id-ID", {
+    let curr = selectedWorkspace?.currency || "IDR";
+    let locale = "id-ID";
+    try {
+      const storedCurr = localStorage.getItem("novajournal_currency");
+      if (storedCurr) curr = storedCurr;
+      const storedFmt = localStorage.getItem("novajournal_number_format");
+      if (storedFmt === "en") locale = "en-US";
+    } catch {}
+    const isNoDecimal = curr === "IDR" || curr === "JPY";
+    return new Intl.NumberFormat(locale, {
       style: "currency",
-      currency: selectedWorkspace?.currency || "IDR",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
+      currency: curr,
+      minimumFractionDigits: isNoDecimal ? 0 : 2,
+      maximumFractionDigits: isNoDecimal ? 0 : 2,
     }).format(num);
   };
 
@@ -849,32 +860,49 @@ export default function Dashboard() {
     }
   }, [selectedWorkspace?.id]);
 
-  // Export handlers
-  const handleExportCsv = () => {
-    if (!filteredTransactions.length) return;
-    const headers = ["ID", "Type", "Description", "Amount", "Category", "Wallet", "Date", "Notes"];
-    const rows = filteredTransactions.map((tx: { id?: string; type?: string; description?: string; amount?: number | string; category?: unknown; notes?: string; date?: string; account?: unknown; accountId?: string }) => [
-      tx.id || "",
-      tx.type || "",
-      `"${(tx.description || "").replace(/"/g, '""')}"`,
-      tx.amount || 0,
-      `"${(getCategoryName(tx.category) || "").replace(/"/g, '""')}"`,
-      `"${(getAccountName(tx) || "").replace(/"/g, '""')}"`,
-      tx.date || "",
-      `"${(tx.notes || "").replace(/"/g, '""')}"`,
-    ]);
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `novajournal-${selectedWorkspace?.name || "transactions"}-${new Date().toISOString().split("T")[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  // Enhanced Export Modal and handlers
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportDateRange, setExportDateRange] = useState<"all" | "this_month" | "last_30_days">("all");
+
+  const getExportFilteredTransactions = (range: "all" | "this_month" | "last_30_days") => {
+    if (range === "all") return filteredTransactions;
+    if (range === "this_month") {
+      const now = new Date();
+      return filteredTransactions.filter((tx: any) => {
+        if (!tx.date) return false;
+        const d = new Date(tx.date);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      });
+    }
+    if (range === "last_30_days") {
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000);
+      return filteredTransactions.filter((tx: any) => tx.date && new Date(tx.date) >= thirtyDaysAgo);
+    }
+    return filteredTransactions;
   };
 
-  const handleExportPdf = () => {
-    window.print();
+  const handleExportExcel = (range = exportDateRange) => {
+    playSoftChime();
+    const txList = getExportFilteredTransactions(range);
+    exportToExcel(
+      selectedWorkspace?.name || "Workspace",
+      selectedWorkspace?.currency || "IDR",
+      txList,
+      workspaceAccounts,
+      { dateRange: range }
+    );
+  };
+
+  const handleExportPdf = (range = exportDateRange) => {
+    playSoftChime();
+    const txList = getExportFilteredTransactions(range);
+    exportToPdf(
+      selectedWorkspace?.name || "Workspace",
+      selectedWorkspace?.currency || "IDR",
+      txList,
+      workspaceAccounts,
+      { dateRange: range }
+    );
   };
 
   // Fully integrated Backend API transaction creator
@@ -1008,10 +1036,119 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background p-4 sm:p-5 flex items-center justify-center">
-        <div className="text-center flex flex-col items-center gap-2.5">
-          <Spinner size="md" />
-          <p className="text-default-500 text-xs sm:text-sm">{dt.loading}</p>
+      <div className="min-h-screen bg-background p-3.5 sm:p-5 lg:p-6 space-y-4 max-w-7xl mx-auto animate-pulse select-none">
+        {/* Top Header Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/70 dark:bg-gray-900/70 p-4 rounded-2xl border border-default-200/70 dark:border-default-800 shadow-2xs">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-44 bg-default-200 dark:bg-default-800 rounded-lg" />
+              <div className="h-4 w-16 bg-default-200/70 dark:bg-default-800/70 rounded-full" />
+              <div className="h-4 w-10 bg-default-200/70 dark:bg-default-800/70 rounded-md" />
+            </div>
+            <div className="h-3.5 w-64 bg-default-100 dark:bg-default-800/50 rounded-md" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-20 bg-default-200 dark:bg-default-800 rounded-lg" />
+            <div className="h-8 w-32 bg-default-200 dark:bg-default-800 rounded-lg" />
+            <div className="h-8 w-20 bg-default-200 dark:bg-default-800 rounded-lg" />
+          </div>
+        </div>
+
+        {/* 4 KPI Metric Cards Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="p-4 rounded-2xl border border-default-200/60 dark:border-default-800 bg-white/70 dark:bg-gray-900/60 space-y-3"
+            >
+              <div className="flex items-center justify-between">
+                <div className="h-3 w-24 bg-default-200 dark:bg-default-800 rounded" />
+                <div className="w-8 h-8 rounded-xl bg-default-200/70 dark:bg-default-800/70" />
+              </div>
+              <div className="h-7 w-36 bg-default-300/70 dark:bg-default-700/60 rounded-lg" />
+              <div className="h-2.5 w-28 bg-default-100 dark:bg-default-800/60 rounded" />
+            </div>
+          ))}
+        </div>
+
+        {/* Analytics & Charts Grid Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Main Chart Skeleton */}
+          <div className="lg:col-span-2 p-4 sm:p-5 rounded-2xl border border-default-200/60 dark:border-default-800 bg-white/70 dark:bg-gray-900/60 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="h-4 w-36 bg-default-200 dark:bg-default-800 rounded" />
+                <div className="h-3 w-48 bg-default-100 dark:bg-default-800/60 rounded" />
+              </div>
+              <div className="flex gap-1.5">
+                <div className="h-6 w-12 bg-default-200 dark:bg-default-800 rounded-md" />
+                <div className="h-6 w-12 bg-default-200 dark:bg-default-800 rounded-md" />
+              </div>
+            </div>
+            {/* Chart Graphic Simulation */}
+            <div className="h-60 rounded-xl bg-default-100/70 dark:bg-default-800/40 flex items-end justify-between p-4 gap-2">
+              {[40, 65, 30, 85, 55, 75, 45, 90, 60, 80, 50, 70].map((h, idx) => (
+                <div
+                  key={idx}
+                  className="flex-1 bg-default-200 dark:bg-default-700/60 rounded-t"
+                  style={{ height: `${h}%` }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Expense Breakdown Skeleton */}
+          <div className="p-4 sm:p-5 rounded-2xl border border-default-200/60 dark:border-default-800 bg-white/70 dark:bg-gray-900/60 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="h-4 w-32 bg-default-200 dark:bg-default-800 rounded" />
+              <div className="h-6 w-16 bg-default-100 dark:bg-default-800 rounded-md" />
+            </div>
+            {/* Circle Donut Skeleton */}
+            <div className="w-36 h-36 mx-auto rounded-full border-8 border-default-200 dark:border-default-700/60 border-t-blue-500/50 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-full bg-default-100 dark:bg-default-800" />
+            </div>
+            {/* Category rows */}
+            <div className="space-y-2 pt-2">
+              {[1, 2, 3].map((k) => (
+                <div key={k} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-default-200 dark:bg-default-700" />
+                    <div className="h-3 w-20 bg-default-200 dark:bg-default-800 rounded" />
+                  </div>
+                  <div className="h-3 w-14 bg-default-200 dark:bg-default-800 rounded" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Transactions Table Skeleton */}
+        <div className="p-4 sm:p-5 rounded-2xl border border-default-200/60 dark:border-default-800 bg-white/70 dark:bg-gray-900/60 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-default-100 dark:border-default-800">
+            <div className="h-4 w-40 bg-default-200 dark:bg-default-800 rounded" />
+            <div className="flex items-center gap-2">
+              <div className="h-7 w-48 bg-default-100 dark:bg-default-800 rounded-lg" />
+              <div className="h-7 w-20 bg-default-100 dark:bg-default-800 rounded-lg" />
+            </div>
+          </div>
+          {/* Table Rows Skeleton */}
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((row) => (
+              <div key={row} className="flex items-center justify-between py-2 border-b border-default-100/70 dark:border-default-800/40">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-default-200 dark:bg-default-800 shrink-0" />
+                  <div className="space-y-1">
+                    <div className="h-3.5 w-36 sm:w-48 bg-default-200 dark:bg-default-800 rounded" />
+                    <div className="h-2.5 w-20 bg-default-100 dark:bg-default-800/60 rounded" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="h-3.5 w-16 bg-default-200/60 dark:bg-default-800/60 rounded hidden sm:block" />
+                  <div className="h-4 w-24 bg-default-200 dark:bg-default-800 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -1080,7 +1217,7 @@ export default function Dashboard() {
           <Button aria-label="Button Action" variant="outline"
             size="sm"
             onPress={() => setIsFilterModalOpen(true)}
-            className="h-8 px-3 text-xs flex items-center gap-1.5 cursor-pointer relative"
+            className="h-8 px-3 text-xs flex items-center gap-1.5 cursor-pointer relative bg-white dark:bg-default-800 hover:bg-default-100 dark:hover:bg-default-700 text-default-800 dark:text-default-200 border border-default-200 dark:border-default-700 shadow-2xs active:scale-95 transition-all"
           >
             <Filter className="w-3.5 h-3.5 text-default-500" />
             <span>{dt.filter}</span>
@@ -1092,8 +1229,10 @@ export default function Dashboard() {
           </Button>
 
           {/* Add Transaction Button */}
-          <Button aria-label="Button Action" size="sm"
-            className="h-8 px-3.5 text-xs bg-linear-to-r from-blue-500 to-purple-600 text-white shadow-xs cursor-pointer flex items-center gap-1.5 font-medium"
+          <Button
+            aria-label="Button Action"
+            size="sm"
+            className="h-8 px-3.5 text-xs bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-xs cursor-pointer flex items-center gap-1.5 font-semibold active:scale-95 transition-all"
             onPress={() => router.push("/transactions/new")}
           >
             <Plus className="w-3.5 h-3.5" />
@@ -1103,27 +1242,60 @@ export default function Dashboard() {
           {/* Export Options Dropdown */}
           <Dropdown>
             <Dropdown.Trigger
-              className="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-default-200 dark:border-default-700 bg-transparent hover:bg-default-100 dark:hover:bg-default-800 text-default-600 cursor-pointer transition-colors"
+              className="h-8 px-2.5 inline-flex items-center gap-1.5 rounded-lg border border-default-200 dark:border-default-700 bg-white dark:bg-default-800 hover:bg-default-100 dark:hover:bg-default-700 text-default-700 dark:text-default-300 hover:text-foreground cursor-pointer shadow-2xs active:scale-95 transition-all text-xs font-semibold"
               aria-label="Export options"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <span className="hidden sm:inline">Ekspor</span>
             </Dropdown.Trigger>
-            <Dropdown.Popover className="min-w-40 z-50 p-1 bg-white dark:bg-gray-900 border border-default-200 dark:border-default-800 rounded-xl shadow-xl">
+            <Dropdown.Popover className="min-w-56 z-50 p-1.5 bg-white dark:bg-gray-900 border border-default-200 dark:border-default-800 rounded-2xl shadow-xl">
+              <div className="px-2.5 py-1.5 mb-1 text-[10px] font-bold text-default-400 uppercase tracking-wider border-b border-default-100 dark:border-default-800">
+                Format Ekspor Laporan
+              </div>
               <Dropdown.Menu
                 aria-label="Export options"
                 onAction={(key) => {
-                  if (key === "excel") handleExportCsv();
+                  if (key === "excel") handleExportExcel();
                   else if (key === "pdf") handleExportPdf();
+                  else if (key === "custom") setShowExportModal(true);
                 }}
                 className="outline-none space-y-0.5"
               >
-                <Dropdown.Item id="excel" textValue="Download Excel" className="text-xs flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-default-100 dark:hover:bg-default-800 cursor-pointer outline-none">
-                  <FileSpreadsheet className="w-3.5 h-3.5 text-green-600" />
-                  <span>{dt.exportCsv}</span>
+                <Dropdown.Item
+                  id="excel"
+                  textValue="Download Excel Workbook"
+                  className="text-xs flex items-center justify-between px-2.5 py-2 rounded-xl hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer outline-none transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                    <div>
+                      <p className="font-semibold text-xs">Excel (.xlsx)</p>
+                      <p className="text-[10px] text-default-400">Multi-sheet summary & ledger</p>
+                    </div>
+                  </div>
                 </Dropdown.Item>
-                <Dropdown.Item id="pdf" textValue="Download PDF" className="text-xs flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-default-100 dark:hover:bg-default-800 cursor-pointer outline-none">
-                  <FileText className="w-3.5 h-3.5 text-red-600" />
-                  <span>{dt.exportPdf}</span>
+
+                <Dropdown.Item
+                  id="pdf"
+                  textValue="Download PDF Statement"
+                  className="text-xs flex items-center justify-between px-2.5 py-2 rounded-xl hover:bg-rose-500/10 hover:text-rose-700 dark:hover:text-rose-400 cursor-pointer outline-none transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-rose-600" />
+                    <div>
+                      <p className="font-semibold text-xs">Executive PDF Statement</p>
+                      <p className="text-[10px] text-default-400">Branded report & autotable</p>
+                    </div>
+                  </div>
+                </Dropdown.Item>
+
+                <Dropdown.Item
+                  id="custom"
+                  textValue="Kustomisasi & Periode"
+                  className="text-xs flex items-center gap-2 px-2.5 py-2 rounded-xl hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer outline-none mt-1 border-t border-default-100 dark:border-default-800 font-semibold"
+                >
+                  <Layers className="w-4 h-4 text-blue-500" />
+                  <span>Kustomisasi Periode...</span>
                 </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown.Popover>
@@ -2264,6 +2436,130 @@ export default function Dashboard() {
           </Modal.Container>
         </Modal.Backdrop>
       </Modal>
+      {/* 8. Export Statement Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-150">
+          <Card className="bg-background border border-default-200 rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-default-100 dark:border-default-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                  <Download className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-foreground">Ekspor Laporan Keuangan</h3>
+                  <p className="text-xs text-default-500">
+                    Workspace: <strong>{selectedWorkspace?.name}</strong> • Mata Uang: <strong>{selectedWorkspace?.currency || "IDR"}</strong>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowExportModal(false)}
+                className="p-1 text-default-400 hover:text-foreground rounded-lg cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Date Range Selection */}
+            <div className="space-y-2 text-xs">
+              <label className="font-semibold block text-foreground">Pilih Rentang Waktu Transaksi:</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { key: "all", label: "Semua Data", desc: `${filteredTransactions.length} transaksi` },
+                  { key: "this_month", label: "Bulan Ini", desc: "Periode aktif" },
+                  { key: "last_30_days", label: "30 Hari Terakhir", desc: "Data terkini" },
+                ].map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setExportDateRange(item.key as any)}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                      exportDateRange === item.key
+                        ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-semibold"
+                        : "border-default-200 bg-default-50/50 hover:bg-default-100 text-default-700 dark:text-default-300"
+                    }`}
+                  >
+                    <p className="text-xs font-bold">{item.label}</p>
+                    <p className="text-[10px] text-default-400 mt-0.5">{item.desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Format Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+              {/* Excel Card */}
+              <div className="p-4 rounded-xl border border-default-200 bg-default-50/40 dark:bg-default-800/30 space-y-3 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600">
+                      <FileSpreadsheet className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-foreground">Microsoft Excel</h4>
+                      <span className="text-[10px] text-emerald-600 font-semibold font-mono">.XLSX Workbook</span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-default-500 mt-2 leading-relaxed">
+                    Format multi-sheet: Sheet 1 berisi Executive Summary & Saldo Wallets, Sheet 2 berisi Buku Besar Transaksi lengkap.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleExportExcel(exportDateRange);
+                    setShowExportModal(false);
+                  }}
+                  className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-semibold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Unduh File Excel</span>
+                </button>
+              </div>
+
+              {/* PDF Card */}
+              <div className="p-4 rounded-xl border border-default-200 bg-default-50/40 dark:bg-default-800/30 space-y-3 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-rose-500/10 text-rose-600">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-foreground">Laporan Resmi PDF</h4>
+                      <span className="text-[10px] text-rose-600 font-semibold font-mono">.PDF Statement</span>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-default-500 mt-2 leading-relaxed">
+                    Dokumen cetak audit berdesain profesional dengan kartu ringkasan KPI, tabel transaksi berpaginasi rapi.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleExportPdf(exportDateRange);
+                    setShowExportModal(false);
+                  }}
+                  className="w-full py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-semibold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Unduh File PDF</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-default-100 dark:border-default-800 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowExportModal(false)}
+                className="px-4 py-2 rounded-xl bg-default-100 hover:bg-default-200 text-default-700 dark:text-default-300 text-xs font-semibold cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
