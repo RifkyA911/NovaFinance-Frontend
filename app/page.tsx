@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { playNovaThemeSound } from "@/app/lib/sound";
 import {
   Wallet,
   TrendingUp,
@@ -42,6 +43,8 @@ import {
   Workflow,
   Lightbulb,
   Check,
+  Terminal,
+  Send,
 } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -234,7 +237,19 @@ const DICT = {
     },
     footer: {
       rights: "NovaJournal Inc. All rights reserved.",
-      tagline: "The Modern Financial Architecture for Forward-Thinking Operators.",
+      tagline: "The Modern Financial Operating System for Forward-Thinking Operators.",
+      statusText: "All Systems Operational • API v1.2",
+      securityBadge: "SOC-2 Ready • 256-bit TLS • BetterAuth Protected",
+      newsletterTitle: "Subscribe to Financial Intelligence",
+      newsletterDesc: "Join 12,000+ operators getting weekly memos on runway optimization and AI bookkeeping.",
+      subscribePlaceholder: "Enter your work email...",
+      subscribeBtn: "Subscribe",
+      colPlatform: "Platform",
+      colAi: "AI & Intelligence",
+      colGovernance: "Governance & RBAC",
+      colDevelopers: "Developers",
+      colLegal: "Legal & Security",
+      madeWith: "Crafted with Next.js 16, Turbopack, and Elysia.",
     },
   },
   id: {
@@ -413,7 +428,19 @@ const DICT = {
     },
     footer: {
       rights: "NovaJournal Inc. Hak cipta dilindungi undang-undang.",
-      tagline: "Arsitektur Keuangan Modern untuk Pengambil Keputusan Terdepan.",
+      tagline: "Sistem Operasi Finansial & Pembukuan Modern untuk Pengambil Keputusan Terdepan.",
+      statusText: "Semua Layanan Operasional • API v1.2",
+      securityBadge: "Siap Standar SOC-2 • Enkripsi TLS 256-bit • Diproteksi BetterAuth",
+      newsletterTitle: "Berlangganan Wawasan Finansial",
+      newsletterDesc: "Bergabung bersama 12.000+ founder mendapatkan kurasi mingguan seputar optimasi arus kas & akuntansi AI.",
+      subscribePlaceholder: "Ketik alamat email Anda...",
+      subscribeBtn: "Langganan",
+      colPlatform: "Platform",
+      colAi: "AI & Intelijen",
+      colGovernance: "Tata Kelola & RBAC",
+      colDevelopers: "Developer",
+      colLegal: "Legal & Keamanan",
+      madeWith: "Dibangun dengan Next.js 16, Turbopack, dan Elysia.",
     },
   },
 };
@@ -697,7 +724,11 @@ export default function LandingPage() {
               <button
                 type="button"
                 aria-label="Toggle Theme"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                onClick={() => {
+                  const nextTheme = theme === "dark" ? "light" : "dark";
+                  playNovaThemeSound(nextTheme === "dark");
+                  setTheme(nextTheme);
+                }}
                 className="w-8 h-8 rounded-lg bg-default-100 hover:bg-default-200 dark:bg-default-800 dark:hover:bg-default-700 text-default-700 dark:text-default-300 flex items-center justify-center transition-colors cursor-pointer"
               >
                 {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-blue-500" />}
@@ -1637,21 +1668,158 @@ export default function LandingPage() {
       </section>
 
       {/* -------------------------------------------------------- */}
-      {/* 11. FOOTER                                               */}
+      {/* 11. ENTERPRISE DETAILED FOOTER                           */}
       {/* -------------------------------------------------------- */}
-      <footer className="border-t border-default-200/60 dark:border-default-800/60 py-10 bg-white dark:bg-gray-950 text-xs text-default-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-2xs shrink-0">
-              <Wallet className="w-3.5 h-3.5 text-white" />
+      <footer className="border-t border-gray-200 dark:border-gray-800/80 bg-white dark:bg-[#030712] text-gray-600 dark:text-gray-400 text-xs transition-colors">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16 space-y-12">
+          
+          {/* Top Newsletter & System Status Strip */}
+          <div className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-200/80 dark:border-gray-800/80 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="space-y-1.5 max-w-xl">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[11px] font-mono font-bold tracking-wider text-emerald-600 dark:text-emerald-400 uppercase">
+                  {t.footer.statusText}
+                </span>
+                <span className="text-gray-300 dark:text-gray-700">•</span>
+                <span className="text-[11px] text-gray-500 font-medium">
+                  {t.footer.securityBadge}
+                </span>
+              </div>
+              <h3 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white">
+                {t.footer.newsletterTitle}
+              </h3>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                {t.footer.newsletterDesc}
+              </p>
             </div>
-            <span className="font-bold text-foreground">NovaJournal</span>
-            <span className="text-default-400">• {t.footer.rights}</span>
+
+            {/* Newsletter Input Box */}
+            <form onSubmit={(e) => { e.preventDefault(); alert("Thank you for subscribing to NovaJournal Financial Intelligence!"); }} className="flex items-center gap-2 w-full lg:w-auto">
+              <input
+                type="email"
+                required
+                placeholder={t.footer.subscribePlaceholder}
+                className="h-10 px-3.5 w-full sm:w-64 text-xs rounded-xl bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 shadow-2xs"
+              />
+              <button
+                type="submit"
+                className="h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition-colors shrink-0 shadow-xs cursor-pointer flex items-center gap-1.5"
+              >
+                <span>{t.footer.subscribeBtn}</span>
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            </form>
           </div>
 
-          <div className="text-default-400 text-[11px] text-center sm:text-right">
-            {t.footer.tagline}
+          {/* 5-Column Navigation Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 text-xs">
+            {/* Brand Column (2 Cols wide on desktop) */}
+            <div className="col-span-2 space-y-4">
+              <Link href="/" className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-xl bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-xs text-white">
+                  <Wallet className="w-4 h-4" />
+                </div>
+                <span className="text-base font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent tracking-tight">
+                  NovaJournal
+                </span>
+              </Link>
+
+              <p className="text-xs text-gray-500 leading-relaxed max-w-sm">
+                {t.footer.tagline}
+              </p>
+
+              {/* Status and Security Badges */}
+              <div className="space-y-2 pt-1">
+                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-[11px] font-mono text-gray-600 dark:text-gray-400">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span>NovaJournal Core v1.2</span>
+                  <span className="text-gray-300 dark:text-gray-700">|</span>
+                  <span className="text-blue-600 dark:text-blue-400">Elysia on Bun</span>
+                </div>
+
+                <div className="flex items-center gap-2 text-[11px] text-gray-500">
+                  <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
+                  <span>Bank-Grade 256-Bit TLS Encryption</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Column 1: Platform */}
+            <div className="space-y-3">
+              <h4 className="font-bold text-gray-900 dark:text-white uppercase tracking-wider text-[11px]">
+                {t.footer.colPlatform}
+              </h4>
+              <ul className="space-y-2 text-gray-600 dark:text-gray-400">
+                <li><Link href="/dashboard" className="hover:text-blue-600 dark:hover:text-white transition-colors">Executive Dashboard</Link></li>
+                <li><Link href="/transactions" className="hover:text-blue-600 dark:hover:text-white transition-colors">Transaction Ledgers</Link></li>
+                <li><Link href="/transactions/new" className="hover:text-blue-600 dark:hover:text-white transition-colors">Smart AI Entry</Link></li>
+                <li><Link href="/wallets" className="hover:text-blue-600 dark:hover:text-white transition-colors">Master Wallets</Link></li>
+                <li><Link href="/workspaces" className="hover:text-blue-600 dark:hover:text-white transition-colors">Multi-Workspace</Link></li>
+              </ul>
+            </div>
+
+            {/* Column 2: AI & Intelligence */}
+            <div className="space-y-3">
+              <h4 className="font-bold text-gray-900 dark:text-white uppercase tracking-wider text-[11px]">
+                {t.footer.colAi}
+              </h4>
+              <ul className="space-y-2 text-gray-600 dark:text-gray-400">
+                <li><a href="#ai-engine" className="hover:text-blue-600 dark:hover:text-white transition-colors">Gemini OCR Scanner</a></li>
+                <li><a href="#ai-engine" className="hover:text-blue-600 dark:hover:text-white transition-colors">Groq Speed Inference</a></li>
+                <li><a href="#ai-engine" className="hover:text-blue-600 dark:hover:text-white transition-colors">DeepSeek Reasoning</a></li>
+                <li><a href="#ai-engine" className="hover:text-blue-600 dark:hover:text-white transition-colors">Claude Advisory</a></li>
+                <li><Link href="/dashboard" className="hover:text-blue-600 dark:hover:text-white transition-colors">Financial Health Audit</Link></li>
+              </ul>
+            </div>
+
+            {/* Column 3: Governance & Controls */}
+            <div className="space-y-3">
+              <h4 className="font-bold text-gray-900 dark:text-white uppercase tracking-wider text-[11px]">
+                {t.footer.colGovernance}
+              </h4>
+              <ul className="space-y-2 text-gray-600 dark:text-gray-400">
+                <li><Link href="/users" className="hover:text-blue-600 dark:hover:text-white transition-colors">Roles & RBAC Matrix</Link></li>
+                <li><Link href="/money-flow" className="hover:text-blue-600 dark:hover:text-white transition-colors">Money Flow Sankey</Link></li>
+                <li><Link href="/portfolio" className="hover:text-blue-600 dark:hover:text-white transition-colors">Investment Portfolio</Link></li>
+                <li><Link href="/goals" className="hover:text-blue-600 dark:hover:text-white transition-colors">Goals & Wishlist</Link></li>
+                <li><Link href="/analytics" className="hover:text-blue-600 dark:hover:text-white transition-colors">Financial Analytics</Link></li>
+              </ul>
+            </div>
+
+            {/* Column 4: Developers */}
+            <div className="space-y-3">
+              <h4 className="font-bold text-gray-900 dark:text-white uppercase tracking-wider text-[11px]">
+                {t.footer.colDevelopers}
+              </h4>
+              <ul className="space-y-2 text-gray-600 dark:text-gray-400">
+                <li><a href="http://localhost:8080/swagger" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 dark:hover:text-white transition-colors flex items-center gap-1">Swagger OpenAPI <ExternalLink className="w-3 h-3" /></a></li>
+                <li><a href="http://localhost:8080/swagger/json" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 dark:hover:text-white transition-colors">OpenAPI JSON Spec</a></li>
+                <li><a href="http://localhost:8080/health" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 dark:hover:text-white transition-colors">System Health API</a></li>
+                <li><span className="text-gray-400 dark:text-gray-600 select-none">MCP Protocol v1.0</span></li>
+                <li><Link href="/settings" className="hover:text-blue-600 dark:hover:text-white transition-colors">API Keys Hub</Link></li>
+              </ul>
+            </div>
           </div>
+
+          {/* Bottom Divider Bar */}
+          <div className="pt-8 border-t border-gray-200/80 dark:border-gray-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-gray-500 text-[11px]">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span>© 2026 {t.footer.rights}</span>
+              <span>•</span>
+              <span className="text-gray-400 dark:text-gray-600">{t.footer.madeWith}</span>
+            </div>
+
+            {/* Privacy & Legal Links */}
+            <div className="flex items-center gap-4">
+              <span className="hover:text-gray-900 dark:hover:text-white cursor-pointer transition-colors">Privacy Policy</span>
+              <span>•</span>
+              <span className="hover:text-gray-900 dark:hover:text-white cursor-pointer transition-colors">Terms of Service</span>
+              <span>•</span>
+              <span className="hover:text-gray-900 dark:hover:text-white cursor-pointer transition-colors">Security Disclosure</span>
+            </div>
+          </div>
+
         </div>
       </footer>
     </div>

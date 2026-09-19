@@ -6,6 +6,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
+import NovaAICopilot from "./components/NovaAICopilot";
+import NovaCosmicLoader from "@/components/transitions/NovaCosmicLoader";
 
 export default function ProtectedLayout({
   children,
@@ -24,22 +26,13 @@ export default function ProtectedLayout({
   }, [isAuthenticated, loading, router]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3">
-        <div className="animate-spin rounded-full h-10 w-10 border-2 border-blue-500 border-t-transparent"></div>
-        <p className="text-default-500 text-sm">Loading NovaJournal...</p>
-      </div>
-    );
+    return <NovaCosmicLoader title="NovaJournal Financial Engine" subtitle="Memuat workspace & memverifikasi sesi..." />;
   }
 
   if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3">
-        <div className="animate-spin rounded-full h-10 w-10 border-2 border-blue-500 border-t-transparent"></div>
-        <p className="text-default-500 text-sm">Redirecting to login...</p>
-      </div>
-    );
+    return <NovaCosmicLoader title="NovaJournal Authentication" subtitle="Mengarahkan ke halaman login..." playSound={false} />;
   }
+
 
   return (
     <WorkspaceProvider>
@@ -56,6 +49,7 @@ export default function ProtectedLayout({
             {children}
           </main>
         </div>
+        <NovaAICopilot />
       </div>
     </WorkspaceProvider>
   );
