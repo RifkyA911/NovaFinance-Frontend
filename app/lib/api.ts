@@ -97,6 +97,88 @@ export interface CreateCategoryPayload {
   icon?: string;
 }
 
+export interface FinancialGoal {
+  id: string;
+  workspaceId: string;
+  title: string;
+  category: string;
+  targetAmount: number | string;
+  currentAmount: number | string;
+  targetDate?: string | null;
+  priority: 'urgent' | 'high' | 'medium' | 'low';
+  order: number;
+  status: 'in_progress' | 'completed' | 'wishlist' | 'paused';
+  monthlyContributionPlanned?: number | string;
+  notes?: string | null;
+  metadata?: any;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface GoalsAnalytics {
+  totalGoals: number;
+  totalTargetAmount: number;
+  totalCurrentAmount: number;
+  overallCompletionRate: number;
+  totalMonthlyPlanned: number;
+  statusCounts: {
+    in_progress: number;
+    completed: number;
+    wishlist: number;
+    paused: number;
+  };
+  priorityCounts: {
+    urgent: number;
+    high: number;
+    medium: number;
+    low: number;
+  };
+  categoryBreakdown: Array<{
+    category: string;
+    totalTarget: number;
+    totalCurrent: number;
+    count: number;
+    targetSharePercentage: string;
+    completionPercentage: string;
+  }>;
+}
+
+export interface CreateGoalPayload {
+  workspaceId: string;
+  title: string;
+  category: string;
+  targetAmount: number | string;
+  currentAmount?: number | string;
+  targetDate?: string | null;
+  priority?: 'urgent' | 'high' | 'medium' | 'low';
+  order?: number;
+  status?: 'in_progress' | 'completed' | 'wishlist' | 'paused';
+  monthlyContributionPlanned?: number | string;
+  notes?: string;
+  metadata?: any;
+}
+
+export interface UpdateGoalPayload {
+  title?: string;
+  category?: string;
+  targetAmount?: number | string;
+  currentAmount?: number | string;
+  targetDate?: string | null;
+  priority?: 'urgent' | 'high' | 'medium' | 'low';
+  status?: 'in_progress' | 'completed' | 'wishlist' | 'paused';
+  order?: number;
+  monthlyContributionPlanned?: number | string;
+  notes?: string;
+  metadata?: any;
+}
+
+export interface ReorderGoalItem {
+  id: string;
+  order: number;
+  priority?: string;
+  status?: string;
+}
+
 class ApiClient {
   private baseUrl: string;
 
@@ -252,6 +334,58 @@ class ApiClient {
 
   async getDashboardAccounts(workspaceId: string): Promise<{ success: boolean; data: { accounts: Array<{ id: string; name: string; balance: string; type: string }> } }> {
     return this.request(`/api/dashboard/accounts?workspaceId=${workspaceId}`);
+  }
+
+  // Goals & Wishlist
+  async getGoals(
+    workspaceId: string,
+    status?: string,
+    priority?: string,
+    category?: string
+  ): Promise<{ success: boolean; data: { goals: FinancialGoal[]; total: number } }> {
+    const params = new URLSearchParams({ workspaceId });
+    if (status && status !== 'all') params.append('status', status);
+    if (priority && priority !== 'all') params.append('priority', priority);
+    if (category && category !== 'all') params.append('category', category);
+    return this.request(`/api/goals?${params}`);
+  }
+
+  async getGoalsAnalytics(workspaceId: string): Promise<{ success: boolean; data: GoalsAnalytics }> {
+    return this.request(`/api/goals/analytics?workspaceId=${workspaceId}`);
+  }
+
+  async createGoal(payload: CreateGoalPayload): Promise<{ success: boolean; data: { goal: FinancialGoal } }> {
+    return this.request('/api/goals', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async updateGoal(id: string, payload: UpdateGoalPayload): Promise<{ success: boolean; data: { goal: FinancialGoal } }> {
+    return this.request(`/api/goals/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async depositGoal(id: string, amount: number | string, accountId?: string, note?: string): Promise<{ success: boolean; data: { goal: FinancialGoal } }> {
+    return this.request(`/api/goals/${id}/deposit`, {
+      method: 'POST',
+      body: JSON.stringify({ amount, accountId, note }),
+    });
+  }
+
+  async reorderGoals(workspaceId: string, items: ReorderGoalItem[]): Promise<{ success: boolean; message: string }> {
+    return this.request('/api/goals/reorder', {
+      method: 'PUT',
+      body: JSON.stringify({ workspaceId, items }),
+    });
+  }
+
+  async deleteGoal(id: string): Promise<{ success: boolean; message: string }> {
+    return this.request(`/api/goals/${id}`, {
+      method: 'DELETE',
+    });
   }
 }
 
