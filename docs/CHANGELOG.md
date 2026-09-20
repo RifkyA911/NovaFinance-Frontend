@@ -1,8 +1,26 @@
 # Changelog
 
-All notable changes to NovaJournal will be documented in this file.
+All notable changes to NovaFinance will be documented in this file.
 
 ## [Unreleased]
+
+## [0.3.8] - 2026-09-20
+
+### Added & Enhanced
+- **Company Brand Logo Width & Placement Customization (`brand/page.tsx`, `Sidebar.tsx`)**:
+  - Added dedicated interactive popup modal to configure custom banner logo width (100px to 260px) and placement options (`left`, `center`, `right`).
+  - Provided quick dimension presets (120px, 140px, 180px, 220px, 250px) with live simulated sidebar header preview.
+  - Fixed logo image update bug by maintaining `localStorage` fallbacks, forcing dynamic key re-renders, and dispatching real-time synchronization events (`novajournal_brand_config_changed`).
+- **Profile Page Navbar Avatar Scaler (`profile/page.tsx`, `Navbar.tsx`)**:
+  - Introduced granular avatar size slider (22px to 48px) in Section 1 of `/profile` with quick presets (24px, 28px, 34px, 40px, 46px).
+  - Integrated live navbar preview card and reactive custom events (`novajournal_navbar_config_changed`) dynamically resizing the top navbar avatar.
+- **Flat Cartoon Theme Transition Animation & Audio Overhaul (`ThemeTransitionOverlay.tsx`)**:
+  - Overhauled theme toggle transition overlay with multi-tone Web Audio API feedback (`playNovaThemeSound`).
+  - Implemented 3 staggered waves (11 total meteors) falling smoothly from top-right to bottom-left with radiant heads and custom vector trails.
+  - Designed a 2D flat cartoon daytime animation featuring a cheerful sun disk, rounded revolving rays, cyan-white breeze clouds, and emerald hills.
+- **Modern Reusable Nova Toast Notification System (`NovaToast.tsx`)**:
+  - Built unified toast container with colored status indicators (emerald, red, amber, blue), bold titles, descriptions, auto-dismiss, and slide-in animations.
+  - Integrated across all modular configuration pages (`/brand`, `/appearance`, `/ai-hub`, `/security`, `/regional`, `/profile`, `/settings`).
 
 ### Added
 - **Authentication System**

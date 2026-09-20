@@ -1,4 +1,4 @@
-# 💰 NovaJournal
+﻿# 💰 NovaFinance
 
 <div align="center">
 
@@ -18,7 +18,7 @@
 
 ## 📖 Overview
 
-NovaJournal is a powerful financial management application that helps you track income, expenses, investments, and achieve your financial goals. Built with modern technologies including Next.js 16, TypeScript, and HeroUI, it provides a beautiful and intuitive user experience with advanced analytics and reporting capabilities.
+NovaFinance is a powerful financial management application that helps you track income, expenses, investments, and achieve your financial goals. Built with modern technologies including Next.js 16, TypeScript, and HeroUI, it provides a beautiful and intuitive user experience with advanced analytics and reporting capabilities.
 
 ## ✨ Features
 
