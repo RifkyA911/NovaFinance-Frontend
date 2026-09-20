@@ -49,7 +49,7 @@ export default function AuthLayout({
               <Wallet className="w-3.5 h-3.5 text-white" />
             </div>
             <span className="text-sm font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent tracking-tight">
-              NovaJournal
+              NovaFinance
             </span>
           </Link>
 
@@ -137,7 +137,7 @@ export default function AuthLayout({
             {/* Testimonial Quote */}
             <div className="p-4 rounded-xl border border-default-200/80 dark:border-default-800/80 bg-linear-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-950/20 dark:to-purple-950/20">
               <p className="text-xs text-default-600 dark:text-default-400 italic">
-                &ldquo;NovaJournal eliminated 15+ hours of manual bookkeeping each month. The live money flow topology and instant OCR make accounting effortless.&rdquo;
+                &ldquo;NovaFinance eliminated 15+ hours of manual bookkeeping each month. The live money flow topology and instant OCR make accounting effortless.&rdquo;
               </p>
               <div className="mt-2.5 flex items-center gap-2">
                 <div className="w-5 h-5 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center">
@@ -168,7 +168,7 @@ export default function AuthLayout({
       {/* Clean Footer */}
       <footer className="border-t border-default-200/60 dark:border-default-800/60 py-4 text-center text-xs text-default-400">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>&copy; {new Date().getFullYear()} NovaJournal Inc. All rights reserved.</span>
+          <span>&copy; {new Date().getFullYear()} NovaFinance Inc. All rights reserved.</span>
           <div className="flex items-center gap-4 text-default-500 text-[11px]">
             <span className="flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />

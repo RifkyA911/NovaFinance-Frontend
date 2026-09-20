@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
   return (
     <AuthLayout
       title="Reset Password"
-      subtitle="Enter the email associated with your NovaJournal account"
+      subtitle="Enter the email associated with your NovaFinance account"
       badgeText="Account Recovery"
     >
       {!success ? (
