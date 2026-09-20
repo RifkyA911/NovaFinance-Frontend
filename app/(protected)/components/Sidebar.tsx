@@ -441,8 +441,11 @@ export default function Sidebar({
   const [brandLogoOverride, setBrandLogoOverride] = useState<string | null>(null);
   const [brandModeOverride, setBrandModeOverride] = useState<"square" | "wide" | null>(null);
   const [brandNameOverride, setBrandNameOverride] = useState<string | null>(null);
-  const [brandLogoWidth, setBrandLogoWidth] = useState(140);
+  const [brandLogoWidth, setBrandLogoWidth] = useState(100);
+  const [brandLogoUnit, setBrandLogoUnit] = useState<"percent" | "px">("percent");
   const [brandLogoPlacement, setBrandLogoPlacement] = useState<"left" | "center" | "right">("left");
+  const [brandSubtextMode, setBrandSubtextMode] = useState<"jargon" | "entity" | "none">("jargon");
+  const [brandLogoFrame, setBrandLogoFrame] = useState<"none" | "bordered" | "card" | "contrast">("none");
   const [brandVersion, setBrandVersion] = useState(0);
 
   // Granular Sidebar Appearance Preferences
@@ -465,7 +468,10 @@ export default function Sidebar({
     const scopedBrandMode = wsId ? localStorage.getItem(`novajournal_brand_logo_mode_${wsId}`) : null;
     const scopedFormat = wsId ? localStorage.getItem(`novajournal_brand_display_format_${wsId}`) : null;
     const scopedWidth = wsId ? localStorage.getItem(`novajournal_brand_logo_width_${wsId}`) : null;
+    const scopedUnit = wsId ? localStorage.getItem(`novajournal_brand_logo_unit_${wsId}`) : null;
     const scopedPlacement = wsId ? localStorage.getItem(`novajournal_brand_logo_placement_${wsId}`) : null;
+    const scopedSubtext = wsId ? localStorage.getItem(`novajournal_brand_subtext_mode_${wsId}`) : null;
+    const scopedFrame = wsId ? localStorage.getItem(`novajournal_brand_logo_frame_${wsId}`) : null;
 
     // Fresh scoped/local logo takes highest precedence over in-memory ws object for instant reactivity
     const effLogo = scopedLogo || globalLogo || ws?.customBrandLogo || null;
@@ -475,6 +481,12 @@ export default function Sidebar({
     const effName = scopedName || localStorage.getItem("novajournal_custom_brand_name") || ws?.customBrandName || null;
     setBrandNameOverride(effName);
 
+    const effSubtext = (scopedSubtext || localStorage.getItem("novajournal_brand_subtext_mode") || "jargon") as "jargon" | "entity" | "none";
+    setBrandSubtextMode(effSubtext);
+
+    const effFrame = (scopedFrame || localStorage.getItem("novajournal_brand_logo_frame") || "none") as "none" | "bordered" | "card" | "contrast";
+    setBrandLogoFrame(effFrame);
+
     const effMode = (scopedBrandMode || localStorage.getItem("novajournal_brand_logo_mode") || ws?.customBrandMode || "square").toLowerCase();
     if (effMode === "square" || effMode === "wide") setBrandModeOverride(effMode as any);
 
@@ -483,12 +495,16 @@ export default function Sidebar({
       setBrandDisplayFormat(effFormat as any);
     }
 
+    const effUnit = (scopedUnit || localStorage.getItem("novajournal_brand_logo_unit") || "percent") as "percent" | "px";
+    setBrandLogoUnit(effUnit);
+
+    const defaultWidth = effUnit === "percent" ? 100 : 140;
     if (scopedWidth) {
-      setBrandLogoWidth(Number(scopedWidth) || 140);
+      setBrandLogoWidth(Number(scopedWidth) || defaultWidth);
     } else {
       const savedLogoWidth = localStorage.getItem("novajournal_brand_logo_width");
-      if (savedLogoWidth) setBrandLogoWidth(Number(savedLogoWidth) || 140);
-      else setBrandLogoWidth(140);
+      if (savedLogoWidth) setBrandLogoWidth(Number(savedLogoWidth) || defaultWidth);
+      else setBrandLogoWidth(defaultWidth);
     }
 
     if (scopedPlacement === "left" || scopedPlacement === "center" || scopedPlacement === "right") {
@@ -659,41 +675,34 @@ export default function Sidebar({
               {!collapsed ? (
                 <div className="flex items-center justify-between w-full min-w-0 pr-0.5">
                   {/* Brand Display Layout */}
-                  {effectiveDisplayFormat === "full-banner" && customBrandLogo ? (
-                    <div className={`flex-1 flex items-center min-w-0 pr-1 ${
-                      brandLogoPlacement === "center" ? "justify-center" : brandLogoPlacement === "right" ? "justify-end" : "justify-start"
-                    }`}>
-                      <div
-                        style={{ width: `${brandLogoWidth}px` }}
-                        className="relative h-10 shrink-0 overflow-hidden rounded-none select-none"
-                      >
-                        <img
-                          key={`${customBrandLogo}-${brandVersion}`}
-                          src={customBrandLogo}
-                          alt="Corporate Banner"
-                          className={`h-10 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
-                            brandLogoPlacement === "center"
-                              ? "left-1/2 -translate-x-1/2"
-                              : brandLogoPlacement === "right"
-                              ? "right-0"
-                              : "left-0"
-                          }`}
-                        />
-                      </div>
-                    </div>
-                  ) : effectiveDisplayFormat === "logo-only" && customBrandLogo ? (
-                    <div className={`flex-1 flex items-center min-w-0 ${
-                      brandLogoPlacement === "center" ? "justify-center" : brandLogoPlacement === "right" ? "justify-end" : "justify-start"
-                    }`}>
-                      {customBrandMode === "wide" ? (
+                  {(() => {
+                    const logoWidthStyle = brandLogoUnit === "percent" ? `${brandLogoWidth}%` : `${brandLogoWidth}px`;
+                    const frameClass = brandLogoFrame === "bordered"
+                      ? "border border-default-300 dark:border-default-700 p-0.5"
+                      : brandLogoFrame === "card"
+                      ? "bg-default-100/70 dark:bg-default-800/70 p-1 shadow-2xs"
+                      : brandLogoFrame === "contrast"
+                      ? "bg-white dark:bg-zinc-800 p-1 shadow-xs border border-default-200/60 dark:border-default-700/60"
+                      : "";
+
+                    const effectiveSubtext = brandSubtextMode === "none"
+                      ? null
+                      : brandSubtextMode === "entity"
+                      ? (ws?.entityType || ws?.type?.toUpperCase() || "PT")
+                      : (customBrandJargon || ws?.name || "Corporate Treasury");
+
+                    return effectiveDisplayFormat === "full-banner" && customBrandLogo ? (
+                      <div className={`flex-1 flex items-center min-w-0 pr-1 ${
+                        brandLogoPlacement === "center" ? "justify-center" : brandLogoPlacement === "right" ? "justify-end" : "justify-start"
+                      }`}>
                         <div
-                          style={{ width: `${brandLogoWidth}px` }}
-                          className="relative h-10 shrink-0 overflow-hidden rounded-none select-none"
+                          style={{ width: logoWidthStyle }}
+                          className={`relative h-10 shrink-0 overflow-hidden rounded-none select-none ${frameClass}`}
                         >
                           <img
                             key={`${customBrandLogo}-${brandVersion}`}
                             src={customBrandLogo}
-                            alt="Corporate Logo"
+                            alt="Corporate Banner"
                             className={`h-10 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
                               brandLogoPlacement === "center"
                                 ? "left-1/2 -translate-x-1/2"
@@ -703,73 +712,99 @@ export default function Sidebar({
                             }`}
                           />
                         </div>
-                      ) : (
-                        <img
-                          key={`${customBrandLogo}-${brandVersion}`}
-                          src={customBrandLogo}
-                          alt="Corporate Logo"
-                          className="w-8 h-8 rounded-none object-contain shadow-2xs border border-default-200/60 dark:border-default-700/60"
-                        />
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      {hasCustomBrand ? (
-                        customBrandLogo ? (
-                          customBrandMode === "wide" ? (
-                            <div
-                              style={{ width: `${brandLogoWidth}px` }}
-                              className="relative h-9 shrink-0 overflow-hidden rounded-none select-none"
-                            >
+                      </div>
+                    ) : effectiveDisplayFormat === "logo-only" && customBrandLogo ? (
+                      <div className={`flex-1 flex items-center min-w-0 ${
+                        brandLogoPlacement === "center" ? "justify-center" : brandLogoPlacement === "right" ? "justify-end" : "justify-start"
+                      }`}>
+                        {customBrandMode === "wide" ? (
+                          <div
+                            style={{ width: logoWidthStyle }}
+                            className={`relative h-10 shrink-0 overflow-hidden rounded-none select-none ${frameClass}`}
+                          >
+                            <img
+                              key={`${customBrandLogo}-${brandVersion}`}
+                              src={customBrandLogo}
+                              alt="Corporate Logo"
+                              className={`h-10 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
+                                brandLogoPlacement === "center"
+                                  ? "left-1/2 -translate-x-1/2"
+                                  : brandLogoPlacement === "right"
+                                  ? "right-0"
+                                  : "left-0"
+                              }`}
+                            />
+                          </div>
+                        ) : (
+                          <img
+                            key={`${customBrandLogo}-${brandVersion}`}
+                            src={customBrandLogo}
+                            alt="Corporate Logo"
+                            className={`w-8 h-8 rounded-none object-contain shadow-2xs border border-default-200/60 dark:border-default-700/60 ${frameClass}`}
+                          />
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        {hasCustomBrand ? (
+                          customBrandLogo ? (
+                            customBrandMode === "wide" ? (
+                              <div
+                                style={{ width: brandLogoUnit === "percent" ? `${Math.min(brandLogoWidth, 65)}%` : `${brandLogoWidth}px`, maxWidth: brandLogoUnit === "percent" ? "130px" : undefined }}
+                                className={`relative h-9 shrink-0 overflow-hidden rounded-none select-none ${frameClass}`}
+                              >
+                                <img
+                                  key={`${customBrandLogo}-${brandVersion}`}
+                                  src={customBrandLogo}
+                                  alt="Company Logo"
+                                  className={`h-9 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
+                                    brandLogoPlacement === "center"
+                                      ? "left-1/2 -translate-x-1/2"
+                                      : brandLogoPlacement === "right"
+                                      ? "right-0"
+                                      : "left-0"
+                                  }`}
+                                />
+                              </div>
+                            ) : (
                               <img
                                 key={`${customBrandLogo}-${brandVersion}`}
                                 src={customBrandLogo}
                                 alt="Company Logo"
-                                className={`h-9 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
-                                  brandLogoPlacement === "center"
-                                    ? "left-1/2 -translate-x-1/2"
-                                    : brandLogoPlacement === "right"
-                                    ? "right-0"
-                                    : "left-0"
-                                }`}
+                                className={`w-7 h-7 rounded-none object-contain shadow-2xs shrink-0 border border-default-200/60 dark:border-default-700/60 ${frameClass}`}
                               />
-                            </div>
+                            )
                           ) : (
-                            <img
-                              key={`${customBrandLogo}-${brandVersion}`}
-                              src={customBrandLogo}
-                              alt="Company Logo"
-                              className="w-7 h-7 rounded-none object-contain shadow-2xs shrink-0 border border-default-200/60 dark:border-default-700/60"
-                            />
+                            <div className="w-7 h-7 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xs shadow-2xs shrink-0">
+                              {customBrandName?.charAt(0)?.toUpperCase() || "C"}
+                            </div>
                           )
                         ) : (
-                          <div className="w-7 h-7 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xs shadow-2xs shrink-0">
-                            {customBrandName?.charAt(0)?.toUpperCase() || "C"}
+                          <div className="w-7 h-7 rounded-lg bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-2xs shrink-0">
+                            <Wallet className="w-3.5 h-3.5 text-white" />
                           </div>
-                        )
-                      ) : (
-                        <div className="w-7 h-7 rounded-lg bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-2xs shrink-0">
-                          <Wallet className="w-3.5 h-3.5 text-white" />
-                        </div>
-                      )}
-                      {brandDisplayMode !== "icon" && (
-                        <div className="flex flex-col min-w-0 leading-tight">
-                          {hasCustomBrand ? (
-                            <span className="text-xs font-bold text-foreground truncate">
-                              {customBrandName}
-                            </span>
-                          ) : (
-                            <span className="text-xs font-extrabold bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-300 dark:to-purple-400 bg-clip-text text-transparent truncate tracking-tight">
-                              NovaFinance
-                            </span>
-                          )}
-                          <span className="text-[9px] text-default-400 font-medium truncate">
-                            {hasCustomBrand ? (customBrandJargon || ws?.name || "Corporate Treasury") : "ProFinancial"}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                        )}
+                        {brandDisplayMode !== "icon" && (
+                          <div className="flex flex-col min-w-0 leading-tight">
+                            {hasCustomBrand ? (
+                              <span className="text-xs font-bold text-foreground truncate">
+                                {customBrandName}
+                              </span>
+                            ) : (
+                              <span className="text-xs font-extrabold bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-300 dark:to-purple-400 bg-clip-text text-transparent truncate tracking-tight">
+                                NovaFinance
+                              </span>
+                            )}
+                            {effectiveSubtext && (
+                              <span className="text-[9px] text-default-400 font-medium truncate">
+                                {hasCustomBrand ? effectiveSubtext : "ProFinancial"}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Tierlist Sleek Icon Badge (Show/Hide controlled by brandBadgeVisible & brandBadgeStyle) */}
                   {brandBadgeVisible && (

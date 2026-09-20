@@ -4,6 +4,28 @@ All notable changes to NovaFinance will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-09-20
+
+### Added & Enhanced
+- **Responsive Percentage & Static Pixel Width Scaler (`brand/page.tsx`, `Sidebar.tsx`)**:
+  - Introduced dual-unit scaler system for custom wide brand logos: **Persentase (`%`)** (range 15% to 100%, default 100%) and **Piksel (`px`)** (range 30px to 260px).
+  - Solved container scaling issues in ~224px sidebars by enabling responsive percentage-based width bounds with true symmetrical side-cropping.
+  - Added dedicated quick presets for both units (e.g. 25%, 50%, 75%, 90%, 100% and 60px, 100px, 140px, 180px, 220px).
+  - Fully synchronized across active sidebar header, live interactive simulation viewports, and the banner width configuration modal.
+- **Enriched Section 2: Preferensi Tampilan Brand di Sidebar Navigasi (`brand/page.tsx`)**:
+  - Expanded into a comprehensive 6-card corporate configuration suite:
+    - **Format Header Sidebar**: Logo + Teks Perusahaan, Hanya Logo Brand, Full Banner Melebar.
+    - **Mode Satuan & Skala Bentang Lebar**: `%` vs `px` segmented switcher, interactive dynamic slider, and quick presets.
+    - **Perataan Horizontal Logo**: Rata Kiri, Rata Tengah, Rata Kanan.
+    - **Visibilitas & Format Badge Tier**: Tampilkan/Sembunyikan badge lisensi dengan pilihan Ikon + Teks vs Hanya Ikon.
+    - **Perilaku Slogan & Entitas Perusahaan**: Slogan Brand vs Legal Entitas (PT/CV) vs Sembunyi.
+    - **Gaya Wadah & Frame Logo**: Polos (Tanpa Garis), Border Halus, Kartu Halus (Card), Kontras Terang (Light Contrast).
+- **Overhauled Section 3: Kontrol Pengaturan Langsung & Pratinjau Toolbar (`brand/page.tsx`)**:
+  - Eliminated UI clutter by restructuring direct controls into a clean 2-tier design:
+    - Top row: 3 balanced segmented control cards for Aspect Ratio, Header Format, and Alignment.
+    - Bottom row: Dedicated full-width Skala Bentang Lebar card with `%`/`px` toggle, responsive slider, and usage guide.
+  - Updated all 4 simulator viewports and telemetry indicators to reflect unit changes, frame styles, and subtext behaviors in real-time.
+
 ## [0.4.1] - 2026-09-20
 
 ### Fixed & Enhanced

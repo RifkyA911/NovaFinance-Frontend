@@ -41,6 +41,10 @@ import {
   LayoutList,
   Info,
   Scale,
+  Percent,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { mutationFunctions } from "@/app/lib/queries";
@@ -90,8 +94,11 @@ export default function CompanyBrandPage() {
   const [customBrandLogo, setCustomBrandLogo] = useState("");
   const [customBrandMode, setCustomBrandMode] = useState<"square" | "wide">("square");
   const [customBrandDisplay, setCustomBrandDisplay] = useState<"logo-and-text" | "logo-only" | "full-banner">("logo-and-text");
-  const [brandLogoWidth, setBrandLogoWidth] = useState(140);
+  const [brandLogoWidth, setBrandLogoWidth] = useState(100);
+  const [brandLogoUnit, setBrandLogoUnit] = useState<"percent" | "px">("percent");
   const [brandLogoPlacement, setBrandLogoPlacement] = useState<"left" | "center" | "right">("left");
+  const [brandSubtextMode, setBrandSubtextMode] = useState<"jargon" | "entity" | "none">("jargon");
+  const [brandLogoFrame, setBrandLogoFrame] = useState<"none" | "bordered" | "card" | "contrast">("none");
   const [isWideSettingsModalOpen, setIsWideSettingsModalOpen] = useState(false);
   const [entityType, setEntityType] = useState("PT");
   const [taxId, setTaxId] = useState("");
@@ -113,6 +120,26 @@ export default function CompanyBrandPage() {
     }
     window.dispatchEvent(new Event("novajournal_brand_config_changed"));
     showNotice(mode === "wide" ? (isId ? "Mode rasio logo: Melebar (Wide / Banner)" : "Brand mode: Wide banner") : (isId ? "Mode rasio logo: Kotak 1:1 (Square)" : "Brand mode: Square 1:1"));
+  };
+
+  const handleLogoUnitChange = (unit: "percent" | "px") => {
+    playSoftChime();
+    setBrandLogoUnit(unit);
+    let newW = brandLogoWidth;
+    if (unit === "percent") {
+      newW = brandLogoUnit === "px" ? Math.min(100, Math.max(15, Math.round((brandLogoWidth / 224) * 100))) : 100;
+    } else {
+      newW = brandLogoUnit === "percent" ? Math.min(260, Math.max(30, Math.round((brandLogoWidth / 100) * 224))) : 140;
+    }
+    setBrandLogoWidth(newW);
+    localStorage.setItem("novajournal_brand_logo_unit", unit);
+    localStorage.setItem("novajournal_brand_logo_width", String(newW));
+    if (selectedWorkspace?.id) {
+      localStorage.setItem(`novajournal_brand_logo_unit_${selectedWorkspace.id}`, unit);
+      localStorage.setItem(`novajournal_brand_logo_width_${selectedWorkspace.id}`, String(newW));
+    }
+    window.dispatchEvent(new Event("novajournal_brand_config_changed"));
+    showNotice(unit === "percent" ? (isId ? "Satuan bentang: Persentase (%)" : "Scale unit: Percentage (%)") : (isId ? "Satuan bentang: Piksel (px)" : "Scale unit: Pixel (px)"));
   };
 
   const handleLogoWidthChange = (w: number) => {
@@ -144,6 +171,26 @@ export default function CompanyBrandPage() {
     }
     window.dispatchEvent(new Event("novajournal_brand_config_changed"));
     showNotice(fmt === "full-banner" ? "Format: Full Banner" : fmt === "logo-only" ? "Format: Hanya Logo" : "Format: Logo + Teks");
+  };
+
+  const handleSubtextModeChange = (mode: "jargon" | "entity" | "none") => {
+    playRealisticClick(0.3);
+    setBrandSubtextMode(mode);
+    localStorage.setItem("novajournal_brand_subtext_mode", mode);
+    if (selectedWorkspace?.id) {
+      localStorage.setItem(`novajournal_brand_subtext_mode_${selectedWorkspace.id}`, mode);
+    }
+    window.dispatchEvent(new Event("novajournal_brand_config_changed"));
+  };
+
+  const handleLogoFrameChange = (frame: "none" | "bordered" | "card" | "contrast") => {
+    playRealisticClick(0.3);
+    setBrandLogoFrame(frame);
+    localStorage.setItem("novajournal_brand_logo_frame", frame);
+    if (selectedWorkspace?.id) {
+      localStorage.setItem(`novajournal_brand_logo_frame_${selectedWorkspace.id}`, frame);
+    }
+    window.dispatchEvent(new Event("novajournal_brand_config_changed"));
   };
 
   // Crop / Upload Modal States for Brand Logo
@@ -255,7 +302,10 @@ export default function CompanyBrandPage() {
       const scopedMode = wsId ? localStorage.getItem(`novajournal_brand_logo_mode_${wsId}`) : null;
       const scopedFormat = wsId ? localStorage.getItem(`novajournal_brand_display_format_${wsId}`) : null;
       const scopedWidth = wsId ? localStorage.getItem(`novajournal_brand_logo_width_${wsId}`) : null;
+      const scopedUnit = wsId ? localStorage.getItem(`novajournal_brand_logo_unit_${wsId}`) : null;
       const scopedPlacement = wsId ? localStorage.getItem(`novajournal_brand_logo_placement_${wsId}`) : null;
+      const scopedSubtext = wsId ? localStorage.getItem(`novajournal_brand_subtext_mode_${wsId}`) : null;
+      const scopedFrame = wsId ? localStorage.getItem(`novajournal_brand_logo_frame_${wsId}`) : null;
 
       const hasTrial = wsId ? localStorage.getItem(`novajournal_enterprise_trial_${wsId}`) === "true" : false;
       const globalOverride = localStorage.getItem("novajournal_enterprise_override") === "true";
@@ -282,11 +332,16 @@ export default function CompanyBrandPage() {
       setTaxId(ws.taxId || "");
       setWebsiteUrl(ws.websiteUrl || "");
 
+      const effUnit = (scopedUnit || localStorage.getItem("novajournal_brand_logo_unit") || "percent") as "percent" | "px";
+      setBrandLogoUnit(effUnit);
+
+      const defaultW = effUnit === "percent" ? 100 : 140;
       if (scopedWidth) {
-        setBrandLogoWidth(Number(scopedWidth) || 140);
+        setBrandLogoWidth(Number(scopedWidth) || defaultW);
       } else {
         const savedLogoWidth = localStorage.getItem("novajournal_brand_logo_width");
-        if (savedLogoWidth) setBrandLogoWidth(Number(savedLogoWidth) || 140);
+        if (savedLogoWidth) setBrandLogoWidth(Number(savedLogoWidth) || defaultW);
+        else setBrandLogoWidth(defaultW);
       }
 
       if (scopedPlacement === "left" || scopedPlacement === "center" || scopedPlacement === "right") {
@@ -296,6 +351,20 @@ export default function CompanyBrandPage() {
         if (savedLogoPlacement === "left" || savedLogoPlacement === "center" || savedLogoPlacement === "right") {
           setBrandLogoPlacement(savedLogoPlacement);
         }
+      }
+
+      if (scopedSubtext === "jargon" || scopedSubtext === "entity" || scopedSubtext === "none") {
+        setBrandSubtextMode(scopedSubtext);
+      } else {
+        const savedSubtext = localStorage.getItem("novajournal_brand_subtext_mode") as any;
+        if (savedSubtext === "jargon" || savedSubtext === "entity" || savedSubtext === "none") setBrandSubtextMode(savedSubtext);
+      }
+
+      if (scopedFrame === "none" || scopedFrame === "bordered" || scopedFrame === "card" || scopedFrame === "contrast") {
+        setBrandLogoFrame(scopedFrame);
+      } else {
+        const savedFrame = localStorage.getItem("novajournal_brand_logo_frame") as any;
+        if (savedFrame === "none" || savedFrame === "bordered" || savedFrame === "card" || savedFrame === "contrast") setBrandLogoFrame(savedFrame);
       }
     }
 
@@ -344,7 +413,10 @@ export default function CompanyBrandPage() {
         localStorage.setItem("novajournal_brand_display_format", customBrandDisplay);
         localStorage.setItem("novajournal_brand_logo_mode", customBrandMode);
         localStorage.setItem("novajournal_brand_logo_width", String(brandLogoWidth));
+        localStorage.setItem("novajournal_brand_logo_unit", brandLogoUnit);
         localStorage.setItem("novajournal_brand_logo_placement", brandLogoPlacement);
+        localStorage.setItem("novajournal_brand_subtext_mode", brandSubtextMode);
+        localStorage.setItem("novajournal_brand_logo_frame", brandLogoFrame);
 
         if (selectedWorkspace?.id) {
           localStorage.setItem(`novajournal_custom_brand_logo_${selectedWorkspace.id}`, customBrandLogo);
@@ -352,7 +424,10 @@ export default function CompanyBrandPage() {
           localStorage.setItem(`novajournal_brand_logo_mode_${selectedWorkspace.id}`, customBrandMode);
           localStorage.setItem(`novajournal_brand_display_format_${selectedWorkspace.id}`, customBrandDisplay);
           localStorage.setItem(`novajournal_brand_logo_width_${selectedWorkspace.id}`, String(brandLogoWidth));
+          localStorage.setItem(`novajournal_brand_logo_unit_${selectedWorkspace.id}`, brandLogoUnit);
           localStorage.setItem(`novajournal_brand_logo_placement_${selectedWorkspace.id}`, brandLogoPlacement);
+          localStorage.setItem(`novajournal_brand_subtext_mode_${selectedWorkspace.id}`, brandSubtextMode);
+          localStorage.setItem(`novajournal_brand_logo_frame_${selectedWorkspace.id}`, brandLogoFrame);
         }
 
         window.dispatchEvent(new Event("novajournal_brand_config_changed"));
@@ -384,7 +459,10 @@ export default function CompanyBrandPage() {
     customBrandMode,
     customBrandDisplay,
     brandLogoWidth,
+    brandLogoUnit,
     brandLogoPlacement,
+    brandSubtextMode,
+    brandLogoFrame,
     entityType,
     taxId,
     websiteUrl,
@@ -885,7 +963,7 @@ export default function CompanyBrandPage() {
                             title="Atur lebar kustom dan posisi penempatan logo"
                           >
                             <SlidersHorizontal className="w-3.5 h-3.5 text-violet-600" />
-                            <span>Atur Lebar & Posisi ({brandLogoWidth}px · {brandLogoPlacement === "left" ? "Kiri" : brandLogoPlacement === "center" ? "Tengah" : "Kanan"})</span>
+                            <span>Atur Lebar & Posisi ({brandLogoWidth}{brandLogoUnit === "percent" ? "%" : "px"} · {brandLogoPlacement === "left" ? "Kiri" : brandLogoPlacement === "center" ? "Tengah" : "Kanan"})</span>
                           </button>
                         )}
                       </div>
@@ -1051,13 +1129,13 @@ export default function CompanyBrandPage() {
                 2. Preferensi Tampilan Brand di Sidebar Navigasi
               </h2>
               <p className="text-[11px] text-default-400">
-                Visibilitas tier badge dan mode tampilan compact vs full di sidebar.
+                Kustomisasi tata letak header, format bentang ({brandLogoUnit === "percent" ? "%" : "px"}), visibilitas tier badge, subteks entitas, dan bingkai logo.
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] px-2 py-0.5 rounded-md bg-default-100 dark:bg-default-800 text-default-500 font-mono">
-              {sidebarBrandDisplayMode.toUpperCase()}
+              {brandLogoWidth}{brandLogoUnit === "percent" ? "%" : "px"} · {brandLogoPlacement.toUpperCase()}
             </span>
             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-default-400 hover:text-foreground">
               {foldedSections.display ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
@@ -1066,53 +1144,31 @@ export default function CompanyBrandPage() {
         </div>
 
         {!foldedSections.display && (
-          <div className="p-4 sm:p-6 pt-0 border-t border-default-100 dark:border-default-800">
-            <div className="pt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Option A: Badge Toggle */}
-              <div className="p-4 rounded-xl border border-default-200/80 dark:border-default-700/80 bg-default-50/60 dark:bg-default-800/40 flex items-center justify-between">
+          <div className="p-4 sm:p-6 pt-0 border-t border-default-100 dark:border-default-800 space-y-4">
+            <div className="pt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Card 1: Format Header Brand Layout */}
+              <div className="p-4 rounded-xl border border-default-200/80 dark:border-default-700/80 bg-default-50/60 dark:bg-default-800/40 space-y-2.5 flex flex-col justify-between">
                 <div>
-                  <span className="text-xs font-bold text-foreground block">
-                    Tampilkan Badge Tier
-                  </span>
-                  <p className="text-[11px] text-default-500 mt-0.5">
-                    Tampilkan badge lisensi di samping logo brand sidebar.
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <LayoutList className="w-3.5 h-3.5 text-blue-500" />
+                      Format Header Sidebar
+                    </span>
+                    <span className="text-[10px] font-mono text-default-400 uppercase">
+                      {customBrandDisplay}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-default-500">
+                    Pilih komposisi elemen visual antara logo, teks nama perusahaan, atau banner penuh.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={showSidebarBrandBadge}
-                  onClick={() => {
-                    const next = !showSidebarBrandBadge;
-                    setShowSidebarBrandBadge(next);
-                    localStorage.setItem("novajournal_sidebar_brand_badge", String(next));
-                    window.dispatchEvent(new Event("novajournal_brand_config_changed"));
-                    playRealisticClick();
-                  }}
-                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer ${
-                    showSidebarBrandBadge ? "bg-violet-600" : "bg-default-300 dark:bg-default-700"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-xs transition-transform ${
-                      showSidebarBrandBadge ? "translate-x-4" : "translate-x-0.5"
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Option B: Header Brand Layout */}
-              <div className="p-4 rounded-xl border border-default-200/80 dark:border-default-700/80 bg-default-50/60 dark:bg-default-800/40 space-y-2">
-                <span className="text-xs font-bold text-foreground block">
-                  Format Header Brand Sidebar
-                </span>
                 <div className="grid grid-cols-3 gap-1.5">
                   <button
                     type="button"
                     onClick={() => handleDisplayFormatChange("logo-and-text")}
                     className={`p-2 rounded-lg border text-center text-xs font-semibold cursor-pointer transition ${
                       customBrandDisplay === "logo-and-text"
-                        ? "bg-violet-600 text-white border-violet-600 shadow-xs"
+                        ? "bg-violet-600 text-white border-violet-600 shadow-xs font-bold"
                         : "bg-white dark:bg-default-900 border-default-200 dark:border-default-700 text-default-600 hover:bg-default-100"
                     }`}
                   >
@@ -1123,7 +1179,7 @@ export default function CompanyBrandPage() {
                     onClick={() => handleDisplayFormatChange("logo-only")}
                     className={`p-2 rounded-lg border text-center text-xs font-semibold cursor-pointer transition ${
                       customBrandDisplay === "logo-only"
-                        ? "bg-violet-600 text-white border-violet-600 shadow-xs"
+                        ? "bg-violet-600 text-white border-violet-600 shadow-xs font-bold"
                         : "bg-white dark:bg-default-900 border-default-200 dark:border-default-700 text-default-600 hover:bg-default-100"
                     }`}
                   >
@@ -1134,7 +1190,7 @@ export default function CompanyBrandPage() {
                     onClick={() => handleDisplayFormatChange("full-banner")}
                     className={`p-2 rounded-lg border text-center text-xs font-semibold cursor-pointer transition ${
                       customBrandDisplay === "full-banner"
-                        ? "bg-violet-600 text-white border-violet-600 shadow-xs"
+                        ? "bg-violet-600 text-white border-violet-600 shadow-xs font-bold"
                         : "bg-white dark:bg-default-900 border-default-200 dark:border-default-700 text-default-600 hover:bg-default-100"
                     }`}
                   >
@@ -1143,44 +1199,257 @@ export default function CompanyBrandPage() {
                 </div>
               </div>
 
-              {/* Option C: Tier Badge Style (Full vs Icon Only) */}
-              <div className="p-4 rounded-xl border border-default-200/80 dark:border-default-700/80 bg-default-50/60 dark:bg-default-800/40 space-y-2">
-                <span className="text-xs font-bold text-foreground block">
-                  Gaya Tampilan Badge Tier
-                </span>
-                <div className="grid grid-cols-2 gap-2">
+              {/* Card 2: Skala Bentang & Satuan Pengukuran (% vs px) */}
+              <div className="p-4 rounded-xl border border-default-200/80 dark:border-default-700/80 bg-default-50/60 dark:bg-default-800/40 space-y-2.5 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <Percent className="w-3.5 h-3.5 text-blue-500" />
+                      Skala Bentang & Satuan
+                    </span>
+                    {/* Unit Switcher */}
+                    <div className="flex items-center gap-1 p-0.5 rounded-lg bg-default-200/60 dark:bg-default-700/60 border border-default-200/80 dark:border-default-700/80">
+                      <button
+                        type="button"
+                        onClick={() => handleLogoUnitChange("percent")}
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer transition ${
+                          brandLogoUnit === "percent"
+                            ? "bg-violet-600 text-white shadow-2xs"
+                            : "text-default-500 hover:text-foreground"
+                        }`}
+                      >
+                        % Persen
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleLogoUnitChange("px")}
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer transition ${
+                          brandLogoUnit === "px"
+                            ? "bg-violet-600 text-white shadow-2xs"
+                            : "text-default-500 hover:text-foreground"
+                        }`}
+                      >
+                        px Piksel
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[11px] text-default-500">
+                      {brandLogoUnit === "percent" ? "Rentang skala 15% - 100%" : "Rentang absolut 30px - 260px"}
+                    </span>
+                    <span className="font-mono text-xs font-bold text-violet-600 dark:text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded border border-violet-500/20">
+                      {brandLogoWidth}{brandLogoUnit === "percent" ? "%" : "px"}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <input
+                    type="range"
+                    min={brandLogoUnit === "percent" ? 15 : 30}
+                    max={brandLogoUnit === "percent" ? 100 : 260}
+                    step={5}
+                    value={brandLogoWidth}
+                    onChange={(e) => handleLogoWidthChange(Number(e.target.value))}
+                    className="w-full h-1.5 bg-default-200 dark:bg-default-700 rounded-lg appearance-none cursor-pointer accent-violet-600"
+                  />
+                  {/* Presets */}
+                  <div className="flex items-center justify-between gap-1 pt-1.5">
+                    {(brandLogoUnit === "percent"
+                      ? [25, 50, 75, 100]
+                      : [60, 100, 140, 180, 240]
+                    ).map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => handleLogoWidthChange(preset)}
+                        className={`text-[10px] px-2 py-0.5 rounded border font-semibold cursor-pointer transition ${
+                          brandLogoWidth === preset
+                            ? "bg-violet-600 text-white border-violet-600 font-bold"
+                            : "bg-white dark:bg-default-900 border-default-200 dark:border-default-700 text-default-500 hover:bg-default-100"
+                        }`}
+                      >
+                        {preset}{brandLogoUnit === "percent" ? "%" : "px"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 3: Perataan & Penempatan (Alignment) */}
+              <div className="p-4 rounded-xl border border-default-200/80 dark:border-default-700/80 bg-default-50/60 dark:bg-default-800/40 space-y-2.5 flex flex-col justify-between">
+                <div>
+                  <span className="text-xs font-bold text-foreground flex items-center gap-1.5 mb-1">
+                    <AlignLeft className="w-3.5 h-3.5 text-blue-500" />
+                    Perataan Horizontal (Placement)
+                  </span>
+                  <p className="text-[11px] text-default-500">
+                    Posisi koordinat logo di dalam kotak header navigasi sidebar.
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[
+                    { id: "left" as const, label: "Kiri", icon: AlignLeft },
+                    { id: "center" as const, label: "Tengah", icon: AlignCenter },
+                    { id: "right" as const, label: "Kanan", icon: AlignRight },
+                  ].map((pos) => {
+                    const PosIcon = pos.icon;
+                    return (
+                      <button
+                        key={pos.id}
+                        type="button"
+                        onClick={() => handleLogoPlacementChange(pos.id)}
+                        className={`p-2 rounded-lg border text-center text-xs font-semibold cursor-pointer transition flex items-center justify-center gap-1.5 ${
+                          brandLogoPlacement === pos.id
+                            ? "bg-violet-600 text-white border-violet-600 shadow-xs font-bold"
+                            : "bg-white dark:bg-default-900 border-default-200 dark:border-default-700 text-default-600 hover:bg-default-100"
+                        }`}
+                      >
+                        <PosIcon className="w-3 h-3" />
+                        <span>{pos.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Card 4: Visibilitas & Format Badge Tier Lisensi */}
+              <div className="p-4 rounded-xl border border-default-200/80 dark:border-default-700/80 bg-default-50/60 dark:bg-default-800/40 space-y-2.5 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <Crown className="w-3.5 h-3.5 text-blue-500" />
+                      Badge Lisensi Tier
+                    </span>
+                    <p className="text-[11px] text-default-500 mt-0.5">
+                      Tampilkan badge status Enterprise / Pro di header sidebar.
+                    </p>
+                  </div>
                   <button
                     type="button"
+                    role="switch"
+                    aria-checked={showSidebarBrandBadge}
                     onClick={() => {
-                      setBrandBadgeStyle("full");
-                      localStorage.setItem("novajournal_brand_badge_style", "full");
+                      const next = !showSidebarBrandBadge;
+                      setShowSidebarBrandBadge(next);
+                      localStorage.setItem("novajournal_sidebar_brand_badge", String(next));
                       window.dispatchEvent(new Event("novajournal_brand_config_changed"));
                       playRealisticClick();
                     }}
-                    className={`p-2 rounded-lg border text-center text-xs font-semibold cursor-pointer transition ${
-                      brandBadgeStyle === "full"
-                        ? "bg-violet-600 text-white border-violet-600 shadow-xs"
-                        : "bg-white dark:bg-default-900 border-default-200 dark:border-default-700 text-default-600"
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer ${
+                      showSidebarBrandBadge ? "bg-violet-600" : "bg-default-300 dark:bg-default-700"
                     }`}
                   >
-                    👑 Ikon + Teks
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-xs transition-transform ${
+                        showSidebarBrandBadge ? "translate-x-4" : "translate-x-0.5"
+                      }`}
+                    />
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBrandBadgeStyle("icon-only");
-                      localStorage.setItem("novajournal_brand_badge_style", "icon-only");
-                      window.dispatchEvent(new Event("novajournal_brand_config_changed"));
-                      playRealisticClick();
-                    }}
-                    className={`p-2 rounded-lg border text-center text-xs font-semibold cursor-pointer transition ${
-                      brandBadgeStyle === "icon-only"
-                        ? "bg-violet-600 text-white border-violet-600 shadow-xs"
-                        : "bg-white dark:bg-default-900 border-default-200 dark:border-default-700 text-default-600"
-                    }`}
-                  >
-                    👑 Hanya Ikon
-                  </button>
+                </div>
+
+                {showSidebarBrandBadge && (
+                  <div className="grid grid-cols-2 gap-2 pt-1 border-t border-default-200/60 dark:border-default-700/60">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBrandBadgeStyle("full");
+                        localStorage.setItem("novajournal_brand_badge_style", "full");
+                        window.dispatchEvent(new Event("novajournal_brand_config_changed"));
+                        playRealisticClick();
+                      }}
+                      className={`p-1.5 rounded-lg border text-center text-xs font-semibold cursor-pointer transition ${
+                        brandBadgeStyle === "full"
+                          ? "bg-violet-600 text-white border-violet-600 shadow-xs font-bold"
+                          : "bg-white dark:bg-default-900 border-default-200 dark:border-default-700 text-default-600"
+                      }`}
+                    >
+                      👑 Ikon + Teks
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBrandBadgeStyle("icon-only");
+                        localStorage.setItem("novajournal_brand_badge_style", "icon-only");
+                        window.dispatchEvent(new Event("novajournal_brand_config_changed"));
+                        playRealisticClick();
+                      }}
+                      className={`p-1.5 rounded-lg border text-center text-xs font-semibold cursor-pointer transition ${
+                        brandBadgeStyle === "icon-only"
+                          ? "bg-violet-600 text-white border-violet-600 shadow-xs font-bold"
+                          : "bg-white dark:bg-default-900 border-default-200 dark:border-default-700 text-default-600"
+                      }`}
+                    >
+                      👑 Hanya Ikon
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Card 5: Perilaku Slogan & Subteks Entitas */}
+              <div className="p-4 rounded-xl border border-default-200/80 dark:border-default-700/80 bg-default-50/60 dark:bg-default-800/40 space-y-2.5 flex flex-col justify-between">
+                <div>
+                  <span className="text-xs font-bold text-foreground flex items-center gap-1.5 mb-1">
+                    <FileText className="w-3.5 h-3.5 text-blue-500" />
+                    Perilaku Subteks & Slogan
+                  </span>
+                  <p className="text-[11px] text-default-500">
+                    Teks sekunder di bawah nama brand pada format Logo + Teks.
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[
+                    { id: "jargon" as const, label: "Jargon" },
+                    { id: "entity" as const, label: "Entitas PT" },
+                    { id: "none" as const, label: "Sembunyi" },
+                  ].map((sub) => (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      onClick={() => handleSubtextModeChange(sub.id)}
+                      className={`p-2 rounded-lg border text-center text-xs font-semibold cursor-pointer transition ${
+                        brandSubtextMode === sub.id
+                          ? "bg-violet-600 text-white border-violet-600 shadow-xs font-bold"
+                          : "bg-white dark:bg-default-900 border-default-200 dark:border-default-700 text-default-600 hover:bg-default-100"
+                      }`}
+                    >
+                      {sub.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Card 6: Gaya Wadah & Frame Bingkai Logo */}
+              <div className="p-4 rounded-xl border border-default-200/80 dark:border-default-700/80 bg-default-50/60 dark:bg-default-800/40 space-y-2.5 flex flex-col justify-between">
+                <div>
+                  <span className="text-xs font-bold text-foreground flex items-center gap-1.5 mb-1">
+                    <Sparkles className="w-3.5 h-3.5 text-blue-500" />
+                    Gaya Frame Wadah Logo
+                  </span>
+                  <p className="text-[11px] text-default-500">
+                    Bingkai dan latar belakang pelindung kontras logo.
+                  </p>
+                </div>
+                <div className="grid grid-cols-4 gap-1">
+                  {[
+                    { id: "none" as const, label: "Polos" },
+                    { id: "bordered" as const, label: "Border" },
+                    { id: "card" as const, label: "Card" },
+                    { id: "contrast" as const, label: "Kontras" },
+                  ].map((frm) => (
+                    <button
+                      key={frm.id}
+                      type="button"
+                      onClick={() => handleLogoFrameChange(frm.id)}
+                      className={`p-1.5 rounded-lg border text-center text-[11px] font-semibold cursor-pointer transition ${
+                        brandLogoFrame === frm.id
+                          ? "bg-violet-600 text-white border-violet-600 shadow-xs font-bold"
+                          : "bg-white dark:bg-default-900 border-default-200 dark:border-default-700 text-default-600 hover:bg-default-100"
+                      }`}
+                    >
+                      {frm.label}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1211,13 +1480,13 @@ export default function CompanyBrandPage() {
                 </span>
               </div>
               <p className="text-[11px] text-default-400 mt-0.5">
-                Simulator visual real-time komponen header sidebar dengan kustomisasi aspek rasio, bentang lebar (px), pemotongan sisi (crop), dan perataan.
+                Simulator visual real-time komponen header sidebar dengan kustomisasi aspek rasio, bentang skala ({brandLogoUnit === "percent" ? "%" : "px"}), pemotongan sisi simetris, dan perataan.
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <span className="hidden sm:inline-flex text-[10px] px-2 py-0.5 rounded-md bg-default-100 dark:bg-default-800 text-default-500 font-mono">
-              {customBrandMode === "wide" ? `Wide · ${brandLogoWidth}px` : "Square 1:1"}
+              {customBrandMode === "wide" ? `Wide · ${brandLogoWidth}${brandLogoUnit === "percent" ? "%" : "px"}` : "Square 1:1"}
             </span>
             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-default-400 hover:text-foreground">
               {foldedSections.preview ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
@@ -1228,7 +1497,7 @@ export default function CompanyBrandPage() {
         {!foldedSections.preview && (
           <div className="p-4 sm:p-6 pt-0 border-t border-default-100 dark:border-default-800 space-y-6">
             {/* Top Toolbar: View Switcher & Display Options */}
-            <div className="pt-4 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 border-b border-default-100 dark:border-default-800 pb-4">
+            <div className="pt-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border-b border-default-100 dark:border-default-800 pb-4">
               {/* Tab Selector */}
               <div className="flex items-center gap-1 p-1 rounded-xl bg-default-100 dark:bg-default-800 border border-default-200/60 dark:border-default-700/60 overflow-x-auto max-w-full">
                 <button
@@ -1239,7 +1508,7 @@ export default function CompanyBrandPage() {
                   }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition whitespace-nowrap ${
                     previewTab === "expanded"
-                      ? "bg-violet-600 text-white shadow-xs"
+                      ? "bg-violet-600 text-white shadow-xs font-bold"
                       : "text-default-600 hover:text-foreground"
                   }`}
                 >
@@ -1254,7 +1523,7 @@ export default function CompanyBrandPage() {
                   }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition whitespace-nowrap ${
                     previewTab === "collapsed"
-                      ? "bg-violet-600 text-white shadow-xs"
+                      ? "bg-violet-600 text-white shadow-xs font-bold"
                       : "text-default-600 hover:text-foreground"
                   }`}
                 >
@@ -1269,7 +1538,7 @@ export default function CompanyBrandPage() {
                   }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition whitespace-nowrap ${
                     previewTab === "joint"
-                      ? "bg-violet-600 text-white shadow-xs"
+                      ? "bg-violet-600 text-white shadow-xs font-bold"
                       : "text-default-600 hover:text-foreground"
                   }`}
                 >
@@ -1284,7 +1553,7 @@ export default function CompanyBrandPage() {
                   }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition whitespace-nowrap ${
                     previewTab === "compare"
-                      ? "bg-violet-600 text-white shadow-xs"
+                      ? "bg-violet-600 text-white shadow-xs font-bold"
                       : "text-default-600 hover:text-foreground"
                   }`}
                 >
@@ -1294,7 +1563,7 @@ export default function CompanyBrandPage() {
               </div>
 
               {/* Auxiliary Preview Controls */}
-              <div className="flex items-center gap-2 self-end lg:self-auto">
+              <div className="flex items-center gap-2 self-end md:self-auto shrink-0">
                 {/* Theme simulation toggle */}
                 <div className="flex items-center gap-1 p-1 rounded-xl bg-default-100 dark:bg-default-800 border border-default-200/60 dark:border-default-700/60 text-xs">
                   <button
@@ -1352,27 +1621,28 @@ export default function CompanyBrandPage() {
               </div>
             </div>
 
-            {/* Quick In-Place Live Adjustment Strip */}
-            <div className="p-4 rounded-2xl bg-default-50/70 dark:bg-default-800/40 border border-default-200/70 dark:border-default-700/60 space-y-4">
-              <div className="flex items-center justify-between">
+            {/* Quick In-Place Live Adjustment Suite */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-default-50/70 dark:bg-default-800/40 border border-default-200/70 dark:border-default-700/60 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
                   <SlidersHorizontal className="w-3.5 h-3.5 text-violet-600" />
                   <span>Kontrol Pengaturan Langsung (Ubah & Lihat Seketika)</span>
                 </span>
                 <span className="text-[11px] text-default-400">
-                  Perubahan di bilah ini langsung mengupdate preview dan Sidebar asli
+                  Perubahan di bilah kontrol ini langsung tersinkronisasi ke simulator dan Sidebar asli
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                {/* Control 1: Aspect Mode */}
-                <div className="space-y-1.5">
+              {/* Baris 1: 3 Segmented Layout Controls */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {/* Control 1: Aspect Ratio */}
+                <div className="p-3 rounded-xl bg-white dark:bg-default-900 border border-default-200 dark:border-default-700 space-y-2">
                   <label className="text-[11px] font-semibold text-default-600 block">Rasio Aspek Logo</label>
-                  <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-white dark:bg-default-900 border border-default-200 dark:border-default-700">
+                  <div className="grid grid-cols-2 gap-1 p-0.5 rounded-lg bg-default-100 dark:bg-default-800 border border-default-200/60 dark:border-default-700/60">
                     <button
                       type="button"
                       onClick={() => handleBrandModeChange("square")}
-                      className={`py-1 text-center rounded-lg text-xs font-semibold cursor-pointer transition ${
+                      className={`py-1.5 text-center rounded-md text-xs font-semibold cursor-pointer transition ${
                         customBrandMode === "square"
                           ? "bg-violet-600 text-white shadow-2xs font-bold"
                           : "text-default-600 hover:text-foreground"
@@ -1383,7 +1653,7 @@ export default function CompanyBrandPage() {
                     <button
                       type="button"
                       onClick={() => handleBrandModeChange("wide")}
-                      className={`py-1 text-center rounded-lg text-xs font-semibold cursor-pointer transition ${
+                      className={`py-1.5 text-center rounded-md text-xs font-semibold cursor-pointer transition ${
                         customBrandMode === "wide"
                           ? "bg-violet-600 text-white shadow-2xs font-bold"
                           : "text-default-600 hover:text-foreground"
@@ -1394,14 +1664,14 @@ export default function CompanyBrandPage() {
                   </div>
                 </div>
 
-                {/* Control 2: Display Format */}
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-semibold text-default-600 block">Format Header</label>
-                  <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-white dark:bg-default-900 border border-default-200 dark:border-default-700">
+                {/* Control 2: Header Format */}
+                <div className="p-3 rounded-xl bg-white dark:bg-default-900 border border-default-200 dark:border-default-700 space-y-2">
+                  <label className="text-[11px] font-semibold text-default-600 block">Format Header Brand</label>
+                  <div className="grid grid-cols-3 gap-1 p-0.5 rounded-lg bg-default-100 dark:bg-default-800 border border-default-200/60 dark:border-default-700/60">
                     <button
                       type="button"
                       onClick={() => handleDisplayFormatChange("logo-and-text")}
-                      className={`py-1 text-center rounded-lg text-[11px] font-semibold cursor-pointer transition ${
+                      className={`py-1.5 text-center rounded-md text-[11px] font-semibold cursor-pointer transition ${
                         customBrandDisplay === "logo-and-text"
                           ? "bg-violet-600 text-white shadow-2xs font-bold"
                           : "text-default-600 hover:text-foreground"
@@ -1413,7 +1683,7 @@ export default function CompanyBrandPage() {
                     <button
                       type="button"
                       onClick={() => handleDisplayFormatChange("logo-only")}
-                      className={`py-1 text-center rounded-lg text-[11px] font-semibold cursor-pointer transition ${
+                      className={`py-1.5 text-center rounded-md text-[11px] font-semibold cursor-pointer transition ${
                         customBrandDisplay === "logo-only"
                           ? "bg-violet-600 text-white shadow-2xs font-bold"
                           : "text-default-600 hover:text-foreground"
@@ -1425,7 +1695,7 @@ export default function CompanyBrandPage() {
                     <button
                       type="button"
                       onClick={() => handleDisplayFormatChange("full-banner")}
-                      className={`py-1 text-center rounded-lg text-[11px] font-semibold cursor-pointer transition ${
+                      className={`py-1.5 text-center rounded-md text-[11px] font-semibold cursor-pointer transition ${
                         customBrandDisplay === "full-banner"
                           ? "bg-violet-600 text-white shadow-2xs font-bold"
                           : "text-default-600 hover:text-foreground"
@@ -1438,15 +1708,15 @@ export default function CompanyBrandPage() {
                 </div>
 
                 {/* Control 3: Alignment Placement */}
-                <div className="space-y-1.5">
+                <div className="p-3 rounded-xl bg-white dark:bg-default-900 border border-default-200 dark:border-default-700 space-y-2">
                   <label className="text-[11px] font-semibold text-default-600 block">Perataan Posisi (Placement)</label>
-                  <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-white dark:bg-default-900 border border-default-200 dark:border-default-700">
+                  <div className="grid grid-cols-3 gap-1 p-0.5 rounded-lg bg-default-100 dark:bg-default-800 border border-default-200/60 dark:border-default-700/60">
                     {(["left", "center", "right"] as const).map((pos) => (
                       <button
                         key={pos}
                         type="button"
                         onClick={() => handleLogoPlacementChange(pos)}
-                        className={`py-1 text-center rounded-lg text-[11px] font-semibold cursor-pointer transition ${
+                        className={`py-1.5 text-center rounded-md text-[11px] font-semibold cursor-pointer transition ${
                           brandLogoPlacement === pos
                             ? "bg-violet-600 text-white shadow-2xs font-bold"
                             : "text-default-600 hover:text-foreground"
@@ -1457,154 +1727,163 @@ export default function CompanyBrandPage() {
                     ))}
                   </div>
                 </div>
+              </div>
 
-                {/* Control 4: Width Slider in px */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[11px] font-semibold text-default-600">Lebar Logo (px)</label>
-                    <span className="font-mono text-[11px] font-bold text-violet-600 dark:text-violet-400 bg-violet-500/10 px-1.5 py-0.2 rounded border border-violet-500/20">
-                      {brandLogoWidth}px
+              {/* Baris 2: Dedicated Skala Bentang & Satuan Switcher Card */}
+              <div className="p-4 rounded-xl bg-white dark:bg-default-900 border border-default-200 dark:border-default-700 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <Percent className="w-3.5 h-3.5 text-violet-600" />
+                      <span>Skala Bentang Lebar Logo</span>
+                    </label>
+                    <span className="text-[11px] text-default-400">
+                      ({brandLogoUnit === "percent" ? "Mode Persentase Responsif" : "Mode Piksel Absolut"})
                     </span>
                   </div>
-                  <input
-                    type="range"
-                    min="100"
-                    max="260"
-                    step="5"
-                    value={brandLogoWidth}
-                    onChange={(e) => handleLogoWidthChange(Number(e.target.value))}
-                    className="w-full h-1.5 bg-default-200 dark:bg-default-700 rounded-lg appearance-none cursor-pointer accent-violet-600 mt-2"
-                  />
-                  <div className="flex items-center justify-between text-[10px] text-default-400 pt-0.5">
-                    {[120, 140, 180, 220, 250].map((w) => (
+
+                  <div className="flex items-center gap-2">
+                    {/* Unit Switcher */}
+                    <div className="flex items-center gap-1 p-0.5 rounded-lg bg-default-100 dark:bg-default-800 border border-default-200/60 dark:border-default-700/60">
                       <button
-                        key={w}
                         type="button"
-                        onClick={() => handleLogoWidthChange(w)}
-                        className={`hover:underline cursor-pointer ${brandLogoWidth === w ? "font-bold text-violet-600" : ""}`}
+                        onClick={() => handleLogoUnitChange("percent")}
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer transition ${
+                          brandLogoUnit === "percent"
+                            ? "bg-violet-600 text-white shadow-2xs"
+                            : "text-default-500 hover:text-foreground"
+                        }`}
                       >
-                        {w}
+                        % Persentase
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleLogoUnitChange("px")}
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer transition ${
+                          brandLogoUnit === "px"
+                            ? "bg-violet-600 text-white shadow-2xs"
+                            : "text-default-500 hover:text-foreground"
+                        }`}
+                      >
+                        px Piksel
+                      </button>
+                    </div>
+
+                    <span className="font-mono text-xs font-bold text-violet-600 dark:text-violet-400 bg-violet-500/10 px-2.5 py-0.5 rounded-md border border-violet-500/20">
+                      {brandLogoWidth}{brandLogoUnit === "percent" ? "%" : "px"}
+                    </span>
+                  </div>
+                </div>
+
+                <input
+                  type="range"
+                  min={brandLogoUnit === "percent" ? 15 : 30}
+                  max={brandLogoUnit === "percent" ? 100 : 260}
+                  step={5}
+                  value={brandLogoWidth}
+                  onChange={(e) => handleLogoWidthChange(Number(e.target.value))}
+                  className="w-full h-2 bg-default-200 dark:bg-default-700 rounded-lg appearance-none cursor-pointer accent-violet-600"
+                />
+
+                {/* Presets & Info */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] text-default-400 font-semibold mr-1">Preset Cepat:</span>
+                    {(brandLogoUnit === "percent"
+                      ? [25, 50, 75, 100]
+                      : [60, 100, 140, 180, 240]
+                    ).map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => handleLogoWidthChange(preset)}
+                        className={`text-[10px] px-2.5 py-0.5 rounded-md border font-semibold cursor-pointer transition ${
+                          brandLogoWidth === preset
+                            ? "bg-violet-600 text-white border-violet-600 shadow-2xs font-bold"
+                            : "bg-default-50 dark:bg-default-800 border-default-200 dark:border-default-700 text-default-600 hover:bg-default-100"
+                        }`}
+                      >
+                        {preset}{brandLogoUnit === "percent" ? "%" : "px"}
                       </button>
                     ))}
                   </div>
+
+                  <p className="text-[10px] text-default-400 italic">
+                    * Pemotongan sisi simetris (true side-crop) otomatis memangkas sayap samping gambar tanpa distorsi atau melar.
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Simulated Canvas Viewports */}
-            <div className={`p-5 sm:p-8 rounded-2xl border ${
-              previewTheme === "dark"
-                ? "bg-zinc-950 border-zinc-800 text-zinc-100"
-                : "bg-zinc-100 border-zinc-300 text-zinc-900"
-            } flex flex-col items-center justify-center transition-colors relative overflow-hidden min-h-[480px]`}>
-              {/* Subtle background grid pattern */}
-              <div
-                className="absolute inset-0 pointer-events-none opacity-30"
-                style={{
-                  backgroundImage: `radial-gradient(circle at 1px 1px, ${previewTheme === "dark" ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.1)"} 1px, transparent 0)`,
-                  backgroundSize: "20px 20px",
-                }}
-              />
+            {(() => {
+              const logoWidthStyle = brandLogoUnit === "percent" ? `${brandLogoWidth}%` : `${brandLogoWidth}px`;
+              const frameClass = brandLogoFrame === "bordered"
+                ? "border border-default-300 dark:border-default-700 p-0.5"
+                : brandLogoFrame === "card"
+                ? "bg-default-100/70 dark:bg-default-800/70 p-1 shadow-2xs"
+                : brandLogoFrame === "contrast"
+                ? "bg-white dark:bg-zinc-800 p-1 shadow-xs border border-default-200/60 dark:border-default-700/60"
+                : "";
 
-              {/* TAB 1: FULL EXPANDED SIDEBAR SIMULATOR (240px) */}
-              {previewTab === "expanded" && (
-                <div className="w-full max-w-[260px] relative z-10 animate-in fade-in zoom-in-95 duration-200">
-                  <div className="text-center mb-2">
-                    <span className="text-[11px] font-mono font-bold text-default-400 uppercase tracking-widest">
-                      Bilah Sidebar Aktif (Lebar 240px)
-                    </span>
-                  </div>
+              const effectiveSubtext = brandSubtextMode === "none"
+                ? null
+                : brandSubtextMode === "entity"
+                ? (entityType || "PT")
+                : (customBrandJargon || selectedWorkspace?.name || "Corporate Treasury");
 
-                  {/* Sidebar Mockup Container */}
-                  <div className={`w-full rounded-2xl border shadow-2xl overflow-hidden flex flex-col ${
-                    previewTheme === "dark"
-                      ? "bg-zinc-900 border-zinc-800"
-                      : "bg-white border-zinc-200"
-                  }`}>
-                    {/* Header: EXACT REPLICA OF SIDEBAR.TSX */}
-                    <div
-                      style={{ height: "56px" }}
-                      className={`px-3.5 flex items-center justify-between border-b relative z-10 overflow-hidden ${
+              return (
+                <div className={`p-5 sm:p-8 rounded-2xl border ${
+                  previewTheme === "dark"
+                    ? "bg-zinc-950 border-zinc-800 text-zinc-100"
+                    : "bg-zinc-100 border-zinc-300 text-zinc-900"
+                } flex flex-col items-center justify-center transition-colors relative overflow-hidden min-h-[480px]`}>
+                  {/* Subtle background grid pattern */}
+                  <div
+                    className="absolute inset-0 pointer-events-none opacity-30"
+                    style={{
+                      backgroundImage: `radial-gradient(circle at 1px 1px, ${previewTheme === "dark" ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.1)"} 1px, transparent 0)`,
+                      backgroundSize: "20px 20px",
+                    }}
+                  />
+
+                  {/* TAB 1: FULL EXPANDED SIDEBAR SIMULATOR (240px) */}
+                  {previewTab === "expanded" && (
+                    <div className="w-full max-w-[260px] relative z-10 animate-in fade-in zoom-in-95 duration-200">
+                      <div className="text-center mb-2">
+                        <span className="text-[11px] font-mono font-bold text-default-400 uppercase tracking-widest">
+                          Bilah Sidebar Aktif (Lebar 240px)
+                        </span>
+                      </div>
+
+                      {/* Sidebar Mockup Container */}
+                      <div className={`w-full rounded-2xl border shadow-2xl overflow-hidden flex flex-col ${
                         previewTheme === "dark"
                           ? "bg-zinc-900 border-zinc-800"
                           : "bg-white border-zinc-200"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between w-full min-w-0 pr-0.5">
-                        {customBrandDisplay === "full-banner" && customBrandLogo ? (
-                          <div className={`flex-1 flex items-center min-w-0 pr-1 ${
-                            brandLogoPlacement === "center" ? "justify-center" : brandLogoPlacement === "right" ? "justify-end" : "justify-start"
-                          }`}>
-                            <div
-                              style={{ width: `${brandLogoWidth}px` }}
-                              className="relative h-10 shrink-0 overflow-hidden rounded-none select-none"
-                            >
-                              <img
-                                src={customBrandLogo}
-                                alt="Corporate Banner"
-                                className={`h-10 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
-                                  brandLogoPlacement === "center"
-                                    ? "left-1/2 -translate-x-1/2"
-                                    : brandLogoPlacement === "right"
-                                    ? "right-0"
-                                    : "left-0"
-                                }`}
-                              />
-                              {showCropGuides && (
-                                <div className="absolute inset-0 border border-dashed border-amber-400/80 pointer-events-none flex items-center justify-between px-0.5">
-                                  <span className="text-[8px] font-mono text-amber-500 font-bold">|</span>
-                                  <span className="text-[8px] font-mono text-amber-500 font-bold">|</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ) : customBrandDisplay === "logo-only" && customBrandLogo ? (
-                          <div className={`flex-1 flex items-center min-w-0 ${
-                            brandLogoPlacement === "center" ? "justify-center" : brandLogoPlacement === "right" ? "justify-end" : "justify-start"
-                          }`}>
-                            {customBrandMode === "wide" ? (
-                              <div
-                                style={{ width: `${brandLogoWidth}px` }}
-                                className="relative h-10 shrink-0 overflow-hidden rounded-none select-none"
-                              >
-                                <img
-                                  src={customBrandLogo}
-                                  alt="Corporate Logo"
-                                  className={`h-10 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
-                                    brandLogoPlacement === "center"
-                                      ? "left-1/2 -translate-x-1/2"
-                                      : brandLogoPlacement === "right"
-                                      ? "right-0"
-                                      : "left-0"
-                                  }`}
-                                />
-                                {showCropGuides && (
-                                  <div className="absolute inset-0 border border-dashed border-amber-400/80 pointer-events-none flex items-center justify-between px-0.5">
-                                    <span className="text-[8px] font-mono text-amber-500 font-bold">|</span>
-                                    <span className="text-[8px] font-mono text-amber-500 font-bold">|</span>
-                                  </div>
-                                )}
-                              </div>
-                            ) : (
-                              <img
-                                src={customBrandLogo}
-                                alt="Corporate Logo"
-                                className="w-8 h-8 rounded-none object-contain shadow-2xs border border-default-200/60 dark:border-default-700/60"
-                              />
-                            )}
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                            {customBrandLogo ? (
-                              customBrandMode === "wide" ? (
+                      }`}>
+                        {/* Header: EXACT REPLICA OF SIDEBAR.TSX */}
+                        <div
+                          style={{ height: "56px" }}
+                          className={`px-3.5 flex items-center justify-between border-b relative z-10 overflow-hidden ${
+                            previewTheme === "dark"
+                              ? "bg-zinc-900 border-zinc-800"
+                              : "bg-white border-zinc-200"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between w-full min-w-0 pr-0.5">
+                            {customBrandDisplay === "full-banner" && customBrandLogo ? (
+                              <div className={`flex-1 flex items-center min-w-0 pr-1 ${
+                                brandLogoPlacement === "center" ? "justify-center" : brandLogoPlacement === "right" ? "justify-end" : "justify-start"
+                              }`}>
                                 <div
-                                  style={{ width: `${brandLogoWidth}px` }}
-                                  className="relative h-9 shrink-0 overflow-hidden rounded-none select-none"
+                                  style={{ width: logoWidthStyle }}
+                                  className={`relative h-10 shrink-0 overflow-hidden rounded-none select-none ${frameClass}`}
                                 >
                                   <img
                                     src={customBrandLogo}
-                                    alt="Company Logo"
-                                    className={`h-9 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
+                                    alt="Corporate Banner"
+                                    className={`h-10 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
                                       brandLogoPlacement === "center"
                                         ? "left-1/2 -translate-x-1/2"
                                         : brandLogoPlacement === "right"
@@ -1619,318 +1898,384 @@ export default function CompanyBrandPage() {
                                     </div>
                                   )}
                                 </div>
-                              ) : (
-                                <img
-                                  src={customBrandLogo}
-                                  alt="Company Logo"
-                                  className="w-7 h-7 rounded-none object-contain shadow-2xs shrink-0 border border-default-200/60 dark:border-default-700/60"
-                                />
-                              )
+                              </div>
+                            ) : customBrandDisplay === "logo-only" && customBrandLogo ? (
+                              <div className={`flex-1 flex items-center min-w-0 ${
+                                brandLogoPlacement === "center" ? "justify-center" : brandLogoPlacement === "right" ? "justify-end" : "justify-start"
+                              }`}>
+                                {customBrandMode === "wide" ? (
+                                  <div
+                                    style={{ width: logoWidthStyle }}
+                                    className={`relative h-10 shrink-0 overflow-hidden rounded-none select-none ${frameClass}`}
+                                  >
+                                    <img
+                                      src={customBrandLogo}
+                                      alt="Corporate Logo"
+                                      className={`h-10 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
+                                        brandLogoPlacement === "center"
+                                          ? "left-1/2 -translate-x-1/2"
+                                          : brandLogoPlacement === "right"
+                                          ? "right-0"
+                                          : "left-0"
+                                      }`}
+                                    />
+                                    {showCropGuides && (
+                                      <div className="absolute inset-0 border border-dashed border-amber-400/80 pointer-events-none flex items-center justify-between px-0.5">
+                                        <span className="text-[8px] font-mono text-amber-500 font-bold">|</span>
+                                        <span className="text-[8px] font-mono text-amber-500 font-bold">|</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <img
+                                    src={customBrandLogo}
+                                    alt="Corporate Logo"
+                                    className={`w-8 h-8 rounded-none object-contain shadow-2xs border border-default-200/60 dark:border-default-700/60 ${frameClass}`}
+                                  />
+                                )}
+                              </div>
                             ) : (
-                              <div className="w-7 h-7 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xs shadow-2xs shrink-0">
-                                {customBrandName ? customBrandName.charAt(0).toUpperCase() : "C"}
+                              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                {customBrandLogo ? (
+                                  customBrandMode === "wide" ? (
+                                    <div
+                                      style={{ width: brandLogoUnit === "percent" ? `${Math.min(brandLogoWidth, 65)}%` : `${brandLogoWidth}px`, maxWidth: brandLogoUnit === "percent" ? "130px" : undefined }}
+                                      className={`relative h-9 shrink-0 overflow-hidden rounded-none select-none ${frameClass}`}
+                                    >
+                                      <img
+                                        src={customBrandLogo}
+                                        alt="Company Logo"
+                                        className={`h-9 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
+                                          brandLogoPlacement === "center"
+                                            ? "left-1/2 -translate-x-1/2"
+                                            : brandLogoPlacement === "right"
+                                            ? "right-0"
+                                            : "left-0"
+                                        }`}
+                                      />
+                                      {showCropGuides && (
+                                        <div className="absolute inset-0 border border-dashed border-amber-400/80 pointer-events-none flex items-center justify-between px-0.5">
+                                          <span className="text-[8px] font-mono text-amber-500 font-bold">|</span>
+                                          <span className="text-[8px] font-mono text-amber-500 font-bold">|</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <img
+                                      src={customBrandLogo}
+                                      alt="Company Logo"
+                                      className={`w-7 h-7 rounded-none object-contain shadow-2xs shrink-0 border border-default-200/60 dark:border-default-700/60 ${frameClass}`}
+                                    />
+                                  )
+                                ) : (
+                                  <div className="w-7 h-7 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xs shadow-2xs shrink-0">
+                                    {customBrandName ? customBrandName.charAt(0).toUpperCase() : "C"}
+                                  </div>
+                                )}
+                                {sidebarBrandDisplayMode !== "icon" && (
+                                  <div className="flex flex-col min-w-0 leading-tight">
+                                    <span className="text-xs font-bold text-foreground truncate">
+                                      {customBrandName || "Nova Solusi Finansial"}
+                                    </span>
+                                    {effectiveSubtext && (
+                                      <span className="text-[9px] text-default-400 font-medium truncate">
+                                        {effectiveSubtext}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             )}
-                            {sidebarBrandDisplayMode !== "icon" && (
-                              <div className="flex flex-col min-w-0 leading-tight">
-                                <span className="text-xs font-bold text-foreground truncate">
-                                  {customBrandName || "Nova Solusi Finansial"}
-                                </span>
-                                <span className="text-[9px] text-default-400 font-medium truncate">
-                                  {customBrandJargon || selectedWorkspace?.name || "Corporate Treasury"}
-                                </span>
-                              </div>
+
+                            {/* Enterprise Badge */}
+                            {showSidebarBrandBadge && (
+                              <span className={`flex items-center ${
+                                brandBadgeStyle === "icon-only" ? "p-1 rounded-md" : "gap-1 px-1.5 py-0.5 rounded-md"
+                              } bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/30 text-[9px] font-bold shrink-0 ml-1`}>
+                                <Crown className="w-2.5 h-2.5 text-violet-500" />
+                                {brandBadgeStyle !== "icon-only" && <span>Enterprise</span>}
+                              </span>
                             )}
                           </div>
-                        )}
-
-                        {/* Enterprise Badge */}
-                        {showSidebarBrandBadge && (
-                          <span className={`flex items-center ${
-                            brandBadgeStyle === "icon-only" ? "p-1 rounded-md" : "gap-1 px-1.5 py-0.5 rounded-md"
-                          } bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/30 text-[9px] font-bold shrink-0 ml-1`}>
-                            <Crown className="w-2.5 h-2.5 text-violet-500" />
-                            {brandBadgeStyle !== "icon-only" && <span>Enterprise</span>}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Simulated Body Navigation */}
-                    <div className="p-2 space-y-3">
-                      {/* Workspace Tag */}
-                      <div className={`px-2 py-1 rounded-lg text-[10px] font-semibold flex items-center justify-between ${
-                        previewTheme === "dark" ? "bg-zinc-800/80 text-zinc-300" : "bg-zinc-100 text-zinc-700"
-                      }`}>
-                        <span className="truncate">{selectedWorkspace?.name || "Corporate Workspace"}</span>
-                        <span className="text-[9px] font-mono px-1 rounded bg-violet-600 text-white uppercase">
-                          {selectedWorkspace?.type || "PT"}
-                        </span>
-                      </div>
-
-                      {/* Navigation Group 1 */}
-                      <div className="space-y-0.5">
-                        <span className="text-[9px] font-bold text-default-400 px-2 uppercase tracking-wider">
-                          Overview
-                        </span>
-                        {/* Active Item */}
-                        <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-violet-600 text-white text-xs font-semibold shadow-xs">
-                          <div className="flex items-center gap-2">
-                            <LayoutDashboard className="w-3.5 h-3.5" />
-                            <span>Dashboard</span>
-                          </div>
-                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                         </div>
-                        {/* Inactive Item */}
-                        <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-medium ${
-                          previewTheme === "dark" ? "text-zinc-400 hover:text-zinc-200" : "text-zinc-600 hover:text-zinc-900"
-                        }`}>
-                          <Wallet className="w-3.5 h-3.5 text-default-400" />
-                          <span>Transaksi</span>
-                        </div>
-                      </div>
 
-                      {/* Navigation Group 2: Reporting */}
-                      <div className="space-y-0.5">
-                        <span className="text-[9px] font-bold text-default-400 px-2 uppercase tracking-wider">
-                          Reporting & Finance
-                        </span>
-                        <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-medium ${
-                          previewTheme === "dark" ? "text-zinc-400" : "text-zinc-600"
-                        }`}>
-                          <FileSpreadsheet className="w-3.5 h-3.5 text-default-400" />
-                          <span>Laporan Keuangan</span>
-                        </div>
-                        <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-medium ${
-                          previewTheme === "dark" ? "text-zinc-400" : "text-zinc-600"
-                        }`}>
-                          <LayoutList className="w-3.5 h-3.5 text-default-400" />
-                          <span>Manajemen Menu</span>
-                        </div>
-                      </div>
-
-                      {/* Bottom Core Engine Preview */}
-                      <div className={`px-2 py-1.5 rounded-xl border flex items-center justify-between ${
-                        previewTheme === "dark"
-                          ? "bg-zinc-800/40 border-zinc-700/50"
-                          : "bg-zinc-100/70 border-zinc-200"
-                      }`}>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-4 h-4 rounded bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white">
-                            <Wallet className="w-2.5 h-2.5" />
-                          </div>
-                          <div className="flex flex-col leading-none">
-                            <span className="text-[9px] font-bold bg-linear-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-                              NovaFinance
+                        {/* Simulated Body Navigation */}
+                        <div className="p-2 space-y-3">
+                          {/* Workspace Tag */}
+                          <div className={`px-2 py-1 rounded-lg text-[10px] font-semibold flex items-center justify-between ${
+                            previewTheme === "dark" ? "bg-zinc-800/80 text-zinc-300" : "bg-zinc-100 text-zinc-700"
+                          }`}>
+                            <span className="truncate">{selectedWorkspace?.name || "Corporate Workspace"}</span>
+                            <span className="text-[9px] font-mono px-1 rounded bg-violet-600 text-white uppercase">
+                              {selectedWorkspace?.type || "PT"}
                             </span>
-                            <span className="text-[7px] text-default-400">Core Engine</span>
                           </div>
-                        </div>
-                        <span className="text-[7px] font-mono px-1 rounded bg-default-200 dark:bg-default-700 text-default-500 uppercase">
-                          V2.5
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
 
-              {/* TAB 2: COLLAPSED RAIL SIMULATOR (64px) */}
-              {previewTab === "collapsed" && (
-                <div className="relative z-10 animate-in fade-in zoom-in-95 duration-200 flex flex-col items-center">
-                  <div className="text-center mb-2">
-                    <span className="text-[11px] font-mono font-bold text-default-400 uppercase tracking-widest">
-                      Bilah Ramping (Rail 64px)
-                    </span>
-                  </div>
-                  <div className={`w-16 rounded-2xl border shadow-2xl overflow-hidden flex flex-col items-center ${
-                    previewTheme === "dark" ? "bg-zinc-900 border-zinc-800" : "bg-white border-zinc-200"
-                  }`}>
-                    {/* Collapsed Header */}
-                    <div style={{ height: "56px" }} className="w-full flex items-center justify-center border-b border-default-200/60 dark:border-default-800/60 px-1">
-                      {customBrandLogo ? (
-                        <img
-                          src={customBrandLogo}
-                          alt="Logo"
-                          className="w-8 h-8 rounded-none object-contain"
-                        />
-                      ) : (
-                        <div className="w-7 h-7 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs">
-                          {customBrandName ? customBrandName.charAt(0).toUpperCase() : "C"}
-                        </div>
-                      )}
-                    </div>
-                    {/* Rail Icons */}
-                    <div className="py-3 space-y-2 flex flex-col items-center">
-                      <div className="w-9 h-9 rounded-xl bg-violet-600 text-white flex items-center justify-center shadow-xs">
-                        <LayoutDashboard className="w-4 h-4" />
-                      </div>
-                      <div className="w-9 h-9 rounded-xl text-default-400 flex items-center justify-center hover:bg-default-100">
-                        <Wallet className="w-4 h-4" />
-                      </div>
-                      <div className="w-9 h-9 rounded-xl text-default-400 flex items-center justify-center hover:bg-default-100">
-                        <FileSpreadsheet className="w-4 h-4" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 3: JOINT NAVBAR & SIDEBAR INTERSECTION */}
-              {previewTab === "joint" && (
-                <div className="w-full max-w-xl relative z-10 animate-in fade-in zoom-in-95 duration-200">
-                  <div className="text-center mb-2">
-                    <span className="text-[11px] font-mono font-bold text-default-400 uppercase tracking-widest">
-                      Integrasi Sudut Atas (Navbar + Header Sidebar)
-                    </span>
-                  </div>
-                  <div className={`rounded-2xl border shadow-2xl overflow-hidden flex ${
-                    previewTheme === "dark" ? "bg-zinc-900 border-zinc-800" : "bg-white border-zinc-200"
-                  }`}>
-                    {/* Simulated Sidebar Header (Left) */}
-                    <div style={{ width: "220px", height: "56px" }} className="px-3 border-r border-default-200/60 dark:border-default-800/60 flex items-center justify-between shrink-0">
-                      <div className="flex items-center gap-2 min-w-0">
-                        {customBrandLogo ? (
-                          customBrandMode === "wide" ? (
-                            <div style={{ width: `${Math.min(brandLogoWidth, 120)}px` }} className="relative h-8 shrink-0 overflow-hidden rounded-none">
-                              <img
-                                src={customBrandLogo}
-                                alt="Logo"
-                                className="h-8 w-auto max-w-none rounded-none absolute top-1/2 -translate-y-1/2 left-0"
-                              />
+                          {/* Navigation Group 1 */}
+                          <div className="space-y-0.5">
+                            <span className="text-[9px] font-bold text-default-400 px-2 uppercase tracking-wider">
+                              Overview
+                            </span>
+                            {/* Active Item */}
+                            <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-violet-600 text-white text-xs font-semibold shadow-xs">
+                              <div className="flex items-center gap-2">
+                                <LayoutDashboard className="w-3.5 h-3.5" />
+                                <span>Dashboard</span>
+                              </div>
+                              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                             </div>
-                          ) : (
-                            <img src={customBrandLogo} alt="Logo" className="w-7 h-7 rounded-none object-contain" />
-                          )
-                        ) : (
-                          <div className="w-7 h-7 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-xs">
-                            {customBrandName ? customBrandName.charAt(0).toUpperCase() : "C"}
+                            {/* Inactive Item */}
+                            <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-medium ${
+                              previewTheme === "dark" ? "text-zinc-400 hover:text-zinc-200" : "text-zinc-600 hover:text-zinc-900"
+                            }`}>
+                              <Wallet className="w-3.5 h-3.5 text-default-400" />
+                              <span>Transaksi</span>
+                            </div>
                           </div>
-                        )}
-                        <span className="text-xs font-bold truncate">{customBrandName || "Nova Solusi"}</span>
-                      </div>
-                      <Crown className="w-3 h-3 text-violet-500 shrink-0" />
-                    </div>
 
-                    {/* Simulated Navbar (Right) */}
-                    <div style={{ height: "56px" }} className="flex-1 px-4 flex items-center justify-between gap-3">
-                      <div className={`h-8 flex-1 max-w-xs rounded-xl px-3 flex items-center text-xs text-default-400 border ${
-                        previewTheme === "dark" ? "bg-zinc-800 border-zinc-700" : "bg-zinc-100 border-zinc-200"
-                      }`}>
-                        <span>Pencarian global (Ctrl + K)...</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-violet-600 text-white text-xs font-bold flex items-center justify-center">
-                          A
+                          {/* Navigation Group 2: Reporting */}
+                          <div className="space-y-0.5">
+                            <span className="text-[9px] font-bold text-default-400 px-2 uppercase tracking-wider">
+                              Reporting & Finance
+                            </span>
+                            <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-medium ${
+                              previewTheme === "dark" ? "text-zinc-400" : "text-zinc-600"
+                            }`}>
+                              <FileSpreadsheet className="w-3.5 h-3.5 text-default-400" />
+                              <span>Laporan Keuangan</span>
+                            </div>
+                            <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-medium ${
+                              previewTheme === "dark" ? "text-zinc-400" : "text-zinc-600"
+                            }`}>
+                              <LayoutList className="w-3.5 h-3.5 text-default-400" />
+                              <span>Manajemen Menu</span>
+                            </div>
+                          </div>
+
+                          {/* Bottom Core Engine Preview */}
+                          <div className={`px-2 py-1.5 rounded-xl border flex items-center justify-between ${
+                            previewTheme === "dark"
+                              ? "bg-zinc-800/40 border-zinc-700/50"
+                              : "bg-zinc-100/70 border-zinc-200"
+                          }`}>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-4 h-4 rounded bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white">
+                                <Wallet className="w-2.5 h-2.5" />
+                              </div>
+                              <div className="flex flex-col leading-none">
+                                <span className="text-[9px] font-bold bg-linear-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+                                  NovaFinance
+                                </span>
+                                <span className="text-[7px] text-default-400">Core Engine</span>
+                              </div>
+                            </div>
+                            <span className="text-[7px] font-mono px-1 rounded bg-default-200 dark:bg-default-700 text-default-500 uppercase">
+                              V2.5
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              )}
+                  )}
 
-              {/* TAB 4: SIDE-BY-SIDE MODE COMPARATOR */}
-              {previewTab === "compare" && (
-                <div className="w-full max-w-2xl relative z-10 animate-in fade-in zoom-in-95 duration-200">
-                  <div className="text-center mb-3">
-                    <span className="text-[11px] font-mono font-bold text-default-400 uppercase tracking-widest">
-                      Komparasi Langsung: Kotak 1:1 vs Melebar (Wide Custom)
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Card A: Square */}
-                    <div className={`p-4 rounded-2xl border shadow-lg space-y-3 ${
-                      previewTheme === "dark" ? "bg-zinc-900 border-zinc-800" : "bg-white border-zinc-200"
-                    }`}>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-foreground">A. Kotak 1:1 (Square)</span>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-default-100 dark:bg-default-800 text-default-500">
-                          32 × 32 px
+                  {/* TAB 2: COLLAPSED RAIL SIMULATOR (64px) */}
+                  {previewTab === "collapsed" && (
+                    <div className="relative z-10 animate-in fade-in zoom-in-95 duration-200 flex flex-col items-center">
+                      <div className="text-center mb-2">
+                        <span className="text-[11px] font-mono font-bold text-default-400 uppercase tracking-widest">
+                          Bilah Ramping (Rail 64px)
                         </span>
                       </div>
-                      <div className="h-20 rounded-xl bg-default-50 dark:bg-default-800/40 border border-dashed border-default-200 dark:border-default-700 flex items-center justify-center p-2">
-                        {customBrandLogo ? (
-                          <img
-                            src={customBrandLogo}
-                            alt="Square Logo"
-                            className="w-12 h-12 rounded-none object-contain shadow-2xs border border-default-200 dark:border-default-700"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-xl bg-linear-to-br from-indigo-500 to-purple-600 text-white font-bold flex items-center justify-center">
-                            {customBrandName ? customBrandName.charAt(0).toUpperCase() : "C"}
-                          </div>
-                        )}
-                      </div>
-                      <p className="text-[10px] text-default-400 leading-relaxed">
-                        Cocok untuk monogram lambang, inisial holding, atau icon shield tanpa teks horizontal panjang.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => handleBrandModeChange("square")}
-                        className={`w-full py-1.5 rounded-xl text-xs font-semibold cursor-pointer transition ${
-                          customBrandMode === "square"
-                            ? "bg-violet-600 text-white font-bold"
-                            : "bg-default-100 dark:bg-default-800 text-default-600 hover:bg-default-200"
-                        }`}
-                      >
-                        {customBrandMode === "square" ? "✓ Mode Terpilih" : "Gunakan Mode Kotak"}
-                      </button>
-                    </div>
-
-                    {/* Card B: Wide */}
-                    <div className={`p-4 rounded-2xl border shadow-lg space-y-3 ${
-                      previewTheme === "dark" ? "bg-zinc-900 border-zinc-800" : "bg-white border-zinc-200"
-                    }`}>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-foreground">B. Melebar (Wide / Banner)</span>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-violet-500/10 text-violet-600 font-bold">
-                          {brandLogoWidth} × 40 px
-                        </span>
-                      </div>
-                      <div className="h-20 rounded-xl bg-default-50 dark:bg-default-800/40 border border-dashed border-default-200 dark:border-default-700 flex items-center justify-center p-2">
-                        <div
-                          style={{ width: `${Math.min(brandLogoWidth, 200)}px` }}
-                          className="relative h-10 overflow-hidden rounded-none border border-violet-500/40 select-none"
-                        >
+                      <div className={`w-16 rounded-2xl border shadow-2xl overflow-hidden flex flex-col items-center ${
+                        previewTheme === "dark" ? "bg-zinc-900 border-zinc-800" : "bg-white border-zinc-200"
+                      }`}>
+                        {/* Collapsed Header */}
+                        <div style={{ height: "56px" }} className="w-full flex items-center justify-center border-b border-default-200/60 dark:border-default-800/60 px-1">
                           {customBrandLogo ? (
                             <img
                               src={customBrandLogo}
-                              alt="Wide Logo"
-                              className={`h-10 w-auto max-w-none rounded-none absolute top-1/2 -translate-y-1/2 ${
-                                brandLogoPlacement === "center"
-                                  ? "left-1/2 -translate-x-1/2"
-                                  : brandLogoPlacement === "right"
-                                  ? "right-0"
-                                  : "left-0"
-                              }`}
+                              alt="Logo"
+                              className="w-8 h-8 rounded-none object-contain"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-xs font-bold text-default-400">
-                              Logo Belum Dipilih
+                            <div className="w-7 h-7 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs">
+                              {customBrandName ? customBrandName.charAt(0).toUpperCase() : "C"}
                             </div>
                           )}
                         </div>
+                        {/* Rail Icons */}
+                        <div className="py-3 space-y-2 flex flex-col items-center">
+                          <div className="w-9 h-9 rounded-xl bg-violet-600 text-white flex items-center justify-center shadow-xs">
+                            <LayoutDashboard className="w-4 h-4" />
+                          </div>
+                          <div className="w-9 h-9 rounded-xl text-default-400 flex items-center justify-center hover:bg-default-100">
+                            <Wallet className="w-4 h-4" />
+                          </div>
+                          <div className="w-9 h-9 rounded-xl text-default-400 flex items-center justify-center hover:bg-default-100">
+                            <FileSpreadsheet className="w-4 h-4" />
+                          </div>
+                        </div>
                       </div>
-                      <p className="text-[10px] text-default-400 leading-relaxed">
-                        Menampilkan corporate wordmark atau banner horizontal dengan pemotongan simetris sisi kanan-kiri (True Side-Crop).
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => handleBrandModeChange("wide")}
-                        className={`w-full py-1.5 rounded-xl text-xs font-semibold cursor-pointer transition ${
-                          customBrandMode === "wide"
-                            ? "bg-violet-600 text-white font-bold"
-                            : "bg-default-100 dark:bg-default-800 text-default-600 hover:bg-default-200"
-                        }`}
-                      >
-                        {customBrandMode === "wide" ? "✓ Mode Terpilih" : "Gunakan Mode Melebar"}
-                      </button>
                     </div>
-                  </div>
+                  )}
+
+                  {/* TAB 3: JOINT NAVBAR & SIDEBAR INTERSECTION */}
+                  {previewTab === "joint" && (
+                    <div className="w-full max-w-xl relative z-10 animate-in fade-in zoom-in-95 duration-200">
+                      <div className="text-center mb-2">
+                        <span className="text-[11px] font-mono font-bold text-default-400 uppercase tracking-widest">
+                          Integrasi Sudut Atas (Navbar + Header Sidebar)
+                        </span>
+                      </div>
+                      <div className={`rounded-2xl border shadow-2xl overflow-hidden flex ${
+                        previewTheme === "dark" ? "bg-zinc-900 border-zinc-800" : "bg-white border-zinc-200"
+                      }`}>
+                        {/* Simulated Sidebar Header (Left) */}
+                        <div style={{ width: "220px", height: "56px" }} className="px-3 border-r border-default-200/60 dark:border-default-800/60 flex items-center justify-between shrink-0">
+                          <div className="flex items-center gap-2 min-w-0">
+                            {customBrandLogo ? (
+                              customBrandMode === "wide" ? (
+                                <div style={{ width: brandLogoUnit === "percent" ? `${Math.min(brandLogoWidth, 55)}%` : `${Math.min(brandLogoWidth, 120)}px` }} className={`relative h-8 shrink-0 overflow-hidden rounded-none ${frameClass}`}>
+                                  <img
+                                    src={customBrandLogo}
+                                    alt="Logo"
+                                    className="h-8 w-auto max-w-none rounded-none absolute top-1/2 -translate-y-1/2 left-0"
+                                  />
+                                </div>
+                              ) : (
+                                <img src={customBrandLogo} alt="Logo" className={`w-7 h-7 rounded-none object-contain ${frameClass}`} />
+                              )
+                            ) : (
+                              <div className="w-7 h-7 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-xs">
+                                {customBrandName ? customBrandName.charAt(0).toUpperCase() : "C"}
+                              </div>
+                            )}
+                            <span className="text-xs font-bold truncate">{customBrandName || "Nova Solusi"}</span>
+                          </div>
+                          <Crown className="w-3 h-3 text-violet-500 shrink-0" />
+                        </div>
+
+                        {/* Simulated Navbar (Right) */}
+                        <div style={{ height: "56px" }} className="flex-1 px-4 flex items-center justify-between gap-3">
+                          <div className={`h-8 flex-1 max-w-xs rounded-xl px-3 flex items-center text-xs text-default-400 border ${
+                            previewTheme === "dark" ? "bg-zinc-800 border-zinc-700" : "bg-zinc-100 border-zinc-200"
+                          }`}>
+                            <span>Pencarian global (Ctrl + K)...</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-full bg-violet-600 text-white text-xs font-bold flex items-center justify-center">
+                              A
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TAB 4: SIDE-BY-SIDE MODE COMPARATOR */}
+                  {previewTab === "compare" && (
+                    <div className="w-full max-w-2xl relative z-10 animate-in fade-in zoom-in-95 duration-200">
+                      <div className="text-center mb-3">
+                        <span className="text-[11px] font-mono font-bold text-default-400 uppercase tracking-widest">
+                          Komparasi Langsung: Kotak 1:1 vs Melebar (Wide Custom)
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Card A: Square */}
+                        <div className={`p-4 rounded-2xl border shadow-lg space-y-3 ${
+                          previewTheme === "dark" ? "bg-zinc-900 border-zinc-800" : "bg-white border-zinc-200"
+                        }`}>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-foreground">A. Kotak 1:1 (Square)</span>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-default-100 dark:bg-default-800 text-default-500">
+                              32 × 32 px
+                            </span>
+                          </div>
+                          <div className="h-20 rounded-xl bg-default-50 dark:bg-default-800/40 border border-dashed border-default-200 dark:border-default-700 flex items-center justify-center p-2">
+                            {customBrandLogo ? (
+                              <img
+                                src={customBrandLogo}
+                                alt="Square Logo"
+                                className="w-12 h-12 rounded-none object-contain shadow-2xs border border-default-200 dark:border-default-700"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-indigo-500 to-purple-600 text-white font-bold flex items-center justify-center">
+                                {customBrandName ? customBrandName.charAt(0).toUpperCase() : "C"}
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-default-400 leading-relaxed">
+                            Cocok untuk monogram lambang, inisial holding, atau icon shield tanpa teks horizontal panjang.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => handleBrandModeChange("square")}
+                            className={`w-full py-1.5 rounded-xl text-xs font-semibold cursor-pointer transition ${
+                              customBrandMode === "square"
+                                ? "bg-violet-600 text-white font-bold"
+                                : "bg-default-100 dark:bg-default-800 text-default-600 hover:bg-default-200"
+                            }`}
+                          >
+                            {customBrandMode === "square" ? "✓ Mode Terpilih" : "Gunakan Mode Kotak"}
+                          </button>
+                        </div>
+
+                        {/* Card B: Wide */}
+                        <div className={`p-4 rounded-2xl border shadow-lg space-y-3 ${
+                          previewTheme === "dark" ? "bg-zinc-900 border-zinc-800" : "bg-white border-zinc-200"
+                        }`}>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-foreground">B. Melebar (Wide / Banner)</span>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-violet-500/10 text-violet-600 font-bold">
+                              {brandLogoWidth}{brandLogoUnit === "percent" ? "%" : "px"} × 40 px
+                            </span>
+                          </div>
+                          <div className="h-20 rounded-xl bg-default-50 dark:bg-default-800/40 border border-dashed border-default-200 dark:border-default-700 flex items-center justify-center p-2">
+                            <div
+                              style={{ width: brandLogoUnit === "percent" ? `${brandLogoWidth}%` : `${Math.min(brandLogoWidth, 200)}px` }}
+                              className={`relative h-10 overflow-hidden rounded-none border border-violet-500/40 select-none ${frameClass}`}
+                            >
+                              {customBrandLogo ? (
+                                <img
+                                  src={customBrandLogo}
+                                  alt="Wide Logo"
+                                  className={`h-10 w-auto max-w-none rounded-none absolute top-1/2 -translate-y-1/2 ${
+                                    brandLogoPlacement === "center"
+                                      ? "left-1/2 -translate-x-1/2"
+                                      : brandLogoPlacement === "right"
+                                      ? "right-0"
+                                      : "left-0"
+                                  }`}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-xs font-bold text-default-400">
+                                  Logo Belum Dipilih
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-[10px] text-default-400 leading-relaxed">
+                            Menampilkan corporate wordmark atau banner horizontal dengan pemotongan simetris sisi kanan-kiri (True Side-Crop).
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => handleBrandModeChange("wide")}
+                            className={`w-full py-1.5 rounded-xl text-xs font-semibold cursor-pointer transition ${
+                              customBrandMode === "wide"
+                                ? "bg-violet-600 text-white font-bold"
+                                : "bg-default-100 dark:bg-default-800 text-default-600 hover:bg-default-200"
+                            }`}
+                          >
+                            {customBrandMode === "wide" ? "✓ Mode Terpilih" : "Gunakan Mode Melebar"}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              );
+            })()}
 
             {/* Technical Specifications & Telemetry Details */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
@@ -1942,13 +2287,13 @@ export default function CompanyBrandPage() {
                   </div>
                   <div>
                     <span className="text-xs font-bold text-foreground block">Dimensi Aktif</span>
-                    <span className="text-[10px] text-default-400 font-mono">Piksel & Layout</span>
+                    <span className="text-[10px] text-default-400 font-mono">Skala & Layout</span>
                   </div>
                 </div>
                 <div className="space-y-1 text-[11px] pt-1 border-t border-default-100 dark:border-default-800">
                   <div className="flex items-center justify-between">
                     <span className="text-default-500">Bentang Lebar:</span>
-                    <span className="font-mono font-bold text-foreground">{brandLogoWidth} px</span>
+                    <span className="font-mono font-bold text-foreground">{brandLogoWidth}{brandLogoUnit === "percent" ? "%" : "px"}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-default-500">Tinggi Standar:</span>
@@ -1973,7 +2318,7 @@ export default function CompanyBrandPage() {
                   </div>
                 </div>
                 <p className="text-[11px] text-default-500 leading-relaxed border-t border-default-100 dark:border-default-800 pt-1.5">
-                  Saat mode Melebar aktif dengan lebar {brandLogoWidth}px, CSS secara simetris menyembunyikan sisi sayap kiri & kanan gambar tanpa memelar, meregang, atau memperkecil aspect ratio.
+                  Saat mode Melebar aktif dengan bentang {brandLogoWidth}{brandLogoUnit === "percent" ? "%" : "px"}, CSS secara simetris menyembunyikan sisi sayap kiri & kanan gambar tanpa memelar, meregang, atau memperkecil aspect ratio.
                 </p>
               </div>
 
@@ -2262,21 +2607,60 @@ export default function CompanyBrandPage() {
 
             {/* Modal Body */}
             <div className="p-5 space-y-5">
+              {/* Mode Satuan Bentang Lebar */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                  <span>Satuan Pengukuran (Unit)</span>
+                  <span className="text-[10px] text-default-400 font-mono">
+                    Mode saat ini: {brandLogoUnit === "percent" ? "Persentase (%)" : "Piksel Statis (px)"}
+                  </span>
+                </label>
+                <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-default-100 dark:bg-default-800 border border-default-200/60 dark:border-default-700/60">
+                  <button
+                    type="button"
+                    onClick={() => handleLogoUnitChange("percent")}
+                    className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition ${
+                      brandLogoUnit === "percent"
+                        ? "bg-violet-600 text-white shadow-xs"
+                        : "text-default-600 dark:text-default-300 hover:text-foreground hover:bg-default-200/50"
+                    }`}
+                  >
+                    <Percent className="w-3.5 h-3.5" />
+                    <span>Persentase (%) - Responsif</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleLogoUnitChange("px")}
+                    className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition ${
+                      brandLogoUnit === "px"
+                        ? "bg-violet-600 text-white shadow-xs"
+                        : "text-default-600 dark:text-default-300 hover:text-foreground hover:bg-default-200/50"
+                    }`}
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    <span>Piksel (px) - Tetap</span>
+                  </button>
+                </div>
+              </div>
+
               {/* Slider Lebar Logo */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                    <span>Lebar Maksimal Logo (Width)</span>
+                    <span>Bentang Lebar Logo</span>
+                    <span className="text-[10px] text-default-400">
+                      ({brandLogoUnit === "percent" ? "15% - 100%" : "30px - 260px"})
+                    </span>
                   </label>
-                  <span className="font-mono text-xs font-bold text-violet-600 dark:text-violet-400 px-2 py-0.5 rounded-md bg-violet-500/10 border border-violet-500/20">
-                    {brandLogoWidth} px
+                  <span className="font-mono text-xs font-bold text-violet-600 dark:text-violet-400 px-2.5 py-0.5 rounded-md bg-violet-500/10 border border-violet-500/20">
+                    {brandLogoWidth} {brandLogoUnit === "percent" ? "%" : "px"}
                   </span>
                 </div>
                 <input
                   type="range"
-                  min="100"
-                  max="260"
-                  step="5"
+                  min={brandLogoUnit === "percent" ? "15" : "30"}
+                  max={brandLogoUnit === "percent" ? "100" : "260"}
+                  step={brandLogoUnit === "percent" ? "1" : "2"}
                   value={brandLogoWidth}
                   onChange={(e) => {
                     const val = Number(e.target.value);
@@ -2291,27 +2675,36 @@ export default function CompanyBrandPage() {
                 />
                 {/* Presets */}
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  {[
-                    { label: "120px (Kecil)", w: 120 },
-                    { label: "140px (Standar)", w: 140 },
-                    { label: "180px (Medium)", w: 180 },
-                    { label: "220px (Lebar)", w: 220 },
-                    { label: "250px (Maksimal)", w: 250 },
-                  ].map((preset) => (
+                  {(brandLogoUnit === "percent"
+                    ? [
+                        { label: "25% (Ramping)", val: 25 },
+                        { label: "50% (Sedang)", val: 50 },
+                        { label: "75% (Proporsional)", val: 75 },
+                        { label: "90% (Hampir Penuh)", val: 90 },
+                        { label: "100% (Penuh Sidebar)", val: 100 },
+                      ]
+                    : [
+                        { label: "60px", val: 60 },
+                        { label: "100px", val: 100 },
+                        { label: "140px", val: 140 },
+                        { label: "180px", val: 180 },
+                        { label: "220px", val: 220 },
+                      ]
+                  ).map((preset) => (
                     <button
-                      key={preset.w}
+                      key={preset.val}
                       type="button"
                       onClick={() => {
                         playRealisticClick(0.3);
-                        setBrandLogoWidth(preset.w);
-                        localStorage.setItem("novajournal_brand_logo_width", String(preset.w));
+                        setBrandLogoWidth(preset.val);
+                        localStorage.setItem("novajournal_brand_logo_width", String(preset.val));
                         if (selectedWorkspace?.id) {
-                          localStorage.setItem(`novajournal_brand_logo_width_${selectedWorkspace.id}`, String(preset.w));
+                          localStorage.setItem(`novajournal_brand_logo_width_${selectedWorkspace.id}`, String(preset.val));
                         }
                         window.dispatchEvent(new Event("novajournal_brand_config_changed"));
                       }}
                       className={`text-[10px] px-2.5 py-1 rounded-lg border font-semibold cursor-pointer transition ${
-                        brandLogoWidth === preset.w
+                        brandLogoWidth === preset.val
                           ? "bg-violet-600 text-white border-violet-600 shadow-xs"
                           : "bg-default-50 dark:bg-default-800 border-default-200 dark:border-default-700 text-default-600 dark:text-default-300 hover:bg-default-100"
                       }`}
@@ -2329,51 +2722,60 @@ export default function CompanyBrandPage() {
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { id: "left" as const, label: "Rata Kiri", desc: "Left aligned" },
-                    { id: "center" as const, label: "Rata Tengah", desc: "Centered logo" },
-                    { id: "right" as const, label: "Rata Kanan", desc: "Right aligned" },
-                  ].map((pos) => (
-                    <button
-                      key={pos.id}
-                      type="button"
-                      onClick={() => {
-                        playRealisticClick(0.3);
-                        setBrandLogoPlacement(pos.id);
-                        localStorage.setItem("novajournal_brand_logo_placement", pos.id);
-                        if (selectedWorkspace?.id) {
-                          localStorage.setItem(`novajournal_brand_logo_placement_${selectedWorkspace.id}`, pos.id);
-                        }
-                        window.dispatchEvent(new Event("novajournal_brand_config_changed"));
-                      }}
-                      className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                        brandLogoPlacement === pos.id
-                          ? "border-violet-500 bg-violet-50/60 dark:bg-violet-950/30 ring-1 ring-violet-500/30"
-                          : "border-default-200 dark:border-default-700 bg-default-50/50 dark:bg-default-800/40 hover:bg-default-100"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-xs font-bold text-foreground">{pos.label}</span>
-                        {brandLogoPlacement === pos.id && <Check className="w-3.5 h-3.5 text-violet-600" />}
-                      </div>
-                      <span className="text-[10px] text-default-400">{pos.desc}</span>
-                    </button>
-                  ))}
+                    { id: "left" as const, label: "Rata Kiri", desc: "Left aligned", icon: AlignLeft },
+                    { id: "center" as const, label: "Rata Tengah", desc: "Centered logo", icon: AlignCenter },
+                    { id: "right" as const, label: "Rata Kanan", desc: "Right aligned", icon: AlignRight },
+                  ].map((pos) => {
+                    const PosIcon = pos.icon;
+                    return (
+                      <button
+                        key={pos.id}
+                        type="button"
+                        onClick={() => {
+                          playRealisticClick(0.3);
+                          setBrandLogoPlacement(pos.id);
+                          localStorage.setItem("novajournal_brand_logo_placement", pos.id);
+                          if (selectedWorkspace?.id) {
+                            localStorage.setItem(`novajournal_brand_logo_placement_${selectedWorkspace.id}`, pos.id);
+                          }
+                          window.dispatchEvent(new Event("novajournal_brand_config_changed"));
+                        }}
+                        className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                          brandLogoPlacement === pos.id
+                            ? "border-violet-500 bg-violet-50/60 dark:bg-violet-950/30 ring-1 ring-violet-500/30"
+                            : "border-default-200 dark:border-default-700 bg-default-50/50 dark:bg-default-800/40 hover:bg-default-100"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-0.5">
+                          <span className="text-xs font-bold text-foreground flex items-center gap-1">
+                            <PosIcon className="w-3.5 h-3.5 text-violet-500" />
+                            {pos.label}
+                          </span>
+                          {brandLogoPlacement === pos.id && <Check className="w-3.5 h-3.5 text-violet-600" />}
+                        </div>
+                        <span className="text-[10px] text-default-400">{pos.desc}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* Live Simulated Preview Box */}
               <div className="space-y-1.5">
                 <span className="text-[11px] font-bold text-default-400 uppercase tracking-wider block">
-                  Simulasi Tampilan Header Sidebar
+                  Simulasi Tampilan Header Sidebar ({brandLogoWidth}{brandLogoUnit === "percent" ? "%" : "px"})
                 </span>
-                <div className="w-full h-14 rounded-xl border border-default-200 dark:border-default-700 bg-default-100/70 dark:bg-default-800/50 px-3 flex items-center overflow-hidden">
+                <div className="w-full h-16 rounded-xl border border-default-200 dark:border-default-700 bg-default-100/70 dark:bg-default-800/50 px-3 flex items-center overflow-hidden">
                   <div className={`w-full flex items-center ${
                     brandLogoPlacement === "center" ? "justify-center" : brandLogoPlacement === "right" ? "justify-end" : "justify-start"
                   }`}>
                     {customBrandLogo ? (
                       <div
-                        style={{ width: `${brandLogoWidth}px` }}
-                        className="relative h-10 shrink-0 overflow-hidden rounded-none select-none"
+                        style={{
+                          width: brandLogoUnit === "percent" ? `${brandLogoWidth}%` : `${brandLogoWidth}px`,
+                          maxWidth: "100%",
+                        }}
+                        className="relative h-10 shrink-0 overflow-hidden rounded-none select-none transition-all duration-150"
                       >
                         <img
                           key={customBrandLogo}
@@ -2390,10 +2792,13 @@ export default function CompanyBrandPage() {
                       </div>
                     ) : (
                       <div
-                        style={{ width: `${brandLogoWidth}px` }}
+                        style={{
+                          width: brandLogoUnit === "percent" ? `${brandLogoWidth}%` : `${brandLogoWidth}px`,
+                          maxWidth: "100%",
+                        }}
                         className="h-8 rounded-lg bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-violet-600 text-xs font-bold"
                       >
-                        Logo Banner ({brandLogoWidth}px)
+                        Logo Banner ({brandLogoWidth}{brandLogoUnit === "percent" ? "%" : "px"})
                       </div>
                     )}
                   </div>
@@ -2407,14 +2812,21 @@ export default function CompanyBrandPage() {
                 type="button"
                 className="text-xs px-3.5 py-1.5 rounded-xl border border-default-200 dark:border-default-700 bg-white dark:bg-default-800 text-default-700 dark:text-default-200 hover:bg-default-100 dark:hover:bg-default-700 cursor-pointer font-medium transition"
                 onClick={() => {
-                  setBrandLogoWidth(140);
+                  setBrandLogoUnit("percent");
+                  setBrandLogoWidth(100);
                   setBrandLogoPlacement("left");
-                  localStorage.setItem("novajournal_brand_logo_width", "140");
+                  localStorage.setItem("novajournal_brand_logo_unit", "percent");
+                  localStorage.setItem("novajournal_brand_logo_width", "100");
                   localStorage.setItem("novajournal_brand_logo_placement", "left");
+                  if (selectedWorkspace?.id) {
+                    localStorage.setItem(`novajournal_brand_logo_unit_${selectedWorkspace.id}`, "percent");
+                    localStorage.setItem(`novajournal_brand_logo_width_${selectedWorkspace.id}`, "100");
+                    localStorage.setItem(`novajournal_brand_logo_placement_${selectedWorkspace.id}`, "left");
+                  }
                   window.dispatchEvent(new Event("novajournal_brand_config_changed"));
                 }}
               >
-                Reset Default
+                Reset Default (100%)
               </button>
               <Button
                 size="sm"
