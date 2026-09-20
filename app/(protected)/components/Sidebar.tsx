@@ -30,6 +30,10 @@ import {
   Palette,
   Cpu,
   Globe,
+  FileSpreadsheet,
+  Calculator,
+  FileCheck2,
+  LayoutList,
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { queryKeys, queryFunctions } from "@/app/lib/queries";
@@ -77,6 +81,10 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   ShieldCheck,
   Users,
   ScrollText,
+  FileSpreadsheet,
+  Calculator,
+  FileCheck2,
+  LayoutList,
 };
 
 const DEFAULT_MENU_GROUPS: MenuGroup[] = [
@@ -110,6 +118,33 @@ const DEFAULT_MENU_GROUPS: MenuGroup[] = [
         path: "/workspaces",
         allowedRoles: ["owner", "admin"],
         requiredRoleName: "Admin",
+      },
+    ],
+  },
+  {
+    id: "reporting",
+    title: "Reporting & Finance",
+    items: [
+      {
+        icon: FileSpreadsheet,
+        label: "Laporan Keuangan",
+        path: "/reports/financial-statement",
+        allowedRoles: ["owner", "admin", "staff"],
+        requiredRoleName: "Staff+",
+      },
+      {
+        icon: Calculator,
+        label: "Kepatuhan Pajak (Tax)",
+        path: "/reports/tax-compliance",
+        allowedRoles: ["owner", "admin"],
+        requiredRoleName: "Admin",
+      },
+      {
+        icon: FileCheck2,
+        label: "Varian Realisasi Anggaran",
+        path: "/reports/budget-variance",
+        allowedRoles: ["owner", "admin", "staff"],
+        requiredRoleName: "Staff+",
       },
     ],
   },
@@ -167,6 +202,13 @@ const DEFAULT_MENU_GROUPS: MenuGroup[] = [
         path: "/appearance",
       },
       {
+        icon: LayoutList,
+        label: "Manajemen Menu",
+        path: "/content-management",
+        allowedRoles: ["owner", "admin"],
+        requiredRoleName: "Admin",
+      },
+      {
         icon: Cpu,
         label: "AI Hub & Copilot",
         path: "/ai-hub",
@@ -207,10 +249,31 @@ export default function Sidebar({
     staleTime: 60000,
   });
 
+  const [hiddenMenus, setHiddenMenus] = useState<string[]>([]);
+  const [customLabels, setCustomLabels] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const loadMenuConfig = () => {
+      try {
+        const savedHidden = localStorage.getItem("novajournal_hidden_menus");
+        if (savedHidden) setHiddenMenus(JSON.parse(savedHidden));
+        else setHiddenMenus([]);
+
+        const savedLabels = localStorage.getItem("novajournal_menu_labels");
+        if (savedLabels) setCustomLabels(JSON.parse(savedLabels));
+        else setCustomLabels({});
+      } catch {}
+    };
+    loadMenuConfig();
+    window.addEventListener("novajournal_menu_config_changed", loadMenuConfig);
+    return () => window.removeEventListener("novajournal_menu_config_changed", loadMenuConfig);
+  }, []);
+
   const menuGroups = useMemo<MenuGroup[]>(() => {
     const groupTitles: Record<string, string> = {
       overview: t(DICTIONARY.sidebar.groupOverview),
       planning: t(DICTIONARY.sidebar.groupPlanning),
+      reporting: lang === "id" ? "Laporan & Kepatuhan" : "Reports & Compliance",
       governance: t(DICTIONARY.sidebar.groupGovernance),
       configuration: t(DICTIONARY.sidebar.groupSettings),
     };
@@ -232,34 +295,43 @@ export default function Sidebar({
       "/profile": DICTIONARY.sidebar.menuProfile,
       "/brand": DICTIONARY.sidebar.menuBrand,
       "/appearance": DICTIONARY.sidebar.menuAppearance,
+      "/content-management": { id: "Manajemen Menu", en: "Menu Management" },
       "/ai-hub": DICTIONARY.sidebar.menuAiHub,
       "/security": DICTIONARY.sidebar.menuSecurity,
     };
 
     const getTranslatedLabel = (item: any) => {
+      if (customLabels[item.path]) return customLabels[item.path];
       if (MENU_TRANSLATIONS[item.path]) {
         return t(MENU_TRANSLATIONS[item.path]);
       }
       return (lang === "id" ? item.labelId : item.labelEn) || item.label || item.name;
     };
 
+    const filterAndLabelItems = (items: MenuItem[]) => {
+      return items
+        .filter((it) => pathname === it.path || !hiddenMenus.includes(it.path))
+        .map((it) => ({
+          ...it,
+          label: customLabels[it.path] || getTranslatedLabel(it),
+        }));
+    };
+
     if (!dbMenusData?.data || !Array.isArray(dbMenusData.data) || dbMenusData.data.length === 0) {
       return DEFAULT_MENU_GROUPS.map((g) => ({
         ...g,
         title: groupTitles[g.id] || g.title,
-        items: g.items.map((it) => ({
-          ...it,
-          label: getTranslatedLabel(it),
-        })),
-      }));
+        items: filterAndLabelItems(g.items),
+      })).filter((g) => g.items.length > 0);
     }
 
     // Organize database menus by their group
     const groups: Record<string, MenuItem[]> = {
       overview: [],
       planning: [],
-      configuration: [],
+      reporting: [],
       governance: [],
+      configuration: [],
     };
 
     const PATH_TO_GROUP: Record<string, string> = {
@@ -274,11 +346,16 @@ export default function Sidebar({
       "/portfolio": "planning",
       "/workspaces": "planning",
 
+      "/reports/financial-statement": "reporting",
+      "/reports/tax-compliance": "reporting",
+      "/reports/budget-variance": "reporting",
+
       "/settings": "configuration",
       "/regional": "configuration",
       "/profile": "configuration",
       "/brand": "configuration",
       "/appearance": "configuration",
+      "/content-management": "configuration",
       "/ai-hub": "configuration",
       "/security": "configuration",
 
@@ -294,8 +371,8 @@ export default function Sidebar({
       if (!groups[g]) groups[g] = [];
       const IconComponent = (item.icon && ICON_MAP[item.icon]) ? ICON_MAP[item.icon] : LayoutDashboard;
 
-      const requiresAdmin = ["/settings", "/brand", "/workspaces", "/users", "/logs"].includes(item.path);
-      const requiresStaff = ["/wallets"].includes(item.path);
+      const requiresAdmin = ["/settings", "/brand", "/workspaces", "/users", "/logs", "/reports/tax-compliance", "/content-management"].includes(item.path);
+      const requiresStaff = ["/wallets", "/reports/financial-statement", "/reports/budget-variance"].includes(item.path);
 
       groups[g].push({
         icon: IconComponent,
@@ -306,17 +383,18 @@ export default function Sidebar({
       });
     }
 
-    const ORDERED_GROUP_KEYS = ["overview", "planning", "governance", "configuration"];
+    const ORDERED_GROUP_KEYS = ["overview", "planning", "reporting", "governance", "configuration"];
     const result = ORDERED_GROUP_KEYS
       .filter((k) => groups[k] && groups[k].length > 0)
       .map((k) => ({
         id: k,
         title: groupTitles[k] || k.toUpperCase(),
-        items: groups[k],
-      }));
+        items: filterAndLabelItems(groups[k]),
+      }))
+      .filter((g) => g.items.length > 0);
 
     return result.length > 0 ? result : DEFAULT_MENU_GROUPS;
-  }, [dbMenusData, lang, t]);
+  }, [dbMenusData, lang, t, hiddenMenus, customLabels, pathname]);
 
   // Active Role state (with support for RBAC simulation)
   const [currentRole, setCurrentRole] = useState<UserRole>("owner");
@@ -325,6 +403,7 @@ export default function Sidebar({
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     overview: true,
     planning: true,
+    reporting: true,
     configuration: true,
     governance: true,
   });
@@ -349,6 +428,7 @@ export default function Sidebar({
   const [brandNameOverride, setBrandNameOverride] = useState<string | null>(null);
   const [brandLogoWidth, setBrandLogoWidth] = useState(140);
   const [brandLogoPlacement, setBrandLogoPlacement] = useState<"left" | "center" | "right">("left");
+  const [brandVersion, setBrandVersion] = useState(0);
 
   // Granular Sidebar Appearance Preferences
   const [sidebarDensity, setSidebarDensity] = useState<"compact" | "comfortable" | "spacious">("comfortable");
@@ -365,15 +445,17 @@ export default function Sidebar({
     const wsId = ws?.id;
 
     const scopedLogo = wsId ? localStorage.getItem(`novajournal_custom_brand_logo_${wsId}`) : null;
+    const globalLogo = localStorage.getItem("novajournal_custom_brand_logo");
     const scopedName = wsId ? localStorage.getItem(`novajournal_custom_brand_name_${wsId}`) : null;
     const scopedBrandMode = wsId ? localStorage.getItem(`novajournal_brand_logo_mode_${wsId}`) : null;
     const scopedFormat = wsId ? localStorage.getItem(`novajournal_brand_display_format_${wsId}`) : null;
     const scopedWidth = wsId ? localStorage.getItem(`novajournal_brand_logo_width_${wsId}`) : null;
     const scopedPlacement = wsId ? localStorage.getItem(`novajournal_brand_logo_placement_${wsId}`) : null;
 
-    // Scoped brand logo: ws.customBrandLogo takes highest precedence, followed by scoped local storage
-    const effLogo = ws?.customBrandLogo || scopedLogo || null;
+    // Fresh scoped/local logo takes highest precedence over in-memory ws object for instant reactivity
+    const effLogo = scopedLogo || globalLogo || ws?.customBrandLogo || null;
     setBrandLogoOverride(effLogo);
+    setBrandVersion((v) => v + 1);
 
     const effName = ws?.customBrandName || scopedName || null;
     setBrandNameOverride(effName);
@@ -532,15 +614,19 @@ export default function Sidebar({
         {(() => {
           const ws = selectedWorkspace as any;
           const wsId = ws?.id;
+          const planTier = (ws?.planTier || "pro").toLowerCase() as "basic" | "pro" | "enterprise";
+          const hasEnterpriseTrial = wsId ? localStorage.getItem(`novajournal_enterprise_trial_${wsId}`) === "true" : false;
+          const isEnterprise = Boolean(planTier === "enterprise" || hasEnterpriseTrial || localStorage.getItem("novajournal_enterprise_override") === "true");
+
           const scopedLogo = wsId ? localStorage.getItem(`novajournal_custom_brand_logo_${wsId}`) : null;
           const scopedName = wsId ? localStorage.getItem(`novajournal_custom_brand_name_${wsId}`) : null;
-          const customBrandLogo = ws?.customBrandLogo || scopedLogo || brandLogoOverride;
-          const customBrandName = ws?.customBrandName || scopedName || brandNameOverride;
-          const customBrandJargon = ws?.customBrandJargon;
+          const customBrandLogo = isEnterprise ? (scopedLogo || brandLogoOverride || ws?.customBrandLogo) : null;
+          const customBrandName = isEnterprise ? (scopedName || brandNameOverride || ws?.customBrandName) : null;
+          const customBrandJargon = isEnterprise ? ws?.customBrandJargon : null;
           const customBrandMode = (brandModeOverride || ws?.customBrandMode || "square").toLowerCase();
-          const effectiveDisplayFormat = (brandDisplayFormat || ws?.customBrandDisplay || "logo-and-text").toLowerCase();
-          const hasCustomBrand = Boolean(customBrandName || customBrandLogo);
-          const planTier = (ws?.planTier || "pro").toLowerCase() as "basic" | "pro" | "enterprise";
+          const effectiveDisplayFormat = isEnterprise ? (brandDisplayFormat || ws?.customBrandDisplay || "logo-and-text").toLowerCase() : "logo-and-text";
+          const hasCustomBrand = Boolean(isEnterprise && (customBrandName || customBrandLogo));
+          const objectPosClass = brandLogoPlacement === "center" ? "object-center" : brandLogoPlacement === "right" ? "object-right" : "object-left";
 
           return (
             <div
@@ -562,45 +648,85 @@ export default function Sidebar({
                     <div className={`flex-1 flex items-center min-w-0 pr-1 ${
                       brandLogoPlacement === "center" ? "justify-center" : brandLogoPlacement === "right" ? "justify-end" : "justify-start"
                     }`}>
-                      <img
-                        key={customBrandLogo}
-                        src={customBrandLogo}
-                        alt="Corporate Banner"
-                        style={{ maxWidth: `${brandLogoWidth}px` }}
-                        className="max-h-11 w-auto object-contain transition-all"
-                      />
+                      <div
+                        style={{ width: `${brandLogoWidth}px` }}
+                        className="relative h-10 shrink-0 overflow-hidden rounded-none select-none"
+                      >
+                        <img
+                          key={`${customBrandLogo}-${brandVersion}`}
+                          src={customBrandLogo}
+                          alt="Corporate Banner"
+                          className={`h-10 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
+                            brandLogoPlacement === "center"
+                              ? "left-1/2 -translate-x-1/2"
+                              : brandLogoPlacement === "right"
+                              ? "right-0"
+                              : "left-0"
+                          }`}
+                        />
+                      </div>
                     </div>
                   ) : effectiveDisplayFormat === "logo-only" && customBrandLogo ? (
                     <div className={`flex-1 flex items-center min-w-0 ${
                       brandLogoPlacement === "center" ? "justify-center" : brandLogoPlacement === "right" ? "justify-end" : "justify-start"
                     }`}>
-                      <img
-                        key={customBrandLogo}
-                        src={customBrandLogo}
-                        alt="Corporate Logo"
-                        style={customBrandMode === "wide" ? { maxWidth: `${brandLogoWidth}px` } : undefined}
-                        className={
-                          customBrandMode === "wide"
-                            ? "max-h-11 w-auto object-contain transition-all"
-                            : "w-8 h-8 rounded-xl object-cover shadow-2xs border border-default-200/60 dark:border-default-700/60"
-                        }
-                      />
+                      {customBrandMode === "wide" ? (
+                        <div
+                          style={{ width: `${brandLogoWidth}px` }}
+                          className="relative h-10 shrink-0 overflow-hidden rounded-none select-none"
+                        >
+                          <img
+                            key={`${customBrandLogo}-${brandVersion}`}
+                            src={customBrandLogo}
+                            alt="Corporate Logo"
+                            className={`h-10 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
+                              brandLogoPlacement === "center"
+                                ? "left-1/2 -translate-x-1/2"
+                                : brandLogoPlacement === "right"
+                                ? "right-0"
+                                : "left-0"
+                            }`}
+                          />
+                        </div>
+                      ) : (
+                        <img
+                          key={`${customBrandLogo}-${brandVersion}`}
+                          src={customBrandLogo}
+                          alt="Corporate Logo"
+                          className="w-8 h-8 rounded-none object-contain shadow-2xs border border-default-200/60 dark:border-default-700/60"
+                        />
+                      )}
                     </div>
                   ) : (
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       {hasCustomBrand ? (
                         customBrandLogo ? (
-                          <img
-                            key={customBrandLogo}
-                            src={customBrandLogo}
-                            alt="Company Logo"
-                            style={customBrandMode === "wide" ? { maxWidth: `${brandLogoWidth}px` } : undefined}
-                            className={
-                              customBrandMode === "wide"
-                                ? "h-10 w-auto object-contain shrink-0 transition-all"
-                                : "w-7 h-7 rounded-lg object-cover shadow-2xs shrink-0 border border-default-200/60 dark:border-default-700/60"
-                            }
-                          />
+                          customBrandMode === "wide" ? (
+                            <div
+                              style={{ width: `${brandLogoWidth}px` }}
+                              className="relative h-9 shrink-0 overflow-hidden rounded-none select-none"
+                            >
+                              <img
+                                key={`${customBrandLogo}-${brandVersion}`}
+                                src={customBrandLogo}
+                                alt="Company Logo"
+                                className={`h-9 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
+                                  brandLogoPlacement === "center"
+                                    ? "left-1/2 -translate-x-1/2"
+                                    : brandLogoPlacement === "right"
+                                    ? "right-0"
+                                    : "left-0"
+                                }`}
+                              />
+                            </div>
+                          ) : (
+                            <img
+                              key={`${customBrandLogo}-${brandVersion}`}
+                              src={customBrandLogo}
+                              alt="Company Logo"
+                              className="w-7 h-7 rounded-none object-contain shadow-2xs shrink-0 border border-default-200/60 dark:border-default-700/60"
+                            />
+                          )
                         ) : (
                           <div className="w-7 h-7 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xs shadow-2xs shrink-0">
                             {customBrandName?.charAt(0)?.toUpperCase() || "C"}
@@ -613,11 +739,17 @@ export default function Sidebar({
                       )}
                       {brandDisplayMode !== "icon" && (
                         <div className="flex flex-col min-w-0 leading-tight">
-                          <span className="text-xs font-bold text-foreground truncate">
-                            {hasCustomBrand ? customBrandName : "NovaFinance"}
-                          </span>
+                          {hasCustomBrand ? (
+                            <span className="text-xs font-bold text-foreground truncate">
+                              {customBrandName}
+                            </span>
+                          ) : (
+                            <span className="text-xs font-extrabold bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-blue-400 dark:via-indigo-300 dark:to-purple-400 bg-clip-text text-transparent truncate tracking-tight">
+                              NovaFinance
+                            </span>
+                          )}
                           <span className="text-[9px] text-default-400 font-medium truncate">
-                            {hasCustomBrand ? (customBrandJargon || ws?.name || "Corporate Treasury") : "Pro Financial"}
+                            {hasCustomBrand ? (customBrandJargon || ws?.name || "Corporate Treasury") : "ProFinancial"}
                           </span>
                         </div>
                       )}
@@ -669,7 +801,7 @@ export default function Sidebar({
                     <img
                       src={customBrandLogo}
                       alt="Logo"
-                      className="w-7 h-7 rounded-lg object-cover shadow-2xs"
+                      className="w-7 h-7 rounded-none object-contain shadow-2xs"
                     />
                   ) : (
                     <div className="w-7 h-7 rounded-lg bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-2xs shrink-0">
@@ -789,11 +921,22 @@ export default function Sidebar({
 
         {/* RBAC Active Role Pill & Collapse Toggle */}
         <div className="p-2 shrink-0 border-t border-default-200/40 dark:border-default-800/40 space-y-1.5">
-          {/* Relocated NovaFinance Brand (when company custom brand is active at the top) */}
+          {/* Relocated NovaFinance Brand (ONLY when custom enterprise brand is active at the top) */}
           {(() => {
             const ws = selectedWorkspace as any;
-            const hasCustomBrand = Boolean(ws?.customBrandName || ws?.customBrandLogo);
-            if (!hasCustomBrand) return null;
+            const wsId = ws?.id;
+            const planTier = (ws?.planTier || "pro").toLowerCase() as "basic" | "pro" | "enterprise";
+            const hasEnterpriseTrial = wsId ? localStorage.getItem(`novajournal_enterprise_trial_${wsId}`) === "true" : false;
+            const isEnterprise = Boolean(planTier === "enterprise" || hasEnterpriseTrial || localStorage.getItem("novajournal_enterprise_override") === "true");
+
+            const scopedLogo = wsId ? localStorage.getItem(`novajournal_custom_brand_logo_${wsId}`) : null;
+            const scopedName = wsId ? localStorage.getItem(`novajournal_custom_brand_name_${wsId}`) : null;
+            const customBrandLogo = isEnterprise ? (scopedLogo || brandLogoOverride || ws?.customBrandLogo) : null;
+            const customBrandName = isEnterprise ? (scopedName || brandNameOverride || ws?.customBrandName) : null;
+            const hasCustomBrandTop = Boolean(isEnterprise && (customBrandName || customBrandLogo));
+
+            // If top is already displaying NovaFinance, hide bottom Core Engine block
+            if (!hasCustomBrandTop) return null;
 
             return !collapsed ? (
               <div className="px-2 py-1.5 rounded-xl bg-default-100/70 dark:bg-default-800/40 border border-default-200/40 dark:border-default-700/30 flex items-center justify-between">

@@ -38,6 +38,10 @@ import {
   Clock,
   Palette,
   Globe,
+  FileSpreadsheet,
+  Calculator,
+  FileCheck2,
+  LayoutList,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -199,6 +203,30 @@ const searchMenuItems: SearchMenuItem[] = [
     description: "Interactive visual cashflow and budget allocation flow",
   },
   {
+    id: "financial-statement",
+    label: "Laporan Keuangan",
+    path: "/reports/financial-statement",
+    group: "Reporting",
+    icon: FileSpreadsheet,
+    description: "Laporan laba rugi, neraca keuangan, dan arus kas komprehensif",
+  },
+  {
+    id: "tax-compliance",
+    label: "Kepatuhan Pajak (Tax)",
+    path: "/reports/tax-compliance",
+    group: "Reporting",
+    icon: Calculator,
+    description: "Rekonsiliasi fiskal, kepatuhan SPT, PPh 21/23, dan PPN",
+  },
+  {
+    id: "budget-variance",
+    label: "Varian Realisasi Anggaran",
+    path: "/reports/budget-variance",
+    group: "Reporting",
+    icon: FileCheck2,
+    description: "Analisis komparasi anggaran disetujui vs realisasi aktual",
+  },
+  {
     id: "analytics",
     label: "Analytics",
     path: "/analytics",
@@ -253,6 +281,14 @@ const searchMenuItems: SearchMenuItem[] = [
     group: "Settings & Configuration",
     icon: Palette,
     description: "Dark/light mode, custom hex colors, font selector, and UI density",
+  },
+  {
+    id: "content-management",
+    label: "Content & Menu Management",
+    path: "/content-management",
+    group: "Settings & Configuration",
+    icon: LayoutList,
+    description: "Atur visibilitas hide/show menu, urutan navigasi, dan custom layout",
   },
   {
     id: "ai-hub",
@@ -712,6 +748,16 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           <input
             ref={searchInputRef}
             type="search"
+            name="novajournal-nav-cmd-search"
+            id="novajournal-nav-cmd-search"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            data-lpignore="true"
+            data-1p-ignore="true"
+            data-form-type="other"
+            aria-autocomplete="list"
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);

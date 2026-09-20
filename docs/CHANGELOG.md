@@ -4,6 +4,35 @@ All notable changes to NovaFinance will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-20
+
+### Added
+- **Reporting & Finance Suite (`/reports/*`, `Sidebar.tsx`, `Navbar.tsx`)**:
+  - Integrated dedicated `Reporting & Finance` navigation group with 3 corporate financial modules:
+    - **Laporan Keuangan (`/reports/financial-statement`)**: Comprehensive financial statements covering Income Statement (Laba Rugi), Balance Sheet (Neraca), and Cash Flow (Arus Kas), with export to CSV/PDF, time range filters, and KPIs.
+    - **Kepatuhan Pajak (`/reports/tax-compliance`)**: Tax compliance dashboard featuring fiscal reconciliation, PPh 21/23/Final, VAT (PPN), e-Bupot status tracking, and SPT filing reminders.
+    - **Varian Realisasi Anggaran (`/reports/budget-variance`)**: Budget vs Actual performance reporting with real-time variance percentage, department breakdown, and visual threshold alerts.
+  - Registered in Navbar Quick Search and backend menu seeds with role access policies (Staff+ and Admin).
+
+- **Content & Dynamic Menu Management (`/content-management`)**:
+  - Introduced unified menu and content configuration page styled with section fold cards, auto-saving badges, and quick-jump navigation.
+  - **Menu Visibility & Alias System**: Toggle visibility of any navigation item and assign custom display aliases saved directly to `localStorage` (`novajournal_hidden_menus`, `novajournal_menu_labels`).
+  - **Navigation Display Modes**: Switch between Accordion, Flat, and Compact sidebar navigation styles with counter badge toggles.
+  - **Workspace Announcement Banner**: Configurable top banner with severity themes (info, warning, promo, success), dismiss controls, and real-time preview.
+  - **RBAC Matrix Preview**: Interactive visual matrix detailing permissions for Owner, Admin, Staff, and Viewer roles.
+  - Real-time synchronization with `Sidebar.tsx` via `novajournal_menu_config_changed` events.
+
+### Enhanced & Fixed
+- **Enterprise Brand Gating & Sidebar Polish (`Sidebar.tsx`)**:
+  - Gated custom workspace branding exclusively to Enterprise workspaces or workspaces with active enterprise trials.
+  - Non-enterprise workspaces seamlessly fallback to modern `NovaFinance` branding with `ProFinancial` subtext and vibrant multi-stop gradient styling.
+  - Streamlined sidebar footer: cleanly hides the bottom "NovaFinance Core Engine" box when the top bar already displays the default NovaFinance brand.
+  - Implemented true side-cropping for wide brand logos (`overflow: hidden` absolute centering) to clip horizontal edges precisely without stretching or zooming.
+  - Removed all rounded corners on sidebar logos (`rounded-none`) to preserve crisp corporate branding.
+- **Global Dark Mode Button Styling (`globals.css`)**:
+  - Resolved theme contrast bug where secondary buttons and buttons with `bg-white` retained stark white backgrounds in dark mode.
+  - Injected global `.dark button.bg-white` and `.dark button[data-variant="secondary"]` overrides and updated UI components to use zinc dark backgrounds.
+
 ## [0.3.9] - 2026-09-20
 
 ### Fixed & Enhanced

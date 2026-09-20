@@ -87,7 +87,20 @@ export function triggerNovaToast(payload: NovaToastPayload) {
   );
 }
 
-export function NovaToastContainer() {
+export function useNovaToast() {
+  const showSuccess = (title: string, description?: string) =>
+    triggerNovaToast({ type: "success", title, description });
+  const showError = (title: string, description?: string) =>
+    triggerNovaToast({ type: "error", title, description });
+  const showWarning = (title: string, description?: string) =>
+    triggerNovaToast({ type: "warning", title, description });
+  const showInfo = (title: string, description?: string) =>
+    triggerNovaToast({ type: "info", title, description });
+
+  return { toasts: [], dismissToast: () => {}, showSuccess, showError, showWarning, showInfo, trigger: triggerNovaToast };
+}
+
+export function NovaToastContainer(props?: { toasts?: any; onDismiss?: any }) {
   const [toasts, setToasts] = useState<ToastItemInternal[]>([]);
 
   const dismissToast = useCallback((id: string) => {

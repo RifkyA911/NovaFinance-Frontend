@@ -330,7 +330,9 @@ export default function CompanyBrandPage() {
     const H = imageNatSize.h || 400;
     const targetW = mode === "wide" ? 280 : 220;
     const targetH = mode === "wide" ? 120 : 220;
-    const baseScale = Math.max(targetW / W, targetH / H);
+    // In wide mode, scale up so the image height covers targetH and width extends past targetW for horizontal side cropping
+    const wideScaleMultiplier = mode === "wide" ? Math.max(1, (targetH / H) / (targetW / W) * 1.35) : 1;
+    const baseScale = Math.max(targetW / W, targetH / H) * wideScaleMultiplier;
     const totalScale = baseScale * zoomLevel;
     const curW = W * totalScale;
     const curH = H * totalScale;
@@ -420,6 +422,8 @@ export default function CompanyBrandPage() {
         if (selectedWorkspace?.id) {
           localStorage.setItem(`novajournal_custom_brand_logo_${selectedWorkspace.id}`, logoUrl);
           localStorage.setItem(`novajournal_brand_logo_mode_${selectedWorkspace.id}`, cropMode);
+          (selectedWorkspace as any).customBrandLogo = logoUrl;
+          (selectedWorkspace as any).customBrandMode = cropMode;
         }
         setIsCropModalOpen(false);
         playNovaSuccessSound();
@@ -435,6 +439,8 @@ export default function CompanyBrandPage() {
         if (selectedWorkspace?.id) {
           localStorage.setItem(`novajournal_custom_brand_logo_${selectedWorkspace.id}`, compressedDataUrl);
           localStorage.setItem(`novajournal_brand_logo_mode_${selectedWorkspace.id}`, cropMode);
+          (selectedWorkspace as any).customBrandLogo = compressedDataUrl;
+          (selectedWorkspace as any).customBrandMode = cropMode;
         }
         setIsCropModalOpen(false);
         playNovaErrorSound();
@@ -460,10 +466,20 @@ export default function CompanyBrandPage() {
       } as any);
       await refreshWorkspaces();
       setOverrideEnterprise(true);
+      if (selectedWorkspace?.id) {
+        localStorage.setItem(`novajournal_enterprise_trial_${selectedWorkspace.id}`, "true");
+      }
+      localStorage.setItem("novajournal_enterprise_override", "true");
+      window.dispatchEvent(new Event("novajournal_brand_config_changed"));
       playNovaSpaceSound();
       showNotice("Selamat! Mode Uji Coba Enterprise diaktifkan untuk workspace ini.");
     } catch {
       setOverrideEnterprise(true);
+      if (selectedWorkspace?.id) {
+        localStorage.setItem(`novajournal_enterprise_trial_${selectedWorkspace.id}`, "true");
+      }
+      localStorage.setItem("novajournal_enterprise_override", "true");
+      window.dispatchEvent(new Event("novajournal_brand_config_changed"));
       showNotice("Mode Enterprise aktif (Local Override).");
     } finally {
       setUpgradingEnterprise(false);
@@ -615,14 +631,13 @@ export default function CompanyBrandPage() {
               <span>Aktifkan Mode Uji Coba Enterprise</span>
             </Button>
 
-            <Button
-              size="sm"
-              variant="secondary"
-              onPress={() => router.push("/workspaces")}
-              className="h-9 px-4 text-xs text-default-600 dark:text-default-300 cursor-pointer"
+            <button
+              type="button"
+              onClick={() => router.push("/workspaces")}
+              className="h-9 px-4 text-xs font-semibold rounded-xl border border-default-200 dark:border-default-700 bg-white dark:bg-default-800 text-default-700 dark:text-default-200 hover:bg-default-100 dark:hover:bg-default-700 cursor-pointer transition"
             >
               Kelola Workspaces & Lisensi
-            </Button>
+            </button>
           </div>
         </Card>
       ) : (
@@ -816,11 +831,10 @@ export default function CompanyBrandPage() {
 
                       {customBrandLogo && (
                         <>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="h-8.5 px-3 text-xs cursor-pointer"
-                            onPress={() => {
+                          <button
+                            type="button"
+                            className="h-8.5 px-3 text-xs font-semibold rounded-xl border border-default-200 dark:border-default-700 bg-white dark:bg-default-800 text-default-700 dark:text-default-200 hover:bg-default-100 dark:hover:bg-default-700 cursor-pointer transition inline-flex items-center"
+                            onClick={() => {
                               setSelectedFileForCrop(customBrandLogo);
                               setCropMode(customBrandMode);
                               setLogoZoom(1);
@@ -831,7 +845,7 @@ export default function CompanyBrandPage() {
                           >
                             <Sliders className="w-3.5 h-3.5 mr-1" />
                             <span>Potong Ulang</span>
-                          </Button>
+                          </button>
                           <Button
                             size="sm"
                             variant="danger-soft"
@@ -1334,14 +1348,9 @@ export default function CompanyBrandPage() {
               >
                 {/* Scaled & Positioned Image */}
                 {(() => {
-                  const W = imageNatSize.w || 400;
-                  const H = imageNatSize.h || 400;
-                  const targetW = cropMode === "wide" ? 280 : 220;
-                  const targetH = cropMode === "wide" ? 120 : 220;
-                  const baseScale = Math.max(targetW / W, targetH / H);
-                  const totalScale = baseScale * logoZoom;
-                  const curW = W * totalScale;
-                  const curH = H * totalScale;
+                  const clamped = clampPan(logoPanX, logoPanY, logoZoom, cropMode);
+                  const curW = clamped.curW;
+                  const curH = clamped.curH;
 
                   return (
                     <div
@@ -1369,9 +1378,9 @@ export default function CompanyBrandPage() {
                   <div
                     className={`${
                       cropMode === "wide"
-                        ? "w-[280px] h-[120px] rounded-xl"
-                        : "w-[220px] h-[220px] rounded-2xl"
-                    } border-2 border-dashed border-white/90 ring-1 ring-black/40 transition-all duration-200`}
+                        ? "w-[280px] h-[120px]"
+                        : "w-[220px] h-[220px]"
+                    } rounded-none border-2 border-dashed border-white/90 ring-1 ring-black/40 transition-all duration-200`}
                     style={{
                       boxShadow: "0 0 0 9999px rgba(0, 0, 0, 0.70)",
                     }}
@@ -1423,14 +1432,13 @@ export default function CompanyBrandPage() {
 
             {/* Modal Footer */}
             <div className="p-4 border-t border-default-200 dark:border-default-800 flex items-center justify-between bg-default-50/50 dark:bg-default-900/50 shrink-0">
-              <Button
-                size="sm"
-                variant="secondary"
-                className="text-xs cursor-pointer"
-                onPress={() => setIsCropModalOpen(false)}
+              <button
+                type="button"
+                className="text-xs px-3.5 py-1.5 rounded-xl border border-default-200 dark:border-default-700 bg-white dark:bg-default-800 text-default-700 dark:text-default-200 hover:bg-default-100 dark:hover:bg-default-700 cursor-pointer font-medium transition"
+                onClick={() => setIsCropModalOpen(false)}
               >
                 Batal
-              </Button>
+              </button>
               <Button
                 size="sm"
                 className="text-xs bg-violet-600 hover:bg-violet-700 text-white font-semibold cursor-pointer shadow-xs active:scale-95 disabled:opacity-50"
@@ -1583,13 +1591,23 @@ export default function CompanyBrandPage() {
                     brandLogoPlacement === "center" ? "justify-center" : brandLogoPlacement === "right" ? "justify-end" : "justify-start"
                   }`}>
                     {customBrandLogo ? (
-                      <img
-                        key={customBrandLogo}
-                        src={customBrandLogo}
-                        alt="Simulated Logo"
-                        style={{ maxWidth: `${brandLogoWidth}px` }}
-                        className="max-h-10 w-auto object-contain transition-all"
-                      />
+                      <div
+                        style={{ width: `${brandLogoWidth}px` }}
+                        className="relative h-10 shrink-0 overflow-hidden rounded-none select-none"
+                      >
+                        <img
+                          key={customBrandLogo}
+                          src={customBrandLogo}
+                          alt="Simulated Logo"
+                          className={`h-10 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
+                            brandLogoPlacement === "center"
+                              ? "left-1/2 -translate-x-1/2"
+                              : brandLogoPlacement === "right"
+                              ? "right-0"
+                              : "left-0"
+                          }`}
+                        />
+                      </div>
                     ) : (
                       <div
                         style={{ width: `${brandLogoWidth}px` }}
@@ -1605,11 +1623,10 @@ export default function CompanyBrandPage() {
 
             {/* Modal Footer */}
             <div className="p-4 border-t border-default-200 dark:border-default-800 flex items-center justify-between bg-default-50/50 dark:bg-default-900/50">
-              <Button
-                size="sm"
-                variant="secondary"
-                className="text-xs cursor-pointer"
-                onPress={() => {
+              <button
+                type="button"
+                className="text-xs px-3.5 py-1.5 rounded-xl border border-default-200 dark:border-default-700 bg-white dark:bg-default-800 text-default-700 dark:text-default-200 hover:bg-default-100 dark:hover:bg-default-700 cursor-pointer font-medium transition"
+                onClick={() => {
                   setBrandLogoWidth(140);
                   setBrandLogoPlacement("left");
                   localStorage.setItem("novajournal_brand_logo_width", "140");
@@ -1618,7 +1635,7 @@ export default function CompanyBrandPage() {
                 }}
               >
                 Reset Default
-              </Button>
+              </button>
               <Button
                 size="sm"
                 className="text-xs bg-violet-600 hover:bg-violet-700 text-white font-semibold cursor-pointer shadow-xs active:scale-95"

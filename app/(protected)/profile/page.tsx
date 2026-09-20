@@ -633,6 +633,14 @@ export default function ProfilePage() {
                   <Camera className="w-5 h-5 mb-1" />
                   <span className="text-[10px] font-bold">Ubah</span>
                 </button>
+
+                {/* Online Status Indicator Dot */}
+                <span
+                  title="Status Akun: Online"
+                  className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-emerald-500 ring-3 ring-white dark:ring-gray-900 shadow-md flex items-center justify-center pointer-events-none z-10"
+                >
+                  <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse" />
+                </span>
               </div>
 
               <div className="flex-1 space-y-2.5 text-center sm:text-left">
