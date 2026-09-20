@@ -1,7 +1,7 @@
 {
-  "name": "NovaJournal",
-  "short_name": "NovaJournal",
-  "description": "Your financial dashboard",
+  "name": "NovaFinance",
+  "short_name": "NovaFinance",
+  "description": "Your modern autonomous financial intelligence dashboard",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
