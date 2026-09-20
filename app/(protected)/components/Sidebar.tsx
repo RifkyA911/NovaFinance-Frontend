@@ -360,62 +360,90 @@ export default function Sidebar({
   const [sidebarShadow, setSidebarShadow] = useState<"none" | "subtle" | "elevated">("none");
   const [navbarGlassBg, setNavbarGlassBg] = useState(true);
 
-  useEffect(() => {
-    const loadBrandPrefs = () => {
-      const glassBg = localStorage.getItem("novajournal_navbar_glass_bg");
-      if (glassBg !== null) setNavbarGlassBg(glassBg !== "false");
+  const loadBrandPrefs = React.useCallback(() => {
+    const ws = selectedWorkspace as any;
+    const wsId = ws?.id;
 
-      const savedBorderless = localStorage.getItem("novajournal_sidebar_borderless");
-      if (savedBorderless !== null) setSidebarBorderless(savedBorderless === "true");
+    const scopedLogo = wsId ? localStorage.getItem(`novajournal_custom_brand_logo_${wsId}`) : null;
+    const scopedName = wsId ? localStorage.getItem(`novajournal_custom_brand_name_${wsId}`) : null;
+    const scopedBrandMode = wsId ? localStorage.getItem(`novajournal_brand_logo_mode_${wsId}`) : null;
+    const scopedFormat = wsId ? localStorage.getItem(`novajournal_brand_display_format_${wsId}`) : null;
+    const scopedWidth = wsId ? localStorage.getItem(`novajournal_brand_logo_width_${wsId}`) : null;
+    const scopedPlacement = wsId ? localStorage.getItem(`novajournal_brand_logo_placement_${wsId}`) : null;
 
-      const savedShadow = localStorage.getItem("novajournal_sidebar_shadow") as any;
-      if (savedShadow) setSidebarShadow(savedShadow);
+    // Scoped brand logo: ws.customBrandLogo takes highest precedence, followed by scoped local storage
+    const effLogo = ws?.customBrandLogo || scopedLogo || null;
+    setBrandLogoOverride(effLogo);
 
-      const savedBadge = localStorage.getItem("novajournal_sidebar_brand_badge");
-      if (savedBadge !== null) setBrandBadgeVisible(savedBadge !== "false");
-      const savedMode = localStorage.getItem("novajournal_sidebar_brand_mode");
-      if (savedMode === "icon" || savedMode === "full") setBrandDisplayMode(savedMode);
-      const savedStyle = localStorage.getItem("novajournal_brand_badge_style");
-      if (savedStyle === "icon-only" || savedStyle === "full") setBrandBadgeStyle(savedStyle);
-      const savedFormat = localStorage.getItem("novajournal_brand_display_format") as any;
-      if (savedFormat === "logo-and-text" || savedFormat === "logo-only" || savedFormat === "full-banner") {
-        setBrandDisplayFormat(savedFormat);
-      }
-      const savedLogo = localStorage.getItem("novajournal_custom_brand_logo");
-      setBrandLogoOverride(savedLogo || null);
-      const savedBrandMode = localStorage.getItem("novajournal_brand_logo_mode") as any;
-      if (savedBrandMode === "square" || savedBrandMode === "wide") setBrandModeOverride(savedBrandMode);
-      const savedName = localStorage.getItem("novajournal_custom_brand_name");
-      setBrandNameOverride(savedName || null);
+    const effName = ws?.customBrandName || scopedName || null;
+    setBrandNameOverride(effName);
 
+    const effMode = (ws?.customBrandMode || scopedBrandMode || "square").toLowerCase();
+    if (effMode === "square" || effMode === "wide") setBrandModeOverride(effMode as any);
+
+    const effFormat = (ws?.customBrandDisplay || scopedFormat || "logo-and-text").toLowerCase();
+    if (effFormat === "logo-and-text" || effFormat === "logo-only" || effFormat === "full-banner") {
+      setBrandDisplayFormat(effFormat as any);
+    }
+
+    if (scopedWidth) {
+      setBrandLogoWidth(Number(scopedWidth) || 140);
+    } else {
       const savedLogoWidth = localStorage.getItem("novajournal_brand_logo_width");
       if (savedLogoWidth) setBrandLogoWidth(Number(savedLogoWidth) || 140);
+      else setBrandLogoWidth(140);
+    }
+
+    if (scopedPlacement === "left" || scopedPlacement === "center" || scopedPlacement === "right") {
+      setBrandLogoPlacement(scopedPlacement as any);
+    } else {
       const savedLogoPlacement = localStorage.getItem("novajournal_brand_logo_placement") as any;
       if (savedLogoPlacement === "left" || savedLogoPlacement === "center" || savedLogoPlacement === "right") {
         setBrandLogoPlacement(savedLogoPlacement);
+      } else {
+        setBrandLogoPlacement("left");
       }
+    }
 
-      const savedDensity = localStorage.getItem("novajournal_sidebar_density") as any;
-      if (savedDensity === "compact" || savedDensity === "comfortable" || savedDensity === "spacious") {
-        setSidebarDensity(savedDensity);
-      }
-      const sideWCustom = localStorage.getItem("novajournal_sidebar_width_custom");
-      let computedW = savedDensity === "compact" ? 200 : savedDensity === "spacious" ? 260 : 224;
-      if (sideWCustom) computedW = Number(sideWCustom) || computedW;
-      setSidebarWidthPx(computedW);
+    const glassBg = localStorage.getItem("novajournal_navbar_glass_bg");
+    if (glassBg !== null) setNavbarGlassBg(glassBg !== "false");
 
-      const navDen = localStorage.getItem("novajournal_navbar_density") as any;
-      const navHCustom = localStorage.getItem("novajournal_navbar_height_custom");
-      let computedNavH = navDen === "compact" ? 48 : navDen === "spacious" ? 64 : 56;
-      if (navHCustom) computedNavH = Number(navHCustom) || computedNavH;
-      setNavbarHeightPx(computedNavH);
+    const savedBorderless = localStorage.getItem("novajournal_sidebar_borderless");
+    if (savedBorderless !== null) setSidebarBorderless(savedBorderless === "true");
 
-      const savedBackdrop = localStorage.getItem("novajournal_sidebar_backdrop") as any;
-      if (savedBackdrop) setSidebarBackdrop(savedBackdrop);
+    const savedShadow = localStorage.getItem("novajournal_sidebar_shadow") as any;
+    if (savedShadow) setSidebarShadow(savedShadow);
 
-      const savedIndicator = localStorage.getItem("novajournal_sidebar_indicator") as any;
-      if (savedIndicator) setSidebarIndicator(savedIndicator);
-    };
+    const savedBadge = localStorage.getItem("novajournal_sidebar_brand_badge");
+    if (savedBadge !== null) setBrandBadgeVisible(savedBadge !== "false");
+    const savedMode = localStorage.getItem("novajournal_sidebar_brand_mode");
+    if (savedMode === "icon" || savedMode === "full") setBrandDisplayMode(savedMode);
+    const savedStyle = localStorage.getItem("novajournal_brand_badge_style");
+    if (savedStyle === "icon-only" || savedStyle === "full") setBrandBadgeStyle(savedStyle);
+
+    const savedDensity = localStorage.getItem("novajournal_sidebar_density") as any;
+    if (savedDensity === "compact" || savedDensity === "comfortable" || savedDensity === "spacious") {
+      setSidebarDensity(savedDensity);
+    }
+    const sideWCustom = localStorage.getItem("novajournal_sidebar_width_custom");
+    let computedW = savedDensity === "compact" ? 200 : savedDensity === "spacious" ? 260 : 224;
+    if (sideWCustom) computedW = Number(sideWCustom) || computedW;
+    setSidebarWidthPx(computedW);
+
+    const navDen = localStorage.getItem("novajournal_navbar_density") as any;
+    const navHCustom = localStorage.getItem("novajournal_navbar_height_custom");
+    let computedNavH = navDen === "compact" ? 48 : navDen === "spacious" ? 64 : 56;
+    if (navHCustom) computedNavH = Number(navHCustom) || computedNavH;
+    setNavbarHeightPx(computedNavH);
+
+    const savedBackdrop = localStorage.getItem("novajournal_sidebar_backdrop") as any;
+    if (savedBackdrop) setSidebarBackdrop(savedBackdrop);
+
+    const savedIndicator = localStorage.getItem("novajournal_sidebar_indicator") as any;
+    if (savedIndicator) setSidebarIndicator(savedIndicator);
+  }, [selectedWorkspace]);
+
+  useEffect(() => {
     loadBrandPrefs();
     window.addEventListener("novajournal_brand_config_changed", loadBrandPrefs);
     window.addEventListener("novajournal_appearance_config_changed", loadBrandPrefs);
@@ -425,20 +453,19 @@ export default function Sidebar({
       window.removeEventListener("novajournal_appearance_config_changed", loadBrandPrefs);
       window.removeEventListener("storage", loadBrandPrefs);
     };
-  }, []);
+  }, [loadBrandPrefs]);
 
-  // Sync role and listen for simulation changes
+  // Sync role, workspace brand identity and listen for simulation changes
   useEffect(() => {
     const syncRole = () => {
       const r = getEffectiveRole((selectedWorkspace as any)?.role);
       setCurrentRole(r);
     };
     syncRole();
-    const savedLogo = localStorage.getItem("novajournal_custom_brand_logo");
-    setBrandLogoOverride(savedLogo || null);
+    loadBrandPrefs();
     window.addEventListener("novajournal_role_change", syncRole);
     return () => window.removeEventListener("novajournal_role_change", syncRole);
-  }, [selectedWorkspace]);
+  }, [selectedWorkspace, loadBrandPrefs]);
 
   const toggleGroup = (groupId: string) => {
     setOpenGroups((prev) => ({
@@ -504,8 +531,11 @@ export default function Sidebar({
         {/* Brand Header - Joint continuation with Navbar */}
         {(() => {
           const ws = selectedWorkspace as any;
-          const customBrandLogo = brandLogoOverride || ws?.customBrandLogo;
-          const customBrandName = brandNameOverride || ws?.customBrandName;
+          const wsId = ws?.id;
+          const scopedLogo = wsId ? localStorage.getItem(`novajournal_custom_brand_logo_${wsId}`) : null;
+          const scopedName = wsId ? localStorage.getItem(`novajournal_custom_brand_name_${wsId}`) : null;
+          const customBrandLogo = ws?.customBrandLogo || scopedLogo || brandLogoOverride;
+          const customBrandName = ws?.customBrandName || scopedName || brandNameOverride;
           const customBrandJargon = ws?.customBrandJargon;
           const customBrandMode = (brandModeOverride || ws?.customBrandMode || "square").toLowerCase();
           const effectiveDisplayFormat = (brandDisplayFormat || ws?.customBrandDisplay || "logo-and-text").toLowerCase();

@@ -161,10 +161,22 @@ function NightTransitionView({ stage }: { stage: "enter" | "hold" | "exit" }) {
     { id: "k2-3", top: "15%", right: "55%", delay: "0.36s", dur: "0.70s", strokeW: 2.8, aura: "#c084fc", len: 240 },
     { id: "k2-4", top: "38%", right: "75%", delay: "0.40s", dur: "0.73s", strokeW: 2.2, aura: "#fbbf24", len: 220 },
 
-    // Kloter 3: Final trailing wave
-    { id: "k3-1", top: "20%", right: "22%", delay: "0.52s", dur: "0.70s", strokeW: 2.5, aura: "#38bdf8", len: 230 },
-    { id: "k3-2", top: "36%", right: "42%", delay: "0.56s", dur: "0.74s", strokeW: 3, aura: "#c084fc", len: 260 },
-    { id: "k3-3", top: "48%", right: "62%", delay: "0.60s", dur: "0.71s", strokeW: 2.6, aura: "#fbbf24", len: 240 },
+    // Kloter 3: Middle trailing wave
+    { id: "k3-1", top: "20%", right: "22%", delay: "0.50s", dur: "0.70s", strokeW: 2.5, aura: "#38bdf8", len: 230 },
+    { id: "k3-2", top: "36%", right: "42%", delay: "0.54s", dur: "0.74s", strokeW: 3, aura: "#c084fc", len: 260 },
+    { id: "k3-3", top: "48%", right: "62%", delay: "0.58s", dur: "0.71s", strokeW: 2.6, aura: "#fbbf24", len: 240 },
+
+    // Kloter 4: Late wave filling sky towards exit
+    { id: "k4-1", top: "14%", right: "12%", delay: "0.68s", dur: "0.68s", strokeW: 2.8, aura: "#38bdf8", len: 250 },
+    { id: "k4-2", top: "26%", right: "38%", delay: "0.74s", dur: "0.70s", strokeW: 3.2, aura: "#fbbf24", len: 270 },
+    { id: "k4-3", top: "40%", right: "58%", delay: "0.80s", dur: "0.66s", strokeW: 2.4, aura: "#c084fc", len: 220 },
+    { id: "k4-4", top: "18%", right: "78%", delay: "0.85s", dur: "0.69s", strokeW: 2.6, aura: "#38bdf8", len: 240 },
+
+    // Kloter 5: Final crescendo wave active right into fade out
+    { id: "k5-1", top: "30%", right: "20%", delay: "0.92s", dur: "0.68s", strokeW: 3, aura: "#fbbf24", len: 260 },
+    { id: "k5-2", top: "16%", right: "50%", delay: "0.98s", dur: "0.65s", strokeW: 2.5, aura: "#38bdf8", len: 230 },
+    { id: "k5-3", top: "44%", right: "68%", delay: "1.04s", dur: "0.66s", strokeW: 2.8, aura: "#c084fc", len: 250 },
+    { id: "k5-4", top: "24%", right: "82%", delay: "1.10s", dur: "0.64s", strokeW: 2.2, aura: "#fbbf24", len: 220 },
   ];
 
   return (
@@ -293,11 +305,11 @@ function NightTransitionView({ stage }: { stage: "enter" | "hold" | "exit" }) {
 }
 
 /* ========================================================================= */
-/* DAY TRANSITION VIEW: Flat Cartoon Style Sun + Rolling Hills               */
+/* DAY TRANSITION VIEW: Flat Cartoon Style Sun + Silver Rolling Hills        */
 /* ========================================================================= */
 function DayTransitionView({ stage }: { stage: "enter" | "hold" | "exit" }) {
   return (
-    <div className="absolute inset-0 w-full h-full bg-linear-to-b from-[#38bdf8] via-[#7dd3fc] via-50% to-[#fef08a] flex flex-col items-center justify-center">
+    <div className="absolute inset-0 w-full h-full bg-linear-to-b from-[#0284c7] via-[#38bdf8] via-55% to-[#e0f2fe] flex flex-col items-center justify-center">
       {/* Flat Cartoon Clouds floating across the sky */}
       <div
         className="absolute top-[14%] left-[6%] w-72 h-20 opacity-80 pointer-events-none"
@@ -325,14 +337,14 @@ function DayTransitionView({ stage }: { stage: "enter" | "hold" | "exit" }) {
         </svg>
       </div>
 
-      {/* Flat Cartoon Rolling Hills at Bottom */}
+      {/* Flat Cartoon Rolling Hills at Bottom - Silver Slate */}
       <div className="absolute bottom-0 left-0 right-0 w-full h-36 pointer-events-none">
-        {/* Back Hill - Flat Mint Green */}
-        <svg viewBox="0 0 1440 220" preserveAspectRatio="none" className="absolute inset-0 w-full h-full fill-[#34d399]">
+        {/* Back Hill - Soft Silver Slate */}
+        <svg viewBox="0 0 1440 220" preserveAspectRatio="none" className="absolute inset-0 w-full h-full fill-[#94a3b8]">
           <path d="M0,130 C340,60 520,150 780,100 C1020,50 1240,140 1440,90 L1440,220 L0,220 Z" />
         </svg>
-        {/* Front Hill - Flat Emerald Green */}
-        <svg viewBox="0 0 1440 220" preserveAspectRatio="none" className="absolute inset-0 w-full h-full fill-[#10b981]">
+        {/* Front Hill - Deep Silver Slate */}
+        <svg viewBox="0 0 1440 220" preserveAspectRatio="none" className="absolute inset-0 w-full h-full fill-[#64748b]">
           <path d="M0,160 C380,100 620,180 920,120 C1160,80 1340,140 1440,110 L1440,220 L0,220 Z" />
         </svg>
       </div>
@@ -374,23 +386,10 @@ function DayTransitionView({ stage }: { stage: "enter" | "hold" | "exit" }) {
             </svg>
           </div>
 
-          {/* Solid Flat Cartoon Sun Disk */}
-          <div className="relative w-24 h-24 rounded-full bg-[#FBBF24] border-4 border-[#F59E0B] flex items-center justify-center shadow-md">
-            {/* Cute Flat Cartoon Face */}
-            <div className="flex flex-col items-center justify-center select-none pointer-events-none">
-              <div className="flex items-center gap-4 mb-1">
-                {/* Cheerful curve eyes */}
-                <div className="w-2.5 h-2.5 rounded-full bg-[#78350F]" />
-                <div className="w-2.5 h-2.5 rounded-full bg-[#78350F]" />
-              </div>
-              {/* Cute smile */}
-              <div className="w-4 h-2 rounded-b-full border-b-2 border-[#78350F]" />
-              {/* Cheerful blush */}
-              <div className="absolute top-11 flex justify-between w-14 px-1">
-                <div className="w-2.5 h-1.5 rounded-full bg-[#F87171]/70" />
-                <div className="w-2.5 h-1.5 rounded-full bg-[#F87171]/70" />
-              </div>
-            </div>
+          {/* Solid Flat Cartoon Sun Disk (Clean, no face) */}
+          <div className="relative w-24 h-24 rounded-full bg-linear-to-tr from-[#F59E0B] via-[#FBBF24] to-[#FDE047] border-4 border-[#F59E0B] flex items-center justify-center shadow-lg shadow-amber-400/30">
+            {/* Subtle inner ring highlight */}
+            <div className="w-16 h-16 rounded-full border border-white/40" />
           </div>
         </div>
 
@@ -409,7 +408,7 @@ function DayTransitionView({ stage }: { stage: "enter" | "hold" | "exit" }) {
         </div>
 
         {/* Flat Cartoon Text Badge */}
-        <div className="mt-4 px-4 py-1.5 rounded-full bg-white border-2 border-amber-300 text-amber-900 text-xs font-black tracking-wide flex items-center gap-2 shadow-lg">
+        <div className="mt-4 px-4 py-1.5 rounded-full bg-white/95 border-2 border-slate-300 text-slate-800 text-xs font-black tracking-wide flex items-center gap-2 shadow-lg backdrop-blur-sm">
           <span>☀️</span>
           <span>Cerah Siang • Light Mode</span>
         </div>

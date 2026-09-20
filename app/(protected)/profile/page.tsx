@@ -199,13 +199,26 @@ export default function ProfilePage() {
     let isMounted = true;
 
     async function loadRemoteProfile() {
+      // 1. Read local storage and user object first so avatar is never empty
+      const savedAvatar = localStorage.getItem("novajournal_user_avatar");
+      const savedNavAvatarSize = localStorage.getItem("novajournal_navbar_avatar_size");
+      if (savedNavAvatarSize && isMounted) {
+        setNavbarAvatarSize(Number(savedNavAvatarSize) || 28);
+      }
+      if (savedAvatar && isMounted) {
+        setAvatarImage(savedAvatar);
+      } else if ((user as any)?.image && isMounted) {
+        setAvatarImage((user as any).image);
+      }
+
       try {
         const res = await api.getUserProfile();
         if (res.success && res.data && isMounted) {
           const d = res.data;
-          if (d.image) {
-            setAvatarImage(d.image);
-            localStorage.setItem("novajournal_user_avatar", d.image);
+          const effectiveAvatar = d.image || savedAvatar || (user as any)?.image;
+          if (effectiveAvatar) {
+            setAvatarImage(effectiveAvatar);
+            localStorage.setItem("novajournal_user_avatar", effectiveAvatar);
           }
           if (d.name) {
             setDisplayName(d.name);
@@ -228,12 +241,6 @@ export default function ProfilePage() {
 
       // Local storage fallback
       try {
-        const savedAvatar = localStorage.getItem("novajournal_user_avatar");
-        if (savedAvatar && isMounted) setAvatarImage(savedAvatar);
-
-        const savedNavAvatarSize = localStorage.getItem("novajournal_navbar_avatar_size");
-        if (savedNavAvatarSize && isMounted) setNavbarAvatarSize(Number(savedNavAvatarSize) || 28);
-
         const userKey = user ? `novajournal_user_profile_${user.id || user.email}` : "novajournal_user_profile_default";
         const savedProfile = localStorage.getItem(userKey);
         if (savedProfile && isMounted) {
@@ -691,27 +698,53 @@ export default function ProfilePage() {
                   <span className="font-mono text-xs font-bold text-blue-600 dark:text-blue-400 px-2.5 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20">
                     {navbarAvatarSize} px
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playRealisticClick(0.3);
+                      setNavbarAvatarSize(28);
+                      localStorage.setItem("novajournal_navbar_avatar_size", "28");
+                      window.dispatchEvent(new Event("novajournal_navbar_config_changed"));
+                      showNotice("Ukuran avatar navbar dikembalikan ke standar (28px).");
+                    }}
+                    className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-lg border border-default-200 dark:border-default-700 bg-white dark:bg-default-900 text-default-600 dark:text-default-400 hover:bg-default-100 dark:hover:bg-default-800 transition cursor-pointer font-semibold active:scale-95 shadow-2xs"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    Reset Default (28px)
+                  </button>
                 </div>
               </div>
 
               <div className="p-3.5 rounded-2xl bg-default-50/60 dark:bg-default-800/40 border border-default-200/60 dark:border-default-700/60 flex flex-col md:flex-row items-center gap-5">
-                {/* Live Mini Preview */}
-                <div className="flex items-center gap-3 shrink-0 p-2.5 rounded-xl bg-white dark:bg-gray-900 border border-default-200 dark:border-default-800 shadow-2xs">
-                  <div
-                    style={{ width: `${navbarAvatarSize}px`, height: `${navbarAvatarSize}px` }}
-                    className="rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-xs overflow-hidden shrink-0 transition-all"
-                  >
-                    {avatarImage ? (
-                      <img src={avatarImage} alt="Preview" className="w-full h-full object-cover" />
-                    ) : (
-                      <span style={{ fontSize: `${Math.max(10, navbarAvatarSize * 0.42)}px` }}>
-                        {firstName.charAt(0).toUpperCase()}
-                      </span>
-                    )}
+                {/* Live Mini Preview with theme-matching navbar styling & proportional online dot */}
+                <div className="flex items-center gap-3 shrink-0 p-2.5 rounded-xl bg-default-100/80 dark:bg-default-800/60 border border-default-200/80 dark:border-default-700/80 shadow-2xs backdrop-blur-sm">
+                  <div className="relative shrink-0">
+                    <div
+                      style={{ width: `${navbarAvatarSize}px`, height: `${navbarAvatarSize}px` }}
+                      className="rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-xs overflow-hidden shrink-0 transition-all"
+                    >
+                      {avatarImage ? (
+                        <img src={avatarImage} alt="Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <span style={{ fontSize: `${Math.max(10, navbarAvatarSize * 0.42)}px` }}>
+                          {firstName.charAt(0).toUpperCase() || "U"}
+                        </span>
+                      )}
+                    </div>
+                    {/* Dynamic Proportional Green Dot */}
+                    <span
+                      style={{
+                        width: `${Math.max(6, Math.min(14, Math.round(navbarAvatarSize * 0.25)))}px`,
+                        height: `${Math.max(6, Math.min(14, Math.round(navbarAvatarSize * 0.25)))}px`,
+                        bottom: `${Math.max(-2, Math.round(navbarAvatarSize * -0.05))}px`,
+                        right: `${Math.max(-2, Math.round(navbarAvatarSize * -0.05))}px`,
+                      }}
+                      className="absolute rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-900 animate-pulse"
+                    />
                   </div>
                   <div className="flex flex-col text-left pr-2">
                     <span className="text-xs font-semibold text-foreground leading-tight">
-                      {displayName || firstName}
+                      {displayName || firstName || "User"}
                     </span>
                     <span className="text-[10px] text-default-400 leading-tight">
                       Pratinjau Navbar

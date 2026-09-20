@@ -1011,7 +1011,15 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                 )}
               </div>
               {showOnlinePing && (
-                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-900 animate-pulse" />
+                <span
+                  style={{
+                    width: `${Math.max(6, Math.min(14, Math.round(navbarAvatarSize * 0.25)))}px`,
+                    height: `${Math.max(6, Math.min(14, Math.round(navbarAvatarSize * 0.25)))}px`,
+                    bottom: `${Math.max(-2, Math.round(navbarAvatarSize * -0.05))}px`,
+                    right: `${Math.max(-2, Math.round(navbarAvatarSize * -0.05))}px`,
+                  }}
+                  className="absolute rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-900 animate-pulse"
+                />
               )}
             </div>
 

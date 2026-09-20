@@ -4,6 +4,22 @@ All notable changes to NovaFinance will be documented in this file.
 
 ## [Unreleased]
 
+## [0.3.9] - 2026-09-20
+
+### Fixed & Enhanced
+- **Profile Photo Loading & Navbar Avatar Scaler Polish (`profile/page.tsx`, `Navbar.tsx`)**:
+  - Fixed empty profile photo bug on `/profile` reload by checking local storage and user object fallbacks alongside `api.getUserProfile()`.
+  - Replaced high-contrast dark preview background with theme-matching navbar container styling (`bg-default-100/80 dark:bg-default-800/60`).
+  - Implemented proportional dynamic scaling for the green online status indicator dot in both `Navbar.tsx` and the live preview.
+  - Added dedicated "Reset Default (28px)" button to quickly revert avatar dimensions to standard size.
+- **Workspace-Scoped Brand Identity & Immediate Switching Sync (`Sidebar.tsx`, `brand/page.tsx`)**:
+  - Scoped custom brand logo, name, width, and placement to the active workspace ID (`novajournal_custom_brand_logo_${wsId}`, `novajournal_brand_logo_width_${wsId}`, `novajournal_brand_logo_placement_${wsId}`).
+  - Fixed sidebar brand logo persistence bug where switching workspaces previously retained stale global overrides.
+  - Sidebar now immediately updates brand logo, custom width, and alignment to reflect each individual workspace's corporate identity upon switching.
+- **Theme Transition Visual Refinements (`ThemeTransitionOverlay.tsx`)**:
+  - Expanded falling meteor waves in Night transition (Waves 4 and 5) to continuously streak across the viewport smoothly until fade-out.
+  - Refactored Day transition: removed face from the sun disk for a clean modern flat graphic, cleansed the sky gradient into pure sky-blue to soft cyan-white (no yellow cast), and recolored horizon rolling hills to elegant silver slate.
+
 ## [0.3.8] - 2026-09-20
 
 ### Added & Enhanced

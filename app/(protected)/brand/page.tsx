@@ -183,20 +183,48 @@ export default function CompanyBrandPage() {
   useEffect(() => {
     if (selectedWorkspace) {
       const ws = selectedWorkspace as any;
-      setCustomBrandName(ws.customBrandName || "");
+      const wsId = ws.id;
+      const scopedLogo = wsId ? localStorage.getItem(`novajournal_custom_brand_logo_${wsId}`) : null;
+      const scopedName = wsId ? localStorage.getItem(`novajournal_custom_brand_name_${wsId}`) : null;
+      const scopedMode = wsId ? localStorage.getItem(`novajournal_brand_logo_mode_${wsId}`) : null;
+      const scopedFormat = wsId ? localStorage.getItem(`novajournal_brand_display_format_${wsId}`) : null;
+      const scopedWidth = wsId ? localStorage.getItem(`novajournal_brand_logo_width_${wsId}`) : null;
+      const scopedPlacement = wsId ? localStorage.getItem(`novajournal_brand_logo_placement_${wsId}`) : null;
+
+      setCustomBrandName(ws.customBrandName || scopedName || "");
       setCustomBrandJargon(ws.customBrandJargon || "");
       setCustomBrandDescription(ws.customBrandDescription || "");
-      const savedLogo = localStorage.getItem("novajournal_custom_brand_logo");
-      setCustomBrandLogo(ws.customBrandLogo || savedLogo || "");
-      if (ws.customBrandMode === "wide" || ws.customBrandMode === "square") {
-        setCustomBrandMode(ws.customBrandMode);
+      setCustomBrandLogo(ws.customBrandLogo || scopedLogo || "");
+
+      const effMode = ws.customBrandMode || scopedMode || "square";
+      if (effMode === "wide" || effMode === "square") {
+        setCustomBrandMode(effMode);
       }
-      if (ws.customBrandDisplay === "logo-and-text" || ws.customBrandDisplay === "logo-only" || ws.customBrandDisplay === "full-banner") {
-        setCustomBrandDisplay(ws.customBrandDisplay);
+
+      const effFormat = ws.customBrandDisplay || scopedFormat || "logo-and-text";
+      if (effFormat === "logo-and-text" || effFormat === "logo-only" || effFormat === "full-banner") {
+        setCustomBrandDisplay(effFormat);
       }
+
       setEntityType(ws.entityType || (ws.type === "pt" ? "PT" : ws.type === "umkm" ? "UMKM" : "Personal"));
       setTaxId(ws.taxId || "");
       setWebsiteUrl(ws.websiteUrl || "");
+
+      if (scopedWidth) {
+        setBrandLogoWidth(Number(scopedWidth) || 140);
+      } else {
+        const savedLogoWidth = localStorage.getItem("novajournal_brand_logo_width");
+        if (savedLogoWidth) setBrandLogoWidth(Number(savedLogoWidth) || 140);
+      }
+
+      if (scopedPlacement === "left" || scopedPlacement === "center" || scopedPlacement === "right") {
+        setBrandLogoPlacement(scopedPlacement);
+      } else {
+        const savedLogoPlacement = localStorage.getItem("novajournal_brand_logo_placement") as any;
+        if (savedLogoPlacement === "left" || savedLogoPlacement === "center" || savedLogoPlacement === "right") {
+          setBrandLogoPlacement(savedLogoPlacement);
+        }
+      }
     }
 
     const savedBadge = localStorage.getItem("novajournal_sidebar_brand_badge");
@@ -207,24 +235,6 @@ export default function CompanyBrandPage() {
 
     const savedBadgeStyle = localStorage.getItem("novajournal_brand_badge_style");
     if (savedBadgeStyle === "icon-only" || savedBadgeStyle === "full") setBrandBadgeStyle(savedBadgeStyle);
-
-    const savedDisplayFormat = localStorage.getItem("novajournal_brand_display_format") as any;
-    if (savedDisplayFormat === "logo-and-text" || savedDisplayFormat === "logo-only" || savedDisplayFormat === "full-banner") {
-      setCustomBrandDisplay(savedDisplayFormat);
-    }
-
-    const savedBrandMode = localStorage.getItem("novajournal_brand_logo_mode") as any;
-    if (savedBrandMode === "square" || savedBrandMode === "wide") {
-      setCustomBrandMode(savedBrandMode);
-    }
-
-    const savedLogoWidth = localStorage.getItem("novajournal_brand_logo_width");
-    if (savedLogoWidth) setBrandLogoWidth(Number(savedLogoWidth) || 140);
-
-    const savedLogoPlacement = localStorage.getItem("novajournal_brand_logo_placement") as any;
-    if (savedLogoPlacement === "left" || savedLogoPlacement === "center" || savedLogoPlacement === "right") {
-      setBrandLogoPlacement(savedLogoPlacement);
-    }
 
     setIsInitialized(true);
   }, [selectedWorkspace]);
@@ -263,6 +273,15 @@ export default function CompanyBrandPage() {
         localStorage.setItem("novajournal_brand_logo_mode", customBrandMode);
         localStorage.setItem("novajournal_brand_logo_width", String(brandLogoWidth));
         localStorage.setItem("novajournal_brand_logo_placement", brandLogoPlacement);
+
+        if (selectedWorkspace?.id) {
+          localStorage.setItem(`novajournal_custom_brand_logo_${selectedWorkspace.id}`, customBrandLogo);
+          localStorage.setItem(`novajournal_custom_brand_name_${selectedWorkspace.id}`, customBrandName);
+          localStorage.setItem(`novajournal_brand_logo_mode_${selectedWorkspace.id}`, customBrandMode);
+          localStorage.setItem(`novajournal_brand_display_format_${selectedWorkspace.id}`, customBrandDisplay);
+          localStorage.setItem(`novajournal_brand_logo_width_${selectedWorkspace.id}`, String(brandLogoWidth));
+          localStorage.setItem(`novajournal_brand_logo_placement_${selectedWorkspace.id}`, brandLogoPlacement);
+        }
 
         window.dispatchEvent(new Event("novajournal_brand_config_changed"));
         setSaveStatus("saved");
@@ -398,6 +417,10 @@ export default function CompanyBrandPage() {
         setCustomBrandMode(cropMode);
         localStorage.setItem("novajournal_custom_brand_logo", logoUrl);
         localStorage.setItem("novajournal_brand_logo_mode", cropMode);
+        if (selectedWorkspace?.id) {
+          localStorage.setItem(`novajournal_custom_brand_logo_${selectedWorkspace.id}`, logoUrl);
+          localStorage.setItem(`novajournal_brand_logo_mode_${selectedWorkspace.id}`, cropMode);
+        }
         setIsCropModalOpen(false);
         playNovaSuccessSound();
         showNotice("Logo identitas brand berhasil diunggah ke MinIO S3 & tersimpan di database!");
@@ -409,6 +432,10 @@ export default function CompanyBrandPage() {
         setCustomBrandMode(cropMode);
         localStorage.setItem("novajournal_custom_brand_logo", compressedDataUrl);
         localStorage.setItem("novajournal_brand_logo_mode", cropMode);
+        if (selectedWorkspace?.id) {
+          localStorage.setItem(`novajournal_custom_brand_logo_${selectedWorkspace.id}`, compressedDataUrl);
+          localStorage.setItem(`novajournal_brand_logo_mode_${selectedWorkspace.id}`, cropMode);
+        }
         setIsCropModalOpen(false);
         playNovaErrorSound();
         showNotice("Logo brand disimpan lokal (upload ke server gagal).");
@@ -811,6 +838,9 @@ export default function CompanyBrandPage() {
                             onPress={() => {
                               setCustomBrandLogo("");
                               localStorage.removeItem("novajournal_custom_brand_logo");
+                              if (selectedWorkspace?.id) {
+                                localStorage.removeItem(`novajournal_custom_brand_logo_${selectedWorkspace.id}`);
+                              }
                               window.dispatchEvent(new Event("novajournal_brand_config_changed"));
                               showNotice("Logo brand telah dihapus.");
                             }}
@@ -1464,6 +1494,9 @@ export default function CompanyBrandPage() {
                     const val = Number(e.target.value);
                     setBrandLogoWidth(val);
                     localStorage.setItem("novajournal_brand_logo_width", String(val));
+                    if (selectedWorkspace?.id) {
+                      localStorage.setItem(`novajournal_brand_logo_width_${selectedWorkspace.id}`, String(val));
+                    }
                     window.dispatchEvent(new Event("novajournal_brand_config_changed"));
                   }}
                   className="w-full h-2 bg-default-200 dark:bg-default-700 rounded-lg appearance-none cursor-pointer accent-violet-600"
@@ -1484,6 +1517,9 @@ export default function CompanyBrandPage() {
                         playRealisticClick(0.3);
                         setBrandLogoWidth(preset.w);
                         localStorage.setItem("novajournal_brand_logo_width", String(preset.w));
+                        if (selectedWorkspace?.id) {
+                          localStorage.setItem(`novajournal_brand_logo_width_${selectedWorkspace.id}`, String(preset.w));
+                        }
                         window.dispatchEvent(new Event("novajournal_brand_config_changed"));
                       }}
                       className={`text-[10px] px-2.5 py-1 rounded-lg border font-semibold cursor-pointer transition ${
@@ -1516,6 +1552,9 @@ export default function CompanyBrandPage() {
                         playRealisticClick(0.3);
                         setBrandLogoPlacement(pos.id);
                         localStorage.setItem("novajournal_brand_logo_placement", pos.id);
+                        if (selectedWorkspace?.id) {
+                          localStorage.setItem(`novajournal_brand_logo_placement_${selectedWorkspace.id}`, pos.id);
+                        }
                         window.dispatchEvent(new Event("novajournal_brand_config_changed"));
                       }}
                       className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
