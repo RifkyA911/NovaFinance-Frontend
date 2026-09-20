@@ -45,10 +45,21 @@ import {
   Check,
   Terminal,
   Send,
+  Crown,
+  Volume2,
+  Sliders,
+  AlertTriangle,
+  ArrowDown,
 } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useAuth } from "@/contexts/AuthContext";
+import NovaSupernovaOverlay from "@/components/landing/NovaSupernovaOverlay";
+import SectionFluidBackdrop from "@/components/landing/SectionFluidBackdrop";
+import SpreadsheetVsNovaSavage from "@/components/landing/SpreadsheetVsNovaSavage";
+import HeroCircularStarTrails from "@/components/landing/HeroCircularStarTrails";
+import HeroDashboardPreview from "@/components/landing/HeroDashboardPreview";
+import NovaShowcaseInteractive from "@/components/landing/NovaShowcaseInteractive";
 
 // Register ScrollTrigger
 if (typeof window !== "undefined") {
@@ -63,8 +74,9 @@ type Language = "en" | "id";
 const DICT = {
   en: {
     nav: {
+      problem: "Friction vs Solution",
       features: "Features",
-      architecture: "AI Engine",
+      architecture: "AI Hub",
       framework: "5W + 2H",
       showcase: "Showcase",
       personas: "Solutions",
@@ -72,6 +84,7 @@ const DICT = {
       signIn: "Sign In",
       getStarted: "Get Started Free",
       openDashboard: "Open Dashboard",
+      supernovaBtn: "Supernova Intro",
     },
     hero: {
       badge: "Next-Gen Multi-Scale Financial Ledger",
@@ -83,9 +96,29 @@ const DICT = {
       ctaSecondary: "Explore Interactive Demo",
       stats: {
         uptime: "99.98% High Availability",
-        providers: "4 AI Engine Fallbacks",
-        latency: "<300ms OCR Response",
+        providers: "Autonomous CFO Copilot",
+        latency: "<280ms Vision Extraction",
         encryption: "Bank-Grade TLS 1.3",
+      },
+      mock: {
+        url: "novafinance.app/dashboard",
+        tenant: "● Multi-Tenant Connected",
+        netWorth: "Total Net Worth",
+        cashflow: "Operating Cash Flow",
+        runway: "Healthy Runway",
+        portfolio: "Stock & Gold (IHSG)",
+        yield: "+8.6% Yield",
+        chartTitle: "Cash Flow vs Budget Trajectory",
+        income: "Income",
+        expense: "Expense",
+        aiInsightTitle: "Nova Copilot Real-Time Audit",
+        aiInsightText: "Receipt from BCA transfer of Rp 2.500.000 auto-categorized into",
+        aiInsightTag: "Operating Expense",
+        aiInsightTime: "Audit verified • Sub-280ms",
+        assetAllocation: "Asset Allocation",
+        liquidCash: "Liquid Cash",
+        businessEquity: "Business Equity",
+        globalValas: "Global Valas",
       },
     },
     ticker: {
@@ -93,63 +126,114 @@ const DICT = {
       defaultBadge: "DEFAULT",
     },
     aiSection: {
-      badge: "MULTI-PROVIDER AI ARCHITECTURE",
-      title: "Intelligent Multi-Model Financial Orchestration",
-      subtitle: "Never rely on a single AI provider. NovaJournal automatically routes your receipts, financial audits, and investment reasoning to specialized leading models with fail-safe zero-downtime failover.",
+      badge: "AUTONOMOUS AI ENGINE",
+      title: "Autonomous Multimodal Financial Intelligence",
+      subtitle: "From sub-second receipt vision to executive CFO voice debriefs — NovaFinance unifies modern multimodal AI capabilities with seamless zero-downtime routing.",
       providers: [
         {
-          name: "Groq (Llama 3.3 70B)",
-          role: "Ultra-Fast OCR & Real-time Tagging",
-          speed: "Sub-300ms",
-          desc: "Instant text extraction from receipt photos, invoice snapshots, and automatic categorization before you can even switch tabs.",
-          tag: "Speed Optimized",
-          gradient: "from-orange-500 to-amber-600",
+          id: "vision-ocr",
+          name: "Ultra-Fast Vision OCR",
+          role: "Multi-Receipt & Invoice Parsing",
+          speed: "<280ms Extraction",
+          desc: "Drag and drop receipts, tax invoices, and bank statements. Vision AI parses merchant names, timestamps, line items, and totals into ledger transactions automatically.",
+          tag: "Vision Intelligence",
+          icon: "Receipt",
+          capability: "Groq & Gemini Vision",
+          badge: "Sub-Second Engine",
         },
         {
-          name: "Google Gemini 2.5 Pro",
-          role: "Multimodal Ledger Auditing",
-          speed: "Complex Reasoning",
-          desc: "Deep analysis across multi-page bank statements, reconciliation discrepancies, and multi-currency exchange rate verifications.",
-          tag: "Multimodal Lead",
-          gradient: "from-blue-500 to-cyan-600",
+          id: "cfo-copilot",
+          name: "Autonomous CFO Copilot",
+          role: "4 Strategic Executive Personas",
+          speed: "Real-time Context",
+          desc: "Switch between Corporate CFO, Friendly Buddy, Forensic Auditor, and Portfolio Analyst personas. Full real-time ledger context with custom (W × H) window sizing.",
+          tag: "Executive Advisory",
+          icon: "BrainCircuit",
+          capability: "4 Operating Personas",
+          badge: "Custom W × H Window",
         },
         {
-          name: "DeepSeek R1",
-          role: "Chain-of-Thought Budget Reasoning",
-          speed: "Mathematical Precision",
-          desc: "Rigorous step-by-step mathematical logic for discovering cash leaks, optimizing business runways, and portfolio rebalancing.",
-          tag: "Deep Reasoning",
-          gradient: "from-purple-500 to-indigo-600",
+          id: "voice-tts",
+          name: "Celestial Voice Synthesis",
+          role: "Spoken Briefings & Audio Cues",
+          speed: "Natural Neural Voice",
+          desc: "Listen to natural audio debriefs of cashflow health in Indonesian & English (male & female profiles), accompanied by interactive celestial theme chimes.",
+          tag: "Voice & Sound",
+          icon: "Volume2",
+          capability: "5 Voice Personas",
+          badge: "ID & EN Natural TTS",
         },
         {
-          name: "Anthropic Claude 3.5 Sonnet",
-          role: "Executive Advisory & Natural Reporting",
-          speed: "Executive Tone",
-          desc: "Generates clear, human-like executive summaries for board meetings, tax planning narratives, and personalized budgeting advice.",
-          tag: "Conversational Master",
-          gradient: "from-rose-500 to-pink-600",
+          id: "intelligent-router",
+          name: "Zero-Downtime Engine Router",
+          role: "High-Availability Failover & BYOK",
+          speed: "99.98% High Availability",
+          desc: "Dynamic failover across Gemini 2.0 Flash, Groq Llama 3.3, DeepSeek R1, and Claude 3.5. Safely connect your custom private API keys with client-side encryption.",
+          tag: "Engine Orchestration",
+          icon: "Workflow",
+          capability: "Multi-Engine Failover",
+          badge: "BYO API Key Vault",
         },
       ],
       customKeysNote: "Configure your primary and fallback API keys directly in Settings or use workspace defaults.",
     },
+    problemToSolved: {
+      badge: "THE FRICTION VS THE NOVA SOLUTION",
+      title: "Why Traditional Spreadsheets Fail & How Nova Solves It",
+      subtitle: "Stop wrestling with broken formulas, siloed m-banking apps, lost invoice slips, and mystery cash leaks.",
+      items: [
+        {
+          id: 1,
+          problemTitle: "Spreadsheet Nightmare & Broken Formulas",
+          problemDesc: "Fragile formulas break on edits, accidental overrides cause math drift, zero audit logs, and zero automated double-entry verification.",
+          solutionTitle: "Automated Ledger Integrity & Audit Trail",
+          solutionDesc: "Real-time debit-credit reconciliation, immutable audit log events, visual Sankey cashflow topology, and zero mathematical drift.",
+          tag: "Double-Entry Core",
+        },
+        {
+          id: 2,
+          problemTitle: "Exhausting Manual Receipt Typing",
+          problemDesc: "Hours wasted every weekend typing crumpled paper receipts and invoice PDFs into spreadsheets with frequent human typos.",
+          solutionTitle: "Multi-Model AI Vision OCR (<300ms)",
+          solutionDesc: "Ultra-fast Groq & Gemini vision OCR extracts merchant, items, taxes, and nominals straight into ledger lines in 1 click.",
+          tag: "Sub-300ms Vision",
+        },
+        {
+          id: 3,
+          problemTitle: "Siloed Bank & Investment Accounts",
+          problemDesc: "Juggling 5 different banking and stock broker apps without any unified real-time net-worth valuation across currencies.",
+          solutionTitle: "Unified Master Multi-Currency Hub",
+          solutionDesc: "Consolidated real-time tracking across bank accounts, e-wallets, crypto assets, and live global indices (IHSG, S&P 500) in IDR/USD.",
+          tag: "Global Multi-Valas",
+        },
+        {
+          id: 4,
+          problemTitle: "Rigid Generic Business Tools",
+          problemDesc: "Generic ERPs are expensive and lack white-label branding, customized UI density, or executive analytical advisory.",
+          solutionTitle: "Enterprise White-Label & Nova Copilot",
+          solutionDesc: "Custom company logo and brand header in sidebar, precision UI density sizing (custom W & H, 6 fonts), and AI Copilot with CFO voice TTS.",
+          tag: "Enterprise Ready",
+        },
+      ],
+    },
     framework5w2h: {
       badge: "SYSTEMATIC 5W + 2H FRAMEWORK",
-      title: "Everything You Need to Know About NovaJournal",
+      title: "Everything You Need to Know About NovaFinance",
       subtitle: "A rigorous, transparent breakdown of our purpose, architecture, timeline, and value proposition.",
       items: [
         {
-          question: "WHAT is NovaJournal?",
+          question: "WHAT is NovaFinance?",
           label: "What",
           icon: BrainCircuit,
           summary: "A unified double-entry ledger platform combining multi-tenant business accounting, global investment portfolios, and intelligent multi-model AI.",
-          details: "Unlike simple expense-trackers that lose history or bulky enterprise ERPs that cost thousands, NovaJournal bridges personal finance and business bookkeeping into one modern reactive system.",
+          details: "Unlike simple expense-trackers that lose history or bulky enterprise ERPs that cost thousands, NovaFinance bridges personal finance and business bookkeeping into one modern reactive system.",
         },
         {
           question: "WHY do you need it?",
           label: "Why",
           icon: Lightbulb,
           summary: "Spreadsheets break, banking apps are isolated, and financial blind spots cause irreversible business cash crunches.",
-          details: "NovaJournal gives you real-time visibility over every rupiah and dollar, visual money flow paths, and automated receipt OCR so you never miss a tax write-off or duplicate expense.",
+          details: "NovaFinance gives you real-time visibility over every rupiah and dollar, visual money flow paths, and automated receipt OCR so you never miss a tax write-off or duplicate expense.",
         },
         {
           question: "WHO is it built for?",
@@ -170,7 +254,7 @@ const DICT = {
           label: "When",
           icon: Clock,
           summary: "From your very first paycheck to scaling an enterprise through round funding.",
-          details: "Starting early prevents financial reconciliation debt. Whether you're sorting out 5 transaction receipts or 5,000 monthly ledger rows, NovaJournal scales seamlessly.",
+          details: "Starting early prevents financial reconciliation debt. Whether you're sorting out 5 transaction receipts or 5,000 monthly ledger rows, NovaFinance scales seamlessly.",
         },
         {
           question: "HOW does it work?",
@@ -191,12 +275,48 @@ const DICT = {
     showcase: {
       badge: "LIVE CAPABILITIES",
       title: "Designed for Velocity and Total Precision",
-      subtitle: "Select a module below to inspect NovaJournal's live interactive workflow.",
+      subtitle: "Select a module below to inspect NovaFinance's live interactive workflow.",
       tabs: {
         dashboard: "1. Multi-Scale Dashboard",
         moneyflow: "2. Money Flow Topology",
         portfolio: "3. Global Portfolio & IHSG",
         ai: "4. Multi-Provider AI Copilot",
+      },
+      cards: {
+        dashboard: {
+          title: "Executive Financial Command Center",
+          desc: "Live multi-entity balance sheets, cashflow trajectory, and quick action hubs.",
+          link: "View full dashboard",
+          assetLabel: "Total Asset Value",
+          assetChange: "+18.4% vs last quarter",
+          burnLabel: "Active Monthly Burn Rate",
+          burnDesc: "Within target safety bounds",
+          runwayLabel: "Emergency & Warchest Runway",
+          runwayDesc: "Tier-1 Capital Resilience",
+        },
+        moneyflow: {
+          title: "Visual Topology & Fund Routing",
+          desc: "Interactive graphical node topology mapping money transfers across all accounts.",
+          link: "Inspect money topology",
+          inflowTitle: "Revenue & Inflow",
+          inflowSub: "BCA & Mandiri Hub",
+          allocTitle: "Internal Allocation",
+          allocSub: "Payroll & Operational Vault",
+          reinvestTitle: "Wealth Reinvestment",
+          reinvestSub: "IHSG Stocks & Bullion Vault",
+        },
+        portfolio: {
+          title: "IHSG & Global Multi-Asset Engine",
+          desc: "Live index tracking, Finviz heatmap integration, and Monte Carlo wealth projector.",
+          link: "Open portfolio suite",
+        },
+        ai: {
+          title: "Live AI Copilot & Receipt Extraction",
+          desc: "Extract unstructured paper receipts, detect tax splits, and forecast budget surplus.",
+          link: "Try copilot audit",
+          boxTitle: "Automated Double-Entry Ledger Entry Formed",
+          boxDesc: "Receipt parsed in 240ms via Groq Llama 3.3. Debited Operational Expense (Rp 450.000) and Credited Petty Cash Wallet with 100% verified tax calculation.",
+        },
       },
     },
     bento: {
@@ -231,12 +351,12 @@ const DICT = {
     },
     cta: {
       title: "Master Your Financial Future Today.",
-      desc: "Join thousands of professionals, UMKM founders, and finance teams who trust NovaJournal for audit-ready precision.",
+      desc: "Join thousands of professionals, UMKM founders, and finance teams who trust NovaFinance for audit-ready precision.",
       button: "Create Free Account Now",
       subtext: "Free forever tier • No credit card required • Instant setup in 60 seconds",
     },
     footer: {
-      rights: "NovaJournal Inc. All rights reserved.",
+      rights: "NovaFinance Inc. All rights reserved.",
       tagline: "The Modern Financial Operating System for Forward-Thinking Operators.",
       statusText: "All Systems Operational • API v1.2",
       securityBadge: "SOC-2 Ready • 256-bit TLS • BetterAuth Protected",
@@ -249,13 +369,17 @@ const DICT = {
       colGovernance: "Governance & RBAC",
       colDevelopers: "Developers",
       colLegal: "Legal & Security",
+      privacy: "Privacy Policy",
+      terms: "Terms of Service",
+      security: "Security Disclosure",
       madeWith: "Crafted with Next.js 16, Turbopack, and Elysia.",
     },
   },
   id: {
     nav: {
+      problem: "Masalah vs Solusi",
       features: "Fitur",
-      architecture: "Mesin AI",
+      architecture: "AI Hub",
       framework: "5W + 2H",
       showcase: "Simulasi",
       personas: "Solusi",
@@ -263,6 +387,7 @@ const DICT = {
       signIn: "Masuk",
       getStarted: "Daftar Gratis",
       openDashboard: "Buka Dashboard",
+      supernovaBtn: "Intro Supernova",
     },
     hero: {
       badge: "Buku Besar Keuangan Multi-Skala Generasi Baru",
@@ -274,9 +399,29 @@ const DICT = {
       ctaSecondary: "Lihat Simulasi Interaktif",
       stats: {
         uptime: "99.98% Ketersediaan Sistem",
-        providers: "4 Provider AI Siap Pakai",
-        latency: "<300ms Kecepatan OCR",
+        providers: "CFO Copilot Otonom",
+        latency: "<280ms Ekstraksi Vision",
         encryption: "Enkripsi Bank-Grade TLS 1.3",
+      },
+      mock: {
+        url: "novafinance.app/dashboard",
+        tenant: "● Multi-Tenant Terhubung",
+        netWorth: "Total Kekayaan Bersih",
+        cashflow: "Arus Kas Operasional",
+        runway: "Runway Aman",
+        portfolio: "Saham & Emas (IHSG)",
+        yield: "+8.6% Imbal Hasil",
+        chartTitle: "Lintasan Arus Kas vs Anggaran",
+        income: "Pemasukan",
+        expense: "Pengeluaran",
+        aiInsightTitle: "Audit Real-Time Nova Copilot",
+        aiInsightText: "Struk transfer BCA Rp 2.500.000 otomatis dikategorikan ke",
+        aiInsightTag: "Beban Operasional",
+        aiInsightTime: "Terverifikasi audit • Sub-280ms",
+        assetAllocation: "Alokasi Aset",
+        liquidCash: "Kas Likuid",
+        businessEquity: "Ekuitas Bisnis",
+        globalValas: "Valas Global",
       },
     },
     ticker: {
@@ -284,63 +429,114 @@ const DICT = {
       defaultBadge: "DEFAULT",
     },
     aiSection: {
-      badge: "ARSITEKTUR MULTI-PROVIDER AI",
-      title: "Orkestrasi AI Cerdas dengan Otomatisasi Fallback",
-      subtitle: "Jangan bergantung hanya pada satu AI. NovaJournal secara otomatis mendistribusikan pembacaan struk, audit pembukuan, dan analisis investasi ke model terbaik dengan proteksi anti-downtime.",
+      badge: "MESIN AI OTONOM",
+      title: "Kecerdasan Finansial Multimodal Otonom",
+      subtitle: "Dari pembacaan struk super cepat hingga briefing suara CFO eksekutif — NovaFinance memadukan teknologi AI multimodal dengan proteksi failover tanpa jeda.",
       providers: [
         {
-          name: "Groq (Llama 3.3 70B)",
-          role: "OCR Struk Kilat & Kategorisasi Cepat",
-          speed: "Kurang dari 300ms",
-          desc: "Ekstraksi teks foto struk belanja, nota warung, dan tagging instan otomatis dalam hitungan milidetik sebelum Anda sempat berpindah tab.",
-          tag: "Super Cepat",
-          gradient: "from-orange-500 to-amber-600",
+          id: "vision-ocr",
+          name: "Vision OCR Super Cepat",
+          role: "Ekstraksi Foto Struk & Faktur Pajak",
+          speed: "Ekstraksi <280ms",
+          desc: "Cukup seret struk belanja, nota warung, atau tagihan multi-halaman. AI Vision mengekstrak nama toko, tanggal transaksi, rincian barang, dan total nominal ke buku kas dalam sekejap.",
+          tag: "Vision Intelligence",
+          icon: "Receipt",
+          capability: "Groq & Gemini Vision",
+          badge: "Sub-Second Engine",
         },
         {
-          name: "Google Gemini 2.5 Pro",
-          role: "Audit Rekonsiliasi & Multi-Halaman",
-          speed: "Penalaran Kompleks",
-          desc: "Menganalisis rekening koran bank multi-halaman PDF, mendeteksi selisih rekonsiliasi, dan verifikasi kurs multi-valas.",
-          tag: "Unggul Multimodal",
-          gradient: "from-blue-500 to-cyan-600",
+          id: "cfo-copilot",
+          name: "Nova Copilot & 4 Persona",
+          role: "Asisten Keuangan Finansial Adaptif",
+          speed: "Real-time Insight",
+          desc: "Beralih instan antara CFO Korporat, Sahabat Finansial, Auditor Forensik, dan Analis Portofolio. Menguasai data pembukuan Anda dengan pengaturan ukuran jendela kustom (W × H).",
+          tag: "Executive Advisory",
+          icon: "BrainCircuit",
+          capability: "4 Persona Operasional",
+          badge: "Jendela Kustom W × H",
         },
         {
-          name: "DeepSeek R1",
-          role: "Logika Penalaran Anggaran Matematik",
-          speed: "Presisi Tinggi",
-          desc: "Langkah penalaran analitis matematis untuk mengungkap kebocoran kas, optimasi runway bisnis, dan kalkulasi rebalancing portofolio.",
-          tag: "Deep Reasoning",
-          gradient: "from-purple-500 to-indigo-600",
+          id: "voice-tts",
+          name: "Sintesis Suara (TTS) Celestial",
+          role: "Briefing Lisan & Audio Feedback",
+          speed: "Suara Alami Bernada",
+          desc: "Dengarkan ringkasan arus kas harian dibacakan dengan suara alami Bahasa Indonesia & English (pria & wanita), lengkap dengan efek suara celestial chime interaktif.",
+          tag: "Voice & Sound",
+          icon: "Volume2",
+          capability: "5 Profil Suara TTS",
+          badge: "ID & EN Natural TTS",
         },
         {
-          name: "Anthropic Claude 3.5 Sonnet",
-          role: "Nasihat Keuangan & Laporan Eksekutif",
-          speed: "Bahasa Alami",
-          desc: "Menyusun ringkasan eksekutif untuk rapat pemegang saham, narasi perencanaan pajak, dan rekomendasi hemat bergaya konsultan privat.",
-          tag: "Master Bahasa Alami",
-          gradient: "from-rose-500 to-pink-600",
+          id: "intelligent-router",
+          name: "Router Mesin Anti-Downtime",
+          role: "Failover Multimodel & Vault BYOK",
+          speed: "99.98% Ketersediaan",
+          desc: "Peralihan otomatis antara Gemini 2.0 Flash, Groq Llama 3.3, DeepSeek R1, dan Claude 3.5. Pasang API Key pribadi Anda sendiri dengan enkripsi aman di sisi pengguna.",
+          tag: "Engine Orchestration",
+          icon: "Workflow",
+          capability: "Failover Otomatis",
+          badge: "Brankas Kunci API Vault",
         },
       ],
       customKeysNote: "Anda dapat mengatur kunci API utama dan cadangan langsung di halaman Settings atau menggunakan setelan bawaan workspace.",
     },
+    problemToSolved: {
+      badge: "PROBLEMA PEMBUKUAN VS SOLUSI NOVA",
+      title: "Mengapa Cara Lama Gagal & Bagaimana Nova Menyelesaikannya",
+      subtitle: "Hentikan kerepotan rumus spreadsheet yang rusak, aplikasi perbankan yang terisolasi, dan kebocoran dana misterius.",
+      items: [
+        {
+          id: 1,
+          problemTitle: "Mimpi Buruk Spreadsheet & Rumus Rusak",
+          problemDesc: "Formula Excel mudah error tertimpa, tanpa jejak audit resmi, dan tanpa verifikasi buku besar berpasangan otomatis.",
+          solutionTitle: "Integritas Buku Besar Berpasangan & Jejak Audit",
+          solutionDesc: "Rekonsiliasi debit-kredit real-time, audit log tidak dapat diubah, visual Sankey money flow, dan nol selisih angka.",
+          tag: "Double-Entry Core",
+        },
+        {
+          id: 2,
+          problemTitle: "Kelelahan Input Struk Manual",
+          problemDesc: "Waktu berjam-jam terbuang mengetik nota belanja, bukti potong pajak tercecer, dan salah ketik nominal transaksi.",
+          solutionTitle: "Vision AI OCR Multi-Provider (<300ms)",
+          solutionDesc: "Ekstraksi multimodal Groq & Gemini sub-300ms langsung menjadi transaksi berkategori akurat dalam 1 klik.",
+          tag: "Sub-300ms Vision",
+        },
+        {
+          id: 3,
+          problemTitle: "Rekening Bank & Investasi Terkotak-kotak",
+          problemDesc: "Harus membuka 6 aplikasi m-banking dan sekuritas berbeda tanpa visibilitas total kekayaan bersih multi-valas.",
+          solutionTitle: "Hub Terpadu Multi-Valas & Indeks Global",
+          solutionDesc: "Pelacakan terpusat rekening bank, e-wallet, aset kripto, serta pantauan indeks IHSG dan S&P 500 dalam IDR/USD/EUR.",
+          tag: "Global Multi-Valas",
+        },
+        {
+          id: 4,
+          problemTitle: "Aplikasi Kaku Tanpa Identitas Korporasi",
+          problemDesc: "Tidak bisa white-label identitas entitas, tampilan terlalu padat atau longgar, dan minim asistensi analitis eksekutif.",
+          solutionTitle: "Enterprise White-Label & Nova Copilot Cerdas",
+          solutionDesc: "Identitas logo & brand kustom perusahaan, pengaturan kepadatan UI presisi (px W & H, 6 font), serta Copilot AI dengan persona CFO.",
+          tag: "Enterprise Ready",
+        },
+      ],
+    },
     framework5w2h: {
       badge: "KERANGKA KERJA SISTEMATIS 5W + 2H",
-      title: "Segala Hal Tentang NovaJournal Secara Transparan",
+      title: "Segala Hal Tentang NovaFinance Secara Transparan",
       subtitle: "Penjelasan terstruktur mengenai fungsi, arsitektur, relevansi, dan nilai tambah bagi pengguna.",
       items: [
         {
-          question: "APA itu NovaJournal? (What)",
+          question: "APA itu NovaFinance? (What)",
           label: "What",
           icon: BrainCircuit,
           summary: "Platform buku besar ganda modern yang menggabungkan pembukuan UMKM/PT, portofolio investasi global, dan AI Copilot terintegrasi.",
-          details: "Berbeda dari aplikasi pencatat pengeluaran biasa yang mudah hilang riwayatnya atau ERP korporat yang rumit dan mahal, NovaJournal menjembatani keuangan pribadi dan pembukuan resmi dalam satu antarmuka reaktif.",
+          details: "Berbeda dari aplikasi pencatat pengeluaran biasa yang mudah hilang riwayatnya atau ERP korporat yang rumit dan mahal, NovaFinance menjembatani keuangan pribadi dan pembukuan resmi dalam satu antarmuka reaktif.",
         },
         {
           question: "MENGAPA Anda membutuhkannya? (Why)",
           label: "Why",
           icon: Lightbulb,
           summary: "Spreadsheet rawan rumus rusak, aplikasi bank terkotak-kotak, dan kebocoran dana dapat mematikan arus kas bisnis.",
-          details: "NovaJournal memberi Anda pandangan menyeluruh atas setiap rupiah, visual aliran dana antar-kantong, dan OCR struk otomatis sehingga tidak ada bukti transaksi yang tercecer.",
+          details: "NovaFinance memberi Anda pandangan menyeluruh atas setiap rupiah, visual aliran dana antar-kantong, dan OCR struk otomatis sehingga tidak ada bukti transaksi yang tercecer.",
         },
         {
           question: "SIAPA pengguna targetnya? (Who)",
@@ -382,12 +578,48 @@ const DICT = {
     showcase: {
       badge: "SIMULASI FITUR UTAMA",
       title: "Dirancang untuk Kecepatan dan Presisi Mutlak",
-      subtitle: "Pilih tab di bawah untuk melihat alur kerja interaktif NovaJournal.",
+      subtitle: "Pilih tab di bawah untuk melihat alur kerja interaktif NovaFinance.",
       tabs: {
         dashboard: "1. Dashboard Multi-Skala",
         moneyflow: "2. Visual Aliran Arus Kas",
         portfolio: "3. Portofolio Global & IHSG",
         ai: "4. Asisten Multi-Provider AI",
+      },
+      cards: {
+        dashboard: {
+          title: "Pusat Komando Finansial Eksekutif",
+          desc: "Neraca multi-entitas real-time, lintasan arus kas, dan pintasan aksi cepat.",
+          link: "Lihat dashboard penuh",
+          assetLabel: "Total Nilai Aset",
+          assetChange: "+18.4% vs kuartal lalu",
+          burnLabel: "Burn Rate Bulanan Aktif",
+          burnDesc: "Dalam batas aman anggaran",
+          runwayLabel: "Runway Kas & Cadangan Darurat",
+          runwayDesc: "Ketahanan Modal Tier-1",
+        },
+        moneyflow: {
+          title: "Topologi Visual & Aliran Dana",
+          desc: "Pemetaan grafis node interaktif untuk arus transfer ke seluruh rekening & brankas.",
+          link: "Periksa topologi dana",
+          inflowTitle: "Pendapatan & Arus Masuk",
+          inflowSub: "Hub Rekening BCA & Mandiri",
+          allocTitle: "Alokasi Operasional",
+          allocSub: "Gaji & Vault Operasional",
+          reinvestTitle: "Reinvestasi & Aset",
+          reinvestSub: "Saham IHSG & Brankas Emas",
+        },
+        portfolio: {
+          title: "Mesin Multi-Aset Global & IHSG",
+          desc: "Pelacakan indeks real-time, integrasi heatmap Finviz, dan simulator Monte Carlo.",
+          link: "Buka modul portofolio",
+        },
+        ai: {
+          title: "Copilot AI & Ekstraksi Struk Real-Time",
+          desc: "Ekstraksi struk kertas tak terstruktur, deteksi pembagian pajak, dan proyeksi surplus kas.",
+          link: "Coba audit copilot",
+          boxTitle: "Jurnal Pembukuan Berpasangan Otomatis Terbentuk",
+          boxDesc: "Struk diproses dalam 240ms via Groq Llama 3.3. Mendebit Beban Operasional (Rp 450.000) dan Mengkredit Kas Kecil dengan kalkulasi pajak 100% terverifikasi.",
+        },
       },
     },
     bento: {
@@ -422,12 +654,12 @@ const DICT = {
     },
     cta: {
       title: "Kuasai Manajemen Keuangan Anda Hari Ini.",
-      desc: "Bergabung bersama ribuan profesional, pelaku UMKM, dan tim keuangan yang mempercayakan pencatatan mereka pada NovaJournal.",
+      desc: "Bergabung bersama ribuan profesional, pelaku UMKM, dan tim keuangan yang mempercayakan pencatatan mereka pada NovaFinance.",
       button: "Buat Akun Gratis Sekarang",
       subtext: "Tier gratis selamanya • Tanpa kartu kredit • Siap digunakan dalam 60 detik",
     },
     footer: {
-      rights: "NovaJournal Inc. Hak cipta dilindungi undang-undang.",
+      rights: "NovaFinance Inc. Hak cipta dilindungi undang-undang.",
       tagline: "Sistem Operasi Finansial & Pembukuan Modern untuk Pengambil Keputusan Terdepan.",
       statusText: "Semua Layanan Operasional • API v1.2",
       securityBadge: "Siap Standar SOC-2 • Enkripsi TLS 256-bit • Diproteksi BetterAuth",
@@ -440,6 +672,9 @@ const DICT = {
       colGovernance: "Tata Kelola & RBAC",
       colDevelopers: "Developer",
       colLegal: "Legal & Keamanan",
+      privacy: "Kebijakan Privasi",
+      terms: "Ketentuan Layanan",
+      security: "Keterbukaan Keamanan",
       madeWith: "Dibangun dengan Next.js 16, Turbopack, dan Elysia.",
     },
   },
@@ -472,6 +707,15 @@ export default function LandingPage() {
   // Active FAQ accordion item
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
+  // Supernova overlay replay control
+  const [replaySupernova, setReplaySupernova] = useState(false);
+
+  useEffect(() => {
+    const handleReplay = () => setReplaySupernova(true);
+    window.addEventListener("novafinance_trigger_supernova", handleReplay);
+    return () => window.removeEventListener("novafinance_trigger_supernova", handleReplay);
+  }, []);
+
   // GSAP animation refs
   const heroContainerRef = useRef<HTMLDivElement>(null);
   const heroBadgeRef = useRef<HTMLDivElement>(null);
@@ -482,12 +726,14 @@ export default function LandingPage() {
   const dotsContainerRef = useRef<HTMLDivElement>(null);
 
   // Scroll section refs
+  const problemSectionRef = useRef<HTMLElement>(null);
   const aiSectionRef = useRef<HTMLElement>(null);
   const frameworkSectionRef = useRef<HTMLElement>(null);
   const showcaseSectionRef = useRef<HTMLElement>(null);
   const bentoSectionRef = useRef<HTMLElement>(null);
   const personasSectionRef = useRef<HTMLElement>(null);
   const faqSectionRef = useRef<HTMLElement>(null);
+  const footerCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // Read language from localStorage on mount
   useEffect(() => {
@@ -509,7 +755,7 @@ export default function LandingPage() {
   useEffect(() => {
     if (!mounted) return;
 
-    const ctx = gsap.context(() => {
+    const ctx = gsap.context((self) => {
       // 1. Floating Dots Animation
       if (dotsContainerRef.current) {
         const dots = dotsContainerRef.current.querySelectorAll(".drifting-dot");
@@ -560,6 +806,7 @@ export default function LandingPage() {
 
       // 3. ScrollTrigger Reveals for Major Sections
       const revealSections = [
+        problemSectionRef.current,
         aiSectionRef.current,
         frameworkSectionRef.current,
         showcaseSectionRef.current,
@@ -586,6 +833,68 @@ export default function LandingPage() {
           }
         );
       });
+
+      // 4. GSAP Floating Loops on Badges & Highlight Cards
+      gsap.to(".floating-loop", {
+        y: -7,
+        duration: 2.8,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut",
+        stagger: 0.25,
+      });
+
+      // 5. Footer Fluid Cosmic Wave Animation (Canvas)
+      const canvas = footerCanvasRef.current;
+      if (canvas) {
+        const ctx2 = canvas.getContext("2d");
+        let animId: number;
+        let w = (canvas.width = canvas.parentElement?.clientWidth || window.innerWidth);
+        let h = (canvas.height = canvas.parentElement?.clientHeight || 500);
+
+        const onResize = () => {
+          if (!canvas) return;
+          w = canvas.width = canvas.parentElement?.clientWidth || window.innerWidth;
+          h = canvas.height = canvas.parentElement?.clientHeight || 500;
+        };
+        window.addEventListener("resize", onResize);
+
+        let step = 0;
+        const renderWave = () => {
+          if (!ctx2) return;
+          step += 0.015;
+          ctx2.clearRect(0, 0, w, h);
+
+          // 3 Cosmic wave layers: indigo, purple, blue with ethereal blending
+          const waves = [
+            { y: h * 0.60, length: 0.0032, amp: 26, speed: 0.02, color: "rgba(99, 102, 241, 0.24)" },
+            { y: h * 0.70, length: 0.0042, amp: 20, speed: 0.014, color: "rgba(168, 85, 247, 0.22)" },
+            { y: h * 0.80, length: 0.0028, amp: 32, speed: 0.01, color: "rgba(59, 130, 246, 0.20)" },
+          ];
+
+          waves.forEach((wave, idx) => {
+            ctx2.beginPath();
+            ctx2.moveTo(0, h);
+            for (let x = 0; x <= w; x += 8) {
+              const y = wave.y + Math.sin(x * wave.length + step * (idx + 1) * 0.8) * wave.amp + Math.cos(x * 0.002 + step * 0.5) * (wave.amp * 0.4);
+              ctx2.lineTo(x, y);
+            }
+            ctx2.lineTo(w, h);
+            ctx2.closePath();
+            ctx2.fillStyle = wave.color;
+            ctx2.fill();
+          });
+
+          animId = requestAnimationFrame(renderWave);
+        };
+
+        renderWave();
+
+        self.add(() => {
+          window.removeEventListener("resize", onResize);
+          cancelAnimationFrame(animId);
+        });
+      }
     });
 
     return () => ctx.revert();
@@ -624,6 +933,12 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-default-50/70 dark:bg-gray-950 text-foreground selection:bg-blue-500/20 selection:text-blue-500 font-sans antialiased overflow-x-hidden">
+      {/* 0. Supernova Fluid Preloader Overlay with Celestial Audio */}
+      <NovaSupernovaOverlay
+        forceShow={replaySupernova}
+        onComplete={() => setReplaySupernova(false)}
+      />
+
       {/* -------------------------------------------------------- */}
       {/* 1. TOP RUNNING TICKER (IHSG Default + Global Indices)     */}
       {/* -------------------------------------------------------- */}
@@ -665,12 +980,15 @@ export default function LandingPage() {
               <Wallet className="w-3.5 h-3.5 text-white" />
             </div>
             <span className="text-sm font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent tracking-tight">
-              NovaJournal
+              NovaFinance
             </span>
           </Link>
 
           {/* Center Navigation Links */}
           <nav className="hidden md:flex items-center gap-6 text-xs font-medium text-default-600 dark:text-default-400">
+            <a href="#problem-solved" className="hover:text-foreground transition-colors">
+              {t.nav.problem}
+            </a>
             <a href="#ai-engine" className="hover:text-foreground transition-colors">
               {t.nav.architecture}
             </a>
@@ -693,6 +1011,17 @@ export default function LandingPage() {
 
           {/* Right Action Controls: Language Toggle, Theme, Session-Aware Button */}
           <div className="flex items-center gap-2.5">
+            {/* Navbar Supernova Replay Button */}
+            <button
+              type="button"
+              onClick={() => setReplaySupernova(true)}
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-300 text-[11px] font-semibold transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
+              title="Putar ulang intro animasi Supernova"
+            >
+              <Sparkles className="w-3 h-3 text-purple-500" />
+              <span>{t.nav.supernovaBtn}</span>
+            </button>
+
             {/* Language Selector (EN / ID) */}
             <div className="flex items-center bg-default-100 dark:bg-default-900 p-0.5 rounded-lg border border-default-200/80 dark:border-default-800/80 text-[11px] font-semibold">
               <button
@@ -771,6 +1100,12 @@ export default function LandingPage() {
       {/* Colorless Backdrop + Technical Micro Corner Accents       */}
       {/* -------------------------------------------------------- */}
       <section ref={heroContainerRef} className="relative pt-12 pb-20 md:pt-20 md:pb-28 overflow-hidden">
+        {/* Ambient Fluid Backdrop Animation */}
+        <SectionFluidBackdrop palette="cosmic" />
+
+        {/* Circular Orbital Star Trails (Hero Section Flanks) */}
+        <HeroCircularStarTrails />
+
         {/* Semi-Square Mesh Container with Fading Edges */}
         <div className="absolute inset-0 max-w-6xl mx-auto pointer-events-none px-4">
           <div className="relative w-full h-full rounded-[2.5rem] border border-default-200/50 dark:border-default-800/50 bg-white/40 dark:bg-gray-900/30 backdrop-blur-md overflow-hidden [mask-image:radial-gradient(ellipse_75%_65%_at_50%_45%,#000_60%,transparent_100%)]">
@@ -804,8 +1139,9 @@ export default function LandingPage() {
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 text-center">
+          {/* Hero Pill Badge + Supernova Replay */}
           {/* Hero Pill Badge */}
-          <div ref={heroBadgeRef} className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-blue-500/25 bg-blue-500/10 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 text-xs font-semibold shadow-xs mb-6">
+          <div ref={heroBadgeRef} className="floating-loop inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-blue-500/25 bg-blue-500/10 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 text-xs font-semibold shadow-xs mb-6">
             <Sparkles className="w-3.5 h-3.5" />
             <span>{t.hero.badge}</span>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
@@ -832,10 +1168,10 @@ export default function LandingPage() {
           </p>
 
           {/* Hero CTA Buttons */}
-          <div ref={heroCtaRef} className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <div ref={heroCtaRef} className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5 max-w-md sm:max-w-2xl mx-auto">
             <Link
               href={isAuthenticated ? "/dashboard" : "/register"}
-              className="w-full sm:w-auto h-11 px-6 rounded-xl bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
+              className="w-full sm:w-auto h-11 px-7 rounded-xl bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-95"
             >
               <span>{isAuthenticated ? t.nav.openDashboard : t.hero.ctaPrimary}</span>
               <ArrowRight className="w-4 h-4" />
@@ -856,11 +1192,11 @@ export default function LandingPage() {
               <span>{t.hero.stats.uptime}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Cpu className="w-3.5 h-3.5 text-blue-500" />
+              <BrainCircuit className="w-3.5 h-3.5 text-purple-500" />
               <span>{t.hero.stats.providers}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+              <Sparkles className="w-3.5 h-3.5 text-blue-500" />
               <span>{t.hero.stats.latency}</span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -874,106 +1210,31 @@ export default function LandingPage() {
             ref={heroPreviewRef}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
-            className="mt-14 max-w-5xl mx-auto rounded-2xl border border-default-200/80 dark:border-default-800/80 bg-white/85 dark:bg-gray-900/85 shadow-2xl backdrop-blur-md p-4 sm:p-6 transition-shadow duration-300"
+            className="mt-14 max-w-5xl mx-auto rounded-3xl border border-default-200/80 dark:border-default-800/80 bg-white/90 dark:bg-gray-900/90 shadow-2xl backdrop-blur-xl p-4 sm:p-6 transition-shadow duration-300"
             style={{ transformStyle: "preserve-3d" }}
           >
-            {/* Mock Header Window */}
-            <div className="flex items-center justify-between pb-4 border-b border-default-200/60 dark:border-default-800/60">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
-                </div>
-                <span className="text-xs font-mono text-default-500 ml-2">novajournal.app/dashboard</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">
-                  ● Multi-Tenant Connected
-                </span>
-              </div>
-            </div>
-
-            {/* Mock Dashboard Body */}
-            <div className="pt-4 grid grid-cols-1 md:grid-cols-12 gap-4 text-left">
-              {/* Left Column: Metric Cards */}
-              <div className="md:col-span-8 space-y-4">
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="p-3.5 rounded-xl border border-default-200/60 dark:border-default-800/60 bg-default-50/50 dark:bg-default-900/40">
-                    <div className="text-[11px] text-default-500">Total Net Worth</div>
-                    <div className="text-base font-bold text-foreground mt-0.5">Rp 248.550.000</div>
-                    <div className="text-[10px] text-emerald-500 font-semibold mt-1 flex items-center gap-1">
-                      <TrendingUp className="w-3 h-3" /> +14.2% MoM
-                    </div>
-                  </div>
-                  <div className="p-3.5 rounded-xl border border-default-200/60 dark:border-default-800/60 bg-default-50/50 dark:bg-default-900/40">
-                    <div className="text-[11px] text-default-500">Operating Cash Flow</div>
-                    <div className="text-base font-bold text-foreground mt-0.5">Rp 42.180.000</div>
-                    <div className="text-[10px] text-blue-500 font-semibold mt-1">Healthy Runway</div>
-                  </div>
-                  <div className="p-3.5 rounded-xl border border-default-200/60 dark:border-default-800/60 bg-default-50/50 dark:bg-default-900/40">
-                    <div className="text-[11px] text-default-500">Stock & Gold (IHSG)</div>
-                    <div className="text-base font-bold text-foreground mt-0.5">Rp 98.400.000</div>
-                    <div className="text-[10px] text-emerald-500 font-semibold mt-1">+8.6% Yield</div>
-                  </div>
-                </div>
-
-                {/* Simulated Chart Bars */}
-                <div className="p-4 rounded-xl border border-default-200/60 dark:border-default-800/60 bg-default-50/50 dark:bg-default-900/40">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="text-xs font-semibold text-foreground">Cash Flow vs Budget Trajectory</div>
-                    <div className="flex items-center gap-2 text-[10px] text-default-500">
-                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> Income</span>
-                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-500" /> Expense</span>
-                    </div>
-                  </div>
-                  <div className="h-24 flex items-end justify-between gap-2 pt-2 px-1">
-                    {[65, 40, 80, 55, 95, 70, 85, 60, 110, 75, 125, 90].map((h, i) => (
-                      <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                        <div
-                          className={`w-full rounded-t-sm transition-all ${
-                            i % 2 === 0 ? "bg-blue-500/80 hover:bg-blue-500" : "bg-purple-500/80 hover:bg-purple-500"
-                          }`}
-                          style={{ height: `${h}%` }}
-                        />
-                        <span className="text-[8px] text-default-400 font-mono">{i + 1}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column: AI Live Audit Snippet */}
-              <div className="md:col-span-4 p-4 rounded-xl border border-blue-500/30 bg-blue-50/40 dark:bg-blue-950/20 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400">
-                      <Cpu className="w-3.5 h-3.5" />
-                      <span>AI Copilot Insight</span>
-                    </div>
-                    <span className="text-[9px] bg-blue-500/15 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded font-mono font-semibold">
-                      Groq Llama 3.3
-                    </span>
-                  </div>
-                  <p className="text-xs text-default-600 dark:text-default-300 leading-relaxed">
-                    &ldquo;Receipt from BCA transfer of Rp 2.500.000 auto-categorized into <span className="font-semibold text-foreground">Operational IT Server</span>. No budget leakage detected.&rdquo;
-                  </p>
-                </div>
-                <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-900/60 flex items-center justify-between text-[11px] text-default-500">
-                  <span>Audit Trail</span>
-                  <span className="text-emerald-500 font-semibold font-mono">100% Balanced</span>
-                </div>
-              </div>
-            </div>
+            {/* Real Dashboard Replica Component */}
+            <HeroDashboardPreview lang={lang} />
           </div>
+        </div>
+      </section>
+
+      {/* -------------------------------------------------------- */}
+      {/* 3.5 BRUTAL SPREADSHEET VS NOVAFINANCE BATTLE ARENA        */}
+      {/* -------------------------------------------------------- */}
+      <section id="problem-solved" ref={problemSectionRef} className="py-24 border-t border-default-200/60 dark:border-default-800/60 relative overflow-hidden bg-default-50/50 dark:bg-gray-950/40">
+        <SectionFluidBackdrop palette="rose" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
+          <SpreadsheetVsNovaSavage />
         </div>
       </section>
 
       {/* -------------------------------------------------------- */}
       {/* 4. AI INTEGRATION DEEP-DIVE (Multi-Provider Fallback)    */}
       {/* -------------------------------------------------------- */}
-      <section id="ai-engine" ref={aiSectionRef} className="py-20 border-t border-default-200/60 dark:border-default-800/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <section id="ai-engine" ref={aiSectionRef} className="py-20 border-t border-default-200/60 dark:border-default-800/60 relative overflow-hidden">
+        <SectionFluidBackdrop palette="purple" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-purple-500/25 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs font-semibold mb-3">
               <Cpu className="w-3.5 h-3.5" />
@@ -988,39 +1249,69 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {t.aiSection.providers.map((p, idx) => (
-              <div
-                key={idx}
-                className="p-5 rounded-2xl border border-default-200 dark:border-default-800 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xs hover:border-blue-500/50 transition-all flex flex-col justify-between group shadow-sm hover:shadow-md"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-[10px] font-semibold font-mono uppercase px-2 py-0.5 rounded bg-default-100 dark:bg-default-800 text-default-600 dark:text-default-400">
-                      {p.tag}
-                    </span>
-                    <span className="text-[10px] font-mono font-bold text-emerald-500">
-                      {p.speed}
-                    </span>
+            {t.aiSection.providers.map((p, idx) => {
+              const IconComp =
+                p.id === "vision-ocr"
+                  ? Receipt
+                  : p.id === "cfo-copilot"
+                  ? BrainCircuit
+                  : p.id === "voice-tts"
+                  ? Volume2
+                  : Workflow;
+
+              const iconGlow =
+                p.id === "vision-ocr"
+                  ? "from-amber-500/20 to-orange-500/20 text-amber-500 border-amber-500/30"
+                  : p.id === "cfo-copilot"
+                  ? "from-purple-500/20 to-indigo-500/20 text-purple-500 border-purple-500/30"
+                  : p.id === "voice-tts"
+                  ? "from-rose-500/20 to-pink-500/20 text-rose-500 border-rose-500/30"
+                  : "from-blue-500/20 to-cyan-500/20 text-blue-500 border-blue-500/30";
+
+              return (
+                <div
+                  key={idx}
+                  className="p-5 rounded-2xl border border-default-200/80 dark:border-default-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md hover:border-purple-500/50 hover:shadow-xl hover:shadow-purple-500/5 transition-all flex flex-col justify-between group"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className={`w-10 h-10 rounded-xl bg-linear-to-br ${iconGlow} border flex items-center justify-center shadow-xs transition-transform group-hover:scale-105`}>
+                        <IconComp className="w-5 h-5" />
+                      </div>
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                        {p.speed}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <span className="text-[10px] font-semibold font-mono uppercase tracking-wider text-default-400">
+                        {p.tag}
+                      </span>
+                    </div>
+
+                    <h3 className="text-base font-bold text-foreground group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                      {p.name}
+                    </h3>
+                    <div className="text-xs font-semibold text-default-500 mt-0.5">
+                      {p.role}
+                    </div>
+
+                    <p className="text-xs text-default-600 dark:text-default-400 mt-3 leading-relaxed">
+                      {p.desc}
+                    </p>
                   </div>
 
-                  <h3 className="text-base font-bold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                    {p.name}
-                  </h3>
-                  <div className="text-xs font-semibold text-default-500 mt-0.5">
-                    {p.role}
+                  <div className="mt-5 pt-3.5 border-t border-default-100 dark:border-default-800/80 flex items-center justify-between text-[11px]">
+                    <span className="text-default-400 font-medium font-mono text-[10px]">
+                      {p.capability}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 font-semibold text-[10px] border border-purple-500/20">
+                      {p.badge}
+                    </span>
                   </div>
-
-                  <p className="text-xs text-default-600 dark:text-default-400 mt-3 leading-relaxed">
-                    {p.desc}
-                  </p>
                 </div>
-
-                <div className="mt-5 pt-3 border-t border-default-100 dark:border-default-800/80 flex items-center justify-between text-[11px]">
-                  <span className="text-default-400 font-medium">Automatic Fallback</span>
-                  <span className="text-blue-500 font-bold">Enabled ✓</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="mt-6 text-center text-xs text-default-500 flex items-center justify-center gap-1.5">
@@ -1033,8 +1324,9 @@ export default function LandingPage() {
       {/* -------------------------------------------------------- */}
       {/* 5. 5W + 2H SYSTEMATIC FRAMEWORK SECTION                 */}
       {/* -------------------------------------------------------- */}
-      <section id="framework-5w2h" ref={frameworkSectionRef} className="py-20 border-t border-default-200/60 dark:border-default-800/60 bg-default-100/40 dark:bg-gray-900/40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <section id="framework-5w2h" ref={frameworkSectionRef} className="py-20 border-t border-default-200/60 dark:border-default-800/60 bg-default-100/40 dark:bg-gray-900/40 relative overflow-hidden">
+        <SectionFluidBackdrop palette="blue" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/25 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-semibold mb-3">
               <Lightbulb className="w-3.5 h-3.5" />
@@ -1145,219 +1437,19 @@ export default function LandingPage() {
       {/* -------------------------------------------------------- */}
       {/* 6. INTERACTIVE TAB SHOWCASE (Dashboard, Money Flow, ...) */}
       {/* -------------------------------------------------------- */}
-      <section id="showcase" ref={showcaseSectionRef} className="py-20 border-t border-default-200/60 dark:border-default-800/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/25 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-semibold mb-3">
-              <Compass className="w-3.5 h-3.5" />
-              <span>{t.showcase.badge}</span>
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-              {t.showcase.title}
-            </h2>
-            <p className="mt-3 text-sm text-default-600 dark:text-default-400 leading-relaxed">
-              {t.showcase.subtitle}
-            </p>
-
-            {/* Segmented Control Tabs */}
-            <div className="mt-8 inline-flex p-1 rounded-xl bg-default-100 dark:bg-gray-900 border border-default-200 dark:border-default-800 max-w-full overflow-x-auto">
-              <button
-                type="button"
-                onClick={() => setActiveShowcase("dashboard")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-                  activeShowcase === "dashboard"
-                    ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-xs"
-                    : "text-default-600 dark:text-default-400 hover:text-foreground"
-                }`}
-              >
-                {t.showcase.tabs.dashboard}
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveShowcase("moneyflow")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-                  activeShowcase === "moneyflow"
-                    ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-xs"
-                    : "text-default-600 dark:text-default-400 hover:text-foreground"
-                }`}
-              >
-                {t.showcase.tabs.moneyflow}
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveShowcase("portfolio")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-                  activeShowcase === "portfolio"
-                    ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-xs"
-                    : "text-default-600 dark:text-default-400 hover:text-foreground"
-                }`}
-              >
-                {t.showcase.tabs.portfolio}
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveShowcase("ai")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-                  activeShowcase === "ai"
-                    ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-xs"
-                    : "text-default-600 dark:text-default-400 hover:text-foreground"
-                }`}
-              >
-                {t.showcase.tabs.ai}
-              </button>
-            </div>
-          </div>
-
-          {/* Tab Content Display */}
-          <div className="p-6 sm:p-8 rounded-2xl border border-default-200 dark:border-default-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-xl">
-            {activeShowcase === "dashboard" && (
-              <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-default-200 dark:border-default-800">
-                  <div>
-                    <h3 className="text-lg font-bold text-foreground">Executive Financial Command Center</h3>
-                    <p className="text-xs text-default-500">Live multi-entity balance sheets, cashflow trajectory, and quick action hubs.</p>
-                  </div>
-                  <Link
-                    href="/dashboard"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
-                  >
-                    <span>View full dashboard</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 rounded-xl border border-default-200 dark:border-default-800 bg-default-50/50 dark:bg-default-900/40">
-                    <span className="text-xs text-default-500">Total Asset Value</span>
-                    <div className="text-xl font-extrabold text-foreground mt-1">Rp 312.450.000</div>
-                    <span className="text-[11px] text-emerald-500 font-semibold mt-1 inline-block">+18.4% vs last quarter</span>
-                  </div>
-                  <div className="p-4 rounded-xl border border-default-200 dark:border-default-800 bg-default-50/50 dark:bg-default-900/40">
-                    <span className="text-xs text-default-500">Active Monthly Burn Rate</span>
-                    <div className="text-xl font-extrabold text-foreground mt-1">Rp 18.200.000</div>
-                    <span className="text-[11px] text-blue-500 font-semibold mt-1 inline-block">Within target safety bounds</span>
-                  </div>
-                  <div className="p-4 rounded-xl border border-default-200 dark:border-default-800 bg-default-50/50 dark:bg-default-900/40">
-                    <span className="text-xs text-default-500">Emergency & Warchest Runway</span>
-                    <div className="text-xl font-extrabold text-foreground mt-1">17.1 Months</div>
-                    <span className="text-[11px] text-emerald-500 font-semibold mt-1 inline-block">Tier-1 Capital Resilience</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeShowcase === "moneyflow" && (
-              <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-default-200 dark:border-default-800">
-                  <div>
-                    <h3 className="text-lg font-bold text-foreground">Visual Topology & Fund Routing</h3>
-                    <p className="text-xs text-default-500">Interactive graphical node topology mapping money transfers across all accounts.</p>
-                  </div>
-                  <Link
-                    href="/money-flow"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
-                  >
-                    <span>Inspect money topology</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-
-                <div className="p-6 rounded-xl border border-default-200 dark:border-default-800 bg-default-50/50 dark:bg-default-900/40 flex flex-col md:flex-row items-center justify-between gap-4 text-center">
-                  <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 w-full md:w-auto">
-                    <div className="text-xs font-bold">Revenue & Inflow</div>
-                    <div className="text-sm font-mono font-bold mt-1">BCA & Mandiri Hub</div>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-default-400 hidden md:block" />
-                  <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-600 dark:text-purple-400 w-full md:w-auto">
-                    <div className="text-xs font-bold">Internal Allocation</div>
-                    <div className="text-sm font-mono font-bold mt-1">Payroll & Operational Vault</div>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-default-400 hidden md:block" />
-                  <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 w-full md:w-auto">
-                    <div className="text-xs font-bold">Wealth Reinvestment</div>
-                    <div className="text-sm font-mono font-bold mt-1">IHSG Stocks & Bullion Vault</div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeShowcase === "portfolio" && (
-              <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-default-200 dark:border-default-800">
-                  <div>
-                    <h3 className="text-lg font-bold text-foreground">IHSG & Global Multi-Asset Engine</h3>
-                    <p className="text-xs text-default-500">Live index tracking, Finviz heatmap integration, and Monte Carlo wealth projector.</p>
-                  </div>
-                  <Link
-                    href="/portfolio"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
-                  >
-                    <span>Open portfolio suite</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="p-3.5 rounded-xl border border-default-200 dark:border-default-800 bg-default-50/50 dark:bg-default-900/40">
-                    <span className="text-[11px] text-default-500">BBCA.JK (BCA)</span>
-                    <div className="text-sm font-bold text-foreground mt-0.5">Rp 10.450</div>
-                    <span className="text-[10px] text-emerald-500 font-semibold">+1.46%</span>
-                  </div>
-                  <div className="p-3.5 rounded-xl border border-default-200 dark:border-default-800 bg-default-50/50 dark:bg-default-900/40">
-                    <span className="text-[11px] text-default-500">BBRI.JK (BRI)</span>
-                    <div className="text-sm font-bold text-foreground mt-0.5">Rp 4.980</div>
-                    <span className="text-[10px] text-emerald-500 font-semibold">+0.81%</span>
-                  </div>
-                  <div className="p-3.5 rounded-xl border border-default-200 dark:border-default-800 bg-default-50/50 dark:bg-default-900/40">
-                    <span className="text-[11px] text-default-500">ANTM.JK (Gold)</span>
-                    <div className="text-sm font-bold text-foreground mt-0.5">Rp 1.620</div>
-                    <span className="text-[10px] text-emerald-500 font-semibold">+2.21%</span>
-                  </div>
-                  <div className="p-3.5 rounded-xl border border-default-200 dark:border-default-800 bg-default-50/50 dark:bg-default-900/40">
-                    <span className="text-[11px] text-default-500">ASII.JK (Astra)</span>
-                    <div className="text-sm font-bold text-foreground mt-0.5">Rp 5.125</div>
-                    <span className="text-[10px] text-rose-500 font-semibold">-0.48%</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeShowcase === "ai" && (
-              <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-default-200 dark:border-default-800">
-                  <div>
-                    <h3 className="text-lg font-bold text-foreground">Live AI Copilot & Receipt Extraction</h3>
-                    <p className="text-xs text-default-500">Extract unstructured paper receipts, detect tax splits, and forecast budget surplus.</p>
-                  </div>
-                  <Link
-                    href="/dashboard"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
-                  >
-                    <span>Try copilot audit</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-
-                <div className="p-4 rounded-xl border border-emerald-500/25 bg-emerald-50/30 dark:bg-emerald-950/20 flex items-start gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <div className="text-xs font-bold text-foreground">Automated Double-Entry Ledger Entry Formed</div>
-                    <p className="text-xs text-default-600 dark:text-default-400">
-                      Receipt parsed in 240ms via Groq Llama 3.3. Debited Operational Expense (Rp 450.000) and Credited Petty Cash Wallet with 100% verified tax calculation.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+      <section id="showcase" ref={showcaseSectionRef} className="py-20 border-t border-default-200/60 dark:border-default-800/60 relative overflow-hidden">
+        <SectionFluidBackdrop palette="cyan" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
+          <NovaShowcaseInteractive lang={lang} />
         </div>
       </section>
 
       {/* -------------------------------------------------------- */}
       {/* 7. EIGHT-PILLAR BENTO GRID                               */}
       {/* -------------------------------------------------------- */}
-      <section id="features" ref={bentoSectionRef} className="py-20 border-t border-default-200/60 dark:border-default-800/60 bg-default-100/30 dark:bg-gray-900/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <section id="features" ref={bentoSectionRef} className="py-20 border-t border-default-200/60 dark:border-default-800/60 bg-default-100/30 dark:bg-gray-900/30 relative overflow-hidden">
+        <SectionFluidBackdrop palette="emerald" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/25 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-semibold mb-3">
               <Layers className="w-3.5 h-3.5" />
@@ -1372,68 +1464,124 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-5 rounded-2xl border border-default-200 dark:border-default-800 bg-white dark:bg-gray-900 space-y-2">
-              <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                <Building2 className="w-4 h-4" />
+            {/* 1. White-label Enterprise & Multi-Tenant */}
+            <div className="p-5 rounded-2xl border border-default-200 dark:border-default-800 bg-white dark:bg-gray-900 space-y-2 hover:border-blue-500/40 transition-colors">
+              <div className="w-8 h-8 rounded-lg bg-linear-to-br from-amber-500/20 to-purple-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                <Crown className="w-4 h-4" />
               </div>
-              <h3 className="text-sm font-bold text-foreground">Multi-Tenant Workspaces</h3>
-              <p className="text-xs text-default-500 leading-relaxed">Isolate personal savings, multiple UMKM stores, and holding companies with independent currencies and roles.</p>
+              <h3 className="text-sm font-bold text-foreground">
+                {lang === "en" ? "Enterprise White-Label" : "White-Label Enterprise"}
+              </h3>
+              <p className="text-xs text-default-500 leading-relaxed">
+                {lang === "en"
+                  ? "Customize corporate logo, brand header, jargon, and tier styling directly integrated into sidebar navigation."
+                  : "Kustomisasi logo perusahaan, nama brand, jargon, dan tema tier langsung terintegrasi di navigasi sidebar."}
+              </p>
             </div>
 
-            <div className="p-5 rounded-2xl border border-default-200 dark:border-default-800 bg-white dark:bg-gray-900 space-y-2">
+            {/* 2. Nova Copilot TTS & Executive Personas */}
+            <div className="p-5 rounded-2xl border border-default-200 dark:border-default-800 bg-white dark:bg-gray-900 space-y-2 hover:border-blue-500/40 transition-colors">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                <Volume2 className="w-4 h-4" />
+              </div>
+              <h3 className="text-sm font-bold text-foreground">
+                {lang === "en" ? "Copilot TTS & Personas" : "Copilot TTS & Persona Eksekutif"}
+              </h3>
+              <p className="text-xs text-default-500 leading-relaxed">
+                {lang === "en"
+                  ? "Interactive audio voice briefing with specialized persona modes: CFO Advisor, Forensic Auditor, and Portfolio Analyst."
+                  : "Penjelasan suara audio interaktif dengan mode persona spesifik: Penasihat CFO, Auditor Forensik, dan Analis Portofolio."}
+              </p>
+            </div>
+
+            {/* 3. Precision UI Density & Typography */}
+            <div className="p-5 rounded-2xl border border-default-200 dark:border-default-800 bg-white dark:bg-gray-900 space-y-2 hover:border-blue-500/40 transition-colors">
               <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                <Sliders className="w-4 h-4" />
+              </div>
+              <h3 className="text-sm font-bold text-foreground">
+                {lang === "en" ? "Precision UI Density & 6 Fonts" : "Kepadatan UI & 6 Pilihan Font"}
+              </h3>
+              <p className="text-xs text-default-500 leading-relaxed">
+                {lang === "en"
+                  ? "Customize exact pixel sizing (custom width & height) and select across 6 typography families (Geist, Inter, Plus Jakarta Sans, etc)."
+                  : "Atur ukuran pixel presisi (custom W & H) serta pilih dari 6 tipografi modern (Geist, Inter, Plus Jakarta Sans, Outfit, dll)."}
+              </p>
+            </div>
+
+            {/* 4. Multi-Currency Regional Hub */}
+            <div className="p-5 rounded-2xl border border-default-200 dark:border-default-800 bg-white dark:bg-gray-900 space-y-2 hover:border-blue-500/40 transition-colors">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                <Coins className="w-4 h-4" />
+              </div>
+              <h3 className="text-sm font-bold text-foreground">
+                {lang === "en" ? "Multi-Currency Valas Hub" : "Hub Valas Multi-Mata Uang"}
+              </h3>
+              <p className="text-xs text-default-500 leading-relaxed">
+                {lang === "en"
+                  ? "Seamless support for IDR, USD, EUR, JPY, GBP, SGD, and AUD with automatic cross-currency net worth conversion."
+                  : "Dukungan penuh IDR, USD, EUR, JPY, GBP, SGD, dan AUD dengan kalkulasi konversi kekayaan bersih otomatis."}
+              </p>
+            </div>
+
+            {/* 5. TanStack Table v8 Engine */}
+            <div className="p-5 rounded-2xl border border-default-200 dark:border-default-800 bg-white dark:bg-gray-900 space-y-2 hover:border-blue-500/40 transition-colors">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                 <BarChart3 className="w-4 h-4" />
               </div>
-              <h3 className="text-sm font-bold text-foreground">TanStack Table v8 Engine</h3>
-              <p className="text-xs text-default-500 leading-relaxed">Supercharged client table with instant multi-column sorting, fuzzy search, pagination, and inline row mutations.</p>
+              <h3 className="text-sm font-bold text-foreground">
+                {lang === "en" ? "TanStack Table v8 Engine" : "Mesin Tabel TanStack v8"}
+              </h3>
+              <p className="text-xs text-default-500 leading-relaxed">
+                {lang === "en"
+                  ? "Supercharged ledger grid with multi-column sorting, fuzzy search, pagination, and real-time inline row mutations."
+                  : "Tabel buku besar kilat dengan multi-column sorting, pencarian fuzzy, paginasi, dan mutasi data baris instan."}
+              </p>
             </div>
 
-            <div className="p-5 rounded-2xl border border-default-200 dark:border-default-800 bg-white dark:bg-gray-900 space-y-2">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+            {/* 6. Double-Entry Ledger Integrity */}
+            <div className="p-5 rounded-2xl border border-default-200 dark:border-default-800 bg-white dark:bg-gray-900 space-y-2 hover:border-blue-500/40 transition-colors">
+              <div className="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">
                 <Scale className="w-4 h-4" />
               </div>
-              <h3 className="text-sm font-bold text-foreground">Double-Entry Ledger Integrity</h3>
-              <p className="text-xs text-default-500 leading-relaxed">Mathematical zero-drift guarantee. Every debit is strictly counterbalanced by a credit to preserve audit compliance.</p>
+              <h3 className="text-sm font-bold text-foreground">
+                {lang === "en" ? "Double-Entry Ledger Integrity" : "Buku Besar Berpasangan Sejati"}
+              </h3>
+              <p className="text-xs text-default-500 leading-relaxed">
+                {lang === "en"
+                  ? "Mathematical zero-drift guarantee. Every debit is strictly counterbalanced by a credit to preserve audit compliance."
+                  : "Jaminan nol selisih matematis. Setiap debit terikat presisi dengan kredit demi kepatuhan audit standar akuntansi."}
+              </p>
             </div>
 
-            <div className="p-5 rounded-2xl border border-default-200 dark:border-default-800 bg-white dark:bg-gray-900 space-y-2">
-              <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-                <FileSpreadsheet className="w-4 h-4" />
-              </div>
-              <h3 className="text-sm font-bold text-foreground">Instant Audit Export</h3>
-              <p className="text-xs text-default-500 leading-relaxed">Export professional Excel workbooks (.xlsx) and clean formatted PDF reports ready for tax accountants.</p>
-            </div>
-
-            <div className="p-5 rounded-2xl border border-default-200 dark:border-default-800 bg-white dark:bg-gray-900 space-y-2">
-              <div className="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center">
-                <Target className="w-4 h-4" />
-              </div>
-              <h3 className="text-sm font-bold text-foreground">Smart Goals & Wishlists</h3>
-              <p className="text-xs text-default-500 leading-relaxed">Interactive funding meters, target feasibility calculators, and automated emergency fund milestones.</p>
-            </div>
-
-            <div className="p-5 rounded-2xl border border-default-200 dark:border-default-800 bg-white dark:bg-gray-900 space-y-2">
+            {/* 7. Sub-300ms Vision OCR */}
+            <div className="p-5 rounded-2xl border border-default-200 dark:border-default-800 bg-white dark:bg-gray-900 space-y-2 hover:border-blue-500/40 transition-colors">
               <div className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center">
                 <Receipt className="w-4 h-4" />
               </div>
-              <h3 className="text-sm font-bold text-foreground">Instant OCR Struk Belanja</h3>
-              <p className="text-xs text-default-500 leading-relaxed">Drag-and-drop multiple paper receipts or PDF invoices for sub-second AI extraction and auto-attachment.</p>
+              <h3 className="text-sm font-bold text-foreground">
+                {lang === "en" ? "Sub-300ms AI Vision OCR" : "AI Vision OCR Sub-300ms"}
+              </h3>
+              <p className="text-xs text-default-500 leading-relaxed">
+                {lang === "en"
+                  ? "Drag-and-drop receipts or PDF invoices for sub-second multi-model AI extraction and automatic attachment."
+                  : "Unggah banyak struk belanja atau faktur PDF sekaligus untuk ekstraksi AI instan dan pencatatan otomatis."}
+              </p>
             </div>
 
-            <div className="p-5 rounded-2xl border border-default-200 dark:border-default-800 bg-white dark:bg-gray-900 space-y-2">
+            {/* 8. Zero-Trust Privacy Vault */}
+            <div className="p-5 rounded-2xl border border-default-200 dark:border-default-800 bg-white dark:bg-gray-900 space-y-2 hover:border-blue-500/40 transition-colors">
               <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-                <Globe className="w-4 h-4" />
-              </div>
-              <h3 className="text-sm font-bold text-foreground">Global Indices & Heatmap</h3>
-              <p className="text-xs text-default-500 leading-relaxed">Live ticker tracking IDX Composite (IHSG), S&P 500, Nikkei, and Finviz market heatmaps in real-time.</p>
-            </div>
-
-            <div className="p-5 rounded-2xl border border-default-200 dark:border-default-800 bg-white dark:bg-gray-900 space-y-2">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                 <Lock className="w-4 h-4" />
               </div>
-              <h3 className="text-sm font-bold text-foreground">Zero-Trust Privacy Vault</h3>
-              <p className="text-xs text-default-500 leading-relaxed">BetterAuth secure session cookies, localized API key overrides, and end-to-end data isolation per workspace.</p>
+              <h3 className="text-sm font-bold text-foreground">
+                {lang === "en" ? "Zero-Trust Privacy Vault" : "Brankas Privasi Zero-Trust"}
+              </h3>
+              <p className="text-xs text-default-500 leading-relaxed">
+                {lang === "en"
+                  ? "BetterAuth secure session cookies, localized API key overrides, and end-to-end data isolation per workspace."
+                  : "Cookie sesi aman BetterAuth, perlindungan kunci API mandiri, dan isolasi data per workspace tanpa bocor."}
+              </p>
             </div>
           </div>
         </div>
@@ -1442,8 +1590,9 @@ export default function LandingPage() {
       {/* -------------------------------------------------------- */}
       {/* 8. PERSONAS COMPARISON MATRIX                            */}
       {/* -------------------------------------------------------- */}
-      <section id="solutions" ref={personasSectionRef} className="py-20 border-t border-default-200/60 dark:border-default-800/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <section id="solutions" ref={personasSectionRef} className="py-20 border-t border-default-200/60 dark:border-default-800/60 relative overflow-hidden">
+        <SectionFluidBackdrop palette="amber" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/25 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-semibold mb-3">
               <Users className="w-3.5 h-3.5" />
@@ -1560,8 +1709,9 @@ export default function LandingPage() {
       {/* -------------------------------------------------------- */}
       {/* 9. INTERACTIVE FAQ ACCORDION                              */}
       {/* -------------------------------------------------------- */}
-      <section id="faq" ref={faqSectionRef} className="py-20 border-t border-default-200/60 dark:border-default-800/60 bg-default-100/30 dark:bg-gray-900/30">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+      <section id="faq" ref={faqSectionRef} className="py-20 border-t border-default-200/60 dark:border-default-800/60 bg-default-100/30 dark:bg-gray-900/30 relative overflow-hidden">
+        <SectionFluidBackdrop palette="blue" />
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 relative z-10">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/25 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-semibold mb-3">
               <HelpCircle className="w-3.5 h-3.5" />
@@ -1580,8 +1730,8 @@ export default function LandingPage() {
               {
                 q: "Bagaimana cara kerja fallback Multi-Provider AI (Groq, Gemini, DeepSeek, Claude)?",
                 q_en: "How does the Multi-Provider AI fallback architecture work?",
-                a: "NovaJournal memprioritaskan Groq (Llama 3.3) untuk ekstraksi OCR berkecepatan tinggi (<300ms). Jika kuota atau server provider sedang bermasalah, request secara instan dialihkan ke Gemini 2.5 Pro, DeepSeek R1, atau Claude 3.5 Sonnet tanpa menghentikan workflow Anda. Anda juga bisa menyetel custom API keys di menu Settings.",
-                a_en: "NovaJournal routes receipt OCR to Groq (Llama 3.3) for ultra-low latency (<300ms). If a provider limit is reached, it seamlessly falls back to Gemini 2.5 Pro, DeepSeek R1, or Claude 3.5 Sonnet with zero downtime.",
+                a: "NovaFinance memprioritaskan Groq (Llama 3.3) untuk ekstraksi OCR berkecepatan tinggi (<300ms). Jika kuota atau server provider sedang bermasalah, request secara instan dialihkan ke Gemini 2.5 Pro, DeepSeek R1, atau Claude 3.5 Sonnet tanpa menghentikan workflow Anda. Anda juga bisa menyetel custom API keys di menu Settings.",
+                a_en: "NovaFinance routes receipt OCR to Groq (Llama 3.3) for ultra-low latency (<300ms). If a provider limit is reached, it seamlessly falls back to Gemini 2.5 Pro, DeepSeek R1, or Claude 3.5 Sonnet with zero downtime.",
               },
               {
                 q: "Apakah data keuangan saya aman dan terenkripsi?",
@@ -1590,9 +1740,9 @@ export default function LandingPage() {
                 a_en: "Absolutely. All transactions are protected via TLS 1.3 256-bit encryption in-flight and at-rest. Session tokens use HttpOnly secure cookies, and workspaces are strictly isolated.",
               },
               {
-                q: "Apakah NovaJournal mendukung bursa saham Indonesia (IHSG)?",
-                q_en: "Does NovaJournal natively support Indonesian stocks (IHSG)?",
-                a: "Ya! IHSG (IDX Composite) adalah indeks default NovaJournal. Anda dapat mencatat dan memantau emiten bursa (seperti BBCA, BBRI, TLKM, ANTM) lengkap dengan kalkulator rebalancing portofolio dan proyeksi Monte Carlo.",
+                q: "Apakah NovaFinance mendukung bursa saham Indonesia (IHSG)?",
+                q_en: "Does NovaFinance natively support Indonesian stocks (IHSG)?",
+                a: "Ya! IHSG (IDX Composite) adalah indeks default NovaFinance. Anda dapat mencatat dan memantau emiten bursa (seperti BBCA, BBRI, TLKM, ANTM) lengkap dengan kalkulator rebalancing portofolio dan proyeksi Monte Carlo.",
                 a_en: "Yes! The IDX Composite (IHSG) is the default benchmark. You can track all IDX equities (BBCA, BBRI, ANTM, etc.) with automated rebalancing and Monte Carlo projection models.",
               },
               {
@@ -1604,8 +1754,8 @@ export default function LandingPage() {
               {
                 q: "Apakah saya bisa mengekspor laporan untuk keperluan pajak?",
                 q_en: "Can I export reports for annual tax filing and audits?",
-                a: "Tentu saja. NovaJournal menyediakan fitur ekspor satu-klik ke file Excel (.xlsx) dan PDF yang sudah terstruktur dengan format buku besar akuntansi standar.",
-                a_en: "Yes. NovaJournal provides instant one-click exports to structured Excel workbooks (.xlsx) and clean PDF reports ready for accountants and tax filing.",
+                a: "Tentu saja. NovaFinance menyediakan fitur ekspor satu-klik ke file Excel (.xlsx) dan PDF yang sudah terstruktur dengan format buku besar akuntansi standar.",
+                a_en: "Yes. NovaFinance provides instant one-click exports to structured Excel workbooks (.xlsx) and clean PDF reports ready for accountants and tax filing.",
               },
             ].map((faq, idx) => {
               const isOpen = openFaq === idx;
@@ -1643,9 +1793,13 @@ export default function LandingPage() {
       {/* -------------------------------------------------------- */}
       {/* 10. HIGH CONVERTING CTA BANNER                           */}
       {/* -------------------------------------------------------- */}
+      {/* -------------------------------------------------------- */}
+      {/* 10. HIGH CONVERTING CTA BANNER                           */}
+      {/* -------------------------------------------------------- */}
       <section className="py-20 border-t border-default-200/60 dark:border-default-800/60 relative overflow-hidden">
+        <SectionFluidBackdrop palette="cosmic" />
         <div className="absolute inset-0 bg-linear-to-r from-blue-600/10 via-purple-600/10 to-indigo-600/10 pointer-events-none" />
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 relative text-center">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 relative z-10 text-center">
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
             {t.cta.title}
           </h2>
@@ -1670,8 +1824,17 @@ export default function LandingPage() {
       {/* -------------------------------------------------------- */}
       {/* 11. ENTERPRISE DETAILED FOOTER                           */}
       {/* -------------------------------------------------------- */}
-      <footer className="border-t border-gray-200 dark:border-gray-800/80 bg-white dark:bg-[#030712] text-gray-600 dark:text-gray-400 text-xs transition-colors">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16 space-y-12">
+      <footer className="relative overflow-hidden border-t border-gray-200 dark:border-gray-800/80 bg-white dark:bg-[#030712] text-gray-600 dark:text-gray-400 text-xs transition-colors">
+        <SectionFluidBackdrop palette="purple" />
+        {/* GSAP Fluid Cosmic Wave Canvas */}
+        <canvas
+          ref={footerCanvasRef}
+          className="absolute inset-0 w-full h-full pointer-events-none opacity-50 dark:opacity-40"
+        />
+        {/* Subtle Contrast Overlay for 100% Crisp Legibility */}
+        <div className="absolute inset-0 bg-white/75 dark:bg-[#030712]/75 backdrop-blur-[1.5px] pointer-events-none" />
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16 space-y-12">
           
           {/* Top Newsletter & System Status Strip */}
           <div className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-900/60 border border-gray-200/80 dark:border-gray-800/80 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -1695,7 +1858,7 @@ export default function LandingPage() {
             </div>
 
             {/* Newsletter Input Box */}
-            <form onSubmit={(e) => { e.preventDefault(); alert("Thank you for subscribing to NovaJournal Financial Intelligence!"); }} className="flex items-center gap-2 w-full lg:w-auto">
+            <form onSubmit={(e) => { e.preventDefault(); alert("Thank you for subscribing to NovaFinance Financial Intelligence!"); }} className="flex items-center gap-2 w-full lg:w-auto">
               <input
                 type="email"
                 required
@@ -1721,7 +1884,7 @@ export default function LandingPage() {
                   <Wallet className="w-4 h-4" />
                 </div>
                 <span className="text-base font-bold bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent tracking-tight">
-                  NovaJournal
+                  NovaFinance
                 </span>
               </Link>
 
@@ -1733,7 +1896,7 @@ export default function LandingPage() {
               <div className="space-y-2 pt-1">
                 <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-[11px] font-mono text-gray-600 dark:text-gray-400">
                   <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span>NovaJournal Core v1.2</span>
+                  <span>NovaFinance Core v1.2</span>
                   <span className="text-gray-300 dark:text-gray-700">|</span>
                   <span className="text-blue-600 dark:text-blue-400">Elysia on Bun</span>
                 </div>
@@ -1812,11 +1975,11 @@ export default function LandingPage() {
 
             {/* Privacy & Legal Links */}
             <div className="flex items-center gap-4">
-              <span className="hover:text-gray-900 dark:hover:text-white cursor-pointer transition-colors">Privacy Policy</span>
+              <Link href="/privacy" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.footer.privacy}</Link>
               <span>•</span>
-              <span className="hover:text-gray-900 dark:hover:text-white cursor-pointer transition-colors">Terms of Service</span>
+              <Link href="/terms" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.footer.terms}</Link>
               <span>•</span>
-              <span className="hover:text-gray-900 dark:hover:text-white cursor-pointer transition-colors">Security Disclosure</span>
+              <Link href="/security-disclosure" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t.footer.security}</Link>
             </div>
           </div>
 
