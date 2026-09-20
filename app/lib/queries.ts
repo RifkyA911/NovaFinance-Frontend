@@ -1,4 +1,5 @@
 import { api } from './api';
+export { api };
 import type {
   CreateTransactionPayload,
   CreateAccountPayload,
@@ -23,12 +24,14 @@ export const queryKeys = {
   dashboardTrends: (workspaceId: string, months?: number) => ['dashboard', 'trends', workspaceId, months] as const,
   dashboardCategories: (workspaceId: string, type?: string) => ['dashboard', 'categories', workspaceId, type] as const,
   dashboardAccounts: (workspaceId: string) => ['dashboard', 'accounts', workspaceId] as const,
+  menus: (workspaceId?: string) => ['menus', workspaceId] as const,
 };
 
 // Query functions
 export const queryFunctions = {
   // Workspaces
   workspaces: () => api.getWorkspaces(),
+  menus: (workspaceId: string) => api.getWorkspaceMenus(workspaceId),
   
   // Transactions
   transactions: (workspaceId: string, limit?: number, sortBy?: string, order?: string) =>
@@ -50,6 +53,7 @@ export const queryFunctions = {
   dashboardTrends: (workspaceId: string, months?: number) => api.getDashboardTrends(workspaceId, months),
   dashboardCategories: (workspaceId: string, type?: string) => api.getDashboardCategories(workspaceId, type),
   dashboardAccounts: (workspaceId: string) => api.getDashboardAccounts(workspaceId),
+  userProfile: () => api.getUserProfile(),
 };
 
 // Mutation functions
@@ -70,5 +74,22 @@ export const mutationFunctions = {
   reorderGoals: (payload: { workspaceId: string; items: ReorderGoalItem[] }) =>
     api.reorderGoals(payload.workspaceId, payload.items),
   deleteGoal: (id: string) => api.deleteGoal(id),
+  updateWorkspace: (payload: { id: string; data?: any } & Record<string, any>) => {
+    const { id, data, ...rest } = payload;
+    const bodyData = data !== undefined ? data : rest;
+    return api.updateWorkspace(id, bodyData);
+  },
+  // User Profile & Avatar mutations
+  updateUserProfile: (payload: { name?: string; jobTitle?: string; department?: string; phone?: string; bio?: string; timezone?: string; lang?: string; image?: string }) =>
+    api.updateUserProfile(payload),
+  uploadAvatar: (dataUrl: string) => api.uploadAvatar(dataUrl),
+  uploadBrandLogo: (workspaceId: string, dataUrl: string, mode: 'square' | 'wide' = 'square') =>
+    api.uploadBrandLogo(workspaceId, dataUrl, mode),
+  testAiKey: (provider: 'groq' | 'gemini' | 'deepseek' | 'claude', apiKey: string) =>
+    api.testAiKey(provider, apiKey),
+  testAiChat: (payload: { provider: string; apiKey: string; model?: string; proxyUrl?: string }) =>
+    api.testAiChat(payload),
+  recordAuditLog: (payload: { workspaceId: string; action: string; entityType: string; entityId?: string; oldData?: any; newData?: any }) =>
+    api.recordAuditLog(payload),
 };
 
