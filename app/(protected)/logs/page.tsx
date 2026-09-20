@@ -388,7 +388,7 @@ export default function AuditLogsPage() {
     const ws = XLSX.utils.json_to_sheet(exportRows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Audit Trail");
-    XLSX.writeFile(wb, `NovaJournal_AuditLogs_${wsName.replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.writeFile(wb, `NovaFinance_AuditLogs_${wsName.replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   const exportAsPdf = () => {
@@ -398,7 +398,7 @@ export default function AuditLogsPage() {
 
     doc.setFontSize(16);
     doc.setTextColor(30, 41, 59);
-    doc.text("NovaJournal - Buku Audit Forensik & Governance Trail", 14, 16);
+    doc.text("NovaFinance - Buku Audit Forensik & Governance Trail", 14, 16);
 
     doc.setFontSize(9);
     doc.setTextColor(100, 116, 139);
@@ -423,7 +423,7 @@ export default function AuditLogsPage() {
       styles: { fontSize: 8, cellPadding: 2.5 },
     });
 
-    doc.save(`NovaJournal_AuditLogs_${wsName.replace(/\s+/g, "_")}.pdf`);
+    doc.save(`NovaFinance_AuditLogs_${wsName.replace(/\s+/g, "_")}.pdf`);
   };
 
   const exportAsJson = () => {
