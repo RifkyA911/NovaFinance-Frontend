@@ -132,7 +132,7 @@ export default function FluidWaveTransition({
             <span>Fluid Data Synchronization</span>
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-white">
-            Connecting to NovaJournal
+            Connecting to NovaFinance
           </h2>
           <p className="text-xs text-slate-400 min-h-6 transition-all duration-300">
             {steps[stepIndex]}

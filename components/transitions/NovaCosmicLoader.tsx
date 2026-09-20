@@ -11,7 +11,7 @@ interface NovaCosmicLoaderProps {
 }
 
 export default function NovaCosmicLoader({
-  title = "NovaJournal Financial Engine",
+  title = "NovaFinance Financial Engine",
   subtitle = "Synchronizing cryptographic session & multi-entity ledgers...",
   playSound = true,
 }: NovaCosmicLoaderProps) {
