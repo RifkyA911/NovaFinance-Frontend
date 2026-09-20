@@ -8,6 +8,8 @@ import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import NovaAICopilot from "./components/NovaAICopilot";
 import NovaCosmicLoader from "@/components/transitions/NovaCosmicLoader";
+import NovaToastContainer from "./components/NovaToast";
+import ThemeTransitionOverlay from "./components/ThemeTransitionOverlay";
 
 export default function ProtectedLayout({
   children,
@@ -26,11 +28,11 @@ export default function ProtectedLayout({
   }, [isAuthenticated, loading, router]);
 
   if (loading) {
-    return <NovaCosmicLoader title="NovaJournal Financial Engine" subtitle="Memuat workspace & memverifikasi sesi..." />;
+    return <NovaCosmicLoader title="NovaFinance Financial Engine" subtitle="Memuat workspace & memverifikasi sesi..." />;
   }
 
   if (!isAuthenticated) {
-    return <NovaCosmicLoader title="NovaJournal Authentication" subtitle="Mengarahkan ke halaman login..." playSound={false} />;
+    return <NovaCosmicLoader title="NovaFinance Authentication" subtitle="Mengarahkan ke halaman login..." playSound={false} />;
   }
 
 
@@ -43,13 +45,18 @@ export default function ProtectedLayout({
           isMobileMenuOpen={isMobileMenuOpen}
           onMobileMenuClose={() => setIsMobileMenuOpen(false)}
         />
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden relative">
           <Navbar onToggleSidebar={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
-          <main className="flex-1 overflow-auto">
+          <main
+            id="main-scroll-container"
+            className="flex-1 overflow-auto -mt-[var(--navbar-height,56px)] pt-[var(--navbar-height,56px)]"
+          >
             {children}
           </main>
         </div>
         <NovaAICopilot />
+        <NovaToastContainer />
+        <ThemeTransitionOverlay />
       </div>
     </WorkspaceProvider>
   );
