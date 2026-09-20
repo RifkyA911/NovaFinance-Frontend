@@ -66,7 +66,7 @@ export function hasAccess(userRole: UserRole | string, requiredRoles?: UserRole[
  */
 export function getEffectiveRole(defaultRole?: string): UserRole {
   if (typeof window !== "undefined") {
-    const sim = localStorage.getItem("novajournal_simulated_role");
+    const sim = localStorage.getItem("novafinance_simulated_role") || localStorage.getItem("novajournal_simulated_role");
     if (sim && (sim === "owner" || sim === "admin" || sim === "staff" || sim === "viewer")) {
       return sim;
     }
@@ -84,9 +84,12 @@ export function getEffectiveRole(defaultRole?: string): UserRole {
 export function setSimulatedRole(role: UserRole | null) {
   if (typeof window === "undefined") return;
   if (!role) {
+    localStorage.removeItem("novafinance_simulated_role");
     localStorage.removeItem("novajournal_simulated_role");
   } else {
+    localStorage.setItem("novafinance_simulated_role", role);
     localStorage.setItem("novajournal_simulated_role", role);
   }
+  window.dispatchEvent(new Event("novafinance_role_change"));
   window.dispatchEvent(new Event("novajournal_role_change"));
 }
