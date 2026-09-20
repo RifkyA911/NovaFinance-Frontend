@@ -444,7 +444,7 @@ export default function UsersPage() {
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Daftar Anggota");
-    XLSX.writeFile(wb, `NovaJournal_Members_${wsName.replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.writeFile(wb, `NovaFinance_Members_${wsName.replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   const exportToPdf = () => {
@@ -454,7 +454,7 @@ export default function UsersPage() {
 
     doc.setFontSize(16);
     doc.setTextColor(30, 41, 59);
-    doc.text("NovaJournal - Roster Anggota & Matriks Otorisasi", 14, 18);
+    doc.text("NovaFinance - Roster Anggota & Matriks Otorisasi", 14, 18);
 
     doc.setFontSize(9);
     doc.setTextColor(100, 116, 139);
@@ -479,7 +479,7 @@ export default function UsersPage() {
       styles: { fontSize: 8, cellPadding: 3 },
     });
 
-    doc.save(`NovaJournal_Members_${wsName.replace(/\s+/g, "_")}.pdf`);
+    doc.save(`NovaFinance_Members_${wsName.replace(/\s+/g, "_")}.pdf`);
   };
 
   // ==========================================
