@@ -1037,114 +1037,217 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background p-3.5 sm:p-5 lg:p-6 space-y-4 max-w-7xl mx-auto animate-pulse select-none">
-        {/* Top Header Skeleton */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/70 dark:bg-gray-900/70 p-4 rounded-2xl border border-default-200/70 dark:border-default-800 shadow-2xs">
+        {/* 1. Top Header & Workspace Context Banner Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/80 dark:bg-gray-900/80 p-4 rounded-2xl border border-default-200/80 dark:border-default-800 shadow-2xs">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <div className="h-6 w-44 bg-default-200 dark:bg-default-800 rounded-lg" />
-              <div className="h-4 w-16 bg-default-200/70 dark:bg-default-800/70 rounded-full" />
-              <div className="h-4 w-10 bg-default-200/70 dark:bg-default-800/70 rounded-md" />
+              <div className="h-6 w-40 bg-default-200 dark:bg-default-800 rounded-lg" />
+              <div className="h-5 w-16 bg-blue-500/15 rounded-full" />
+              <div className="h-5 w-12 bg-default-200/70 dark:bg-default-800/70 rounded-md" />
             </div>
-            <div className="h-3.5 w-64 bg-default-100 dark:bg-default-800/50 rounded-md" />
+            <div className="h-3.5 w-64 bg-default-100 dark:bg-default-800/50 rounded" />
           </div>
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-20 bg-default-200 dark:bg-default-800 rounded-lg" />
-            <div className="h-8 w-32 bg-default-200 dark:bg-default-800 rounded-lg" />
-            <div className="h-8 w-20 bg-default-200 dark:bg-default-800 rounded-lg" />
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="h-8 w-20 bg-default-200 dark:bg-default-800 rounded-xl" />
+            <div className="h-8 w-32 bg-default-300 dark:bg-default-700 rounded-xl" />
+            <div className="h-8 w-20 bg-default-200 dark:bg-default-800 rounded-xl" />
           </div>
         </div>
 
-        {/* 4 KPI Metric Cards Skeleton */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-          {[1, 2, 3, 4].map((i) => (
+        {/* 2. RBAC Quick Status Pill Skeleton */}
+        <div className="flex items-center gap-2 p-2.5 px-3.5 rounded-xl border border-indigo-500/20 bg-indigo-500/5">
+          <div className="w-4 h-4 rounded bg-indigo-400/30 shrink-0" />
+          <div className="h-3.5 w-24 bg-default-200 dark:bg-default-800 rounded" />
+          <div className="h-4 w-14 bg-amber-500/20 rounded" />
+          <div className="h-3 w-48 bg-default-100 dark:bg-default-800/60 rounded hidden md:block" />
+          <div className="w-3.5 h-3.5 rounded bg-default-200 dark:bg-default-800 ml-auto" />
+        </div>
+
+        {/* 3. Primary Financial Stats Row (4 KPI Cards) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {[
+            { color: "bg-blue-500/15" },
+            { color: "bg-emerald-500/15" },
+            { color: "bg-rose-500/15" },
+            { color: "bg-purple-500/15" },
+          ].map((item, idx) => (
             <div
-              key={i}
-              className="p-4 rounded-2xl border border-default-200/60 dark:border-default-800 bg-white/70 dark:bg-gray-900/60 space-y-3"
+              key={idx}
+              className="p-4 rounded-xl border border-default-200/80 dark:border-default-800 bg-white/70 dark:bg-gray-900/60 space-y-3"
             >
               <div className="flex items-center justify-between">
-                <div className="h-3 w-24 bg-default-200 dark:bg-default-800 rounded" />
-                <div className="w-8 h-8 rounded-xl bg-default-200/70 dark:bg-default-800/70" />
+                <div className="h-3.5 w-24 bg-default-200 dark:bg-default-800 rounded" />
+                <div className={`w-8 h-8 rounded-lg ${item.color}`} />
               </div>
-              <div className="h-7 w-36 bg-default-300/70 dark:bg-default-700/60 rounded-lg" />
-              <div className="h-2.5 w-28 bg-default-100 dark:bg-default-800/60 rounded" />
+              <div className="h-7 w-36 bg-default-300/80 dark:bg-default-700/70 rounded-lg" />
+              <div className="pt-2 border-t border-default-100 dark:border-default-800 flex items-center justify-between">
+                <div className="h-3 w-20 bg-default-100 dark:bg-default-800/60 rounded" />
+                <div className="h-3 w-12 bg-default-200 dark:bg-default-800 rounded" />
+              </div>
             </div>
           ))}
         </div>
 
-        {/* Analytics & Charts Grid Skeleton */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Main Chart Skeleton */}
-          <div className="lg:col-span-2 p-4 sm:p-5 rounded-2xl border border-default-200/60 dark:border-default-800 bg-white/70 dark:bg-gray-900/60 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="h-4 w-36 bg-default-200 dark:bg-default-800 rounded" />
-                <div className="h-3 w-48 bg-default-100 dark:bg-default-800/60 rounded" />
-              </div>
-              <div className="flex gap-1.5">
-                <div className="h-6 w-12 bg-default-200 dark:bg-default-800 rounded-md" />
-                <div className="h-6 w-12 bg-default-200 dark:bg-default-800 rounded-md" />
-              </div>
+        {/* 4. Quick Wallets Strip Skeleton */}
+        <div className="flex items-center gap-2 overflow-x-auto py-1">
+          <div className="h-3.5 w-16 bg-default-200 dark:bg-default-800 rounded shrink-0 mr-1" />
+          <div className="h-7 w-24 bg-blue-500/15 rounded-xl shrink-0" />
+          {[1, 2, 3, 4].map((w) => (
+            <div
+              key={w}
+              className="h-7 w-36 rounded-xl border border-default-200/70 dark:border-default-800 bg-white/60 dark:bg-gray-900/60 flex items-center gap-2 px-2.5 shrink-0"
+            >
+              <div className="w-3.5 h-3.5 rounded bg-default-300 dark:bg-default-700 shrink-0" />
+              <div className="h-3 w-14 bg-default-200 dark:bg-default-800 rounded" />
+              <div className="h-3 w-12 bg-default-100 dark:bg-default-800/60 rounded ml-auto" />
             </div>
-            {/* Chart Graphic Simulation */}
-            <div className="h-60 rounded-xl bg-default-100/70 dark:bg-default-800/40 flex items-end justify-between p-4 gap-2">
-              {[40, 65, 30, 85, 55, 75, 45, 90, 60, 80, 50, 70].map((h, idx) => (
-                <div
-                  key={idx}
-                  className="flex-1 bg-default-200 dark:bg-default-700/60 rounded-t"
-                  style={{ height: `${h}%` }}
-                />
-              ))}
+          ))}
+        </div>
+
+        {/* 5. Scalable Cashflow Trends Chart Skeleton (Full-Width) */}
+        <div className="w-full p-4 sm:p-5 rounded-2xl border border-default-200/80 dark:border-default-800 bg-white/70 dark:bg-gray-900/60 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-1.5">
+              <div className="h-4.5 w-44 bg-default-300 dark:bg-default-700 rounded-lg" />
+              <div className="h-3 w-56 bg-default-100 dark:bg-default-800/60 rounded" />
+            </div>
+            <div className="flex gap-1.5">
+              <div className="h-7 w-16 bg-default-200 dark:bg-default-800 rounded-lg" />
+              <div className="h-7 w-16 bg-default-200 dark:bg-default-800 rounded-lg" />
+              <div className="h-7 w-16 bg-default-200 dark:bg-default-800 rounded-lg" />
             </div>
           </div>
-
-          {/* Expense Breakdown Skeleton */}
-          <div className="p-4 sm:p-5 rounded-2xl border border-default-200/60 dark:border-default-800 bg-white/70 dark:bg-gray-900/60 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="h-4 w-32 bg-default-200 dark:bg-default-800 rounded" />
-              <div className="h-6 w-16 bg-default-100 dark:bg-default-800 rounded-md" />
-            </div>
-            {/* Circle Donut Skeleton */}
-            <div className="w-36 h-36 mx-auto rounded-full border-8 border-default-200 dark:border-default-700/60 border-t-blue-500/50 flex items-center justify-center">
-              <div className="w-16 h-16 rounded-full bg-default-100 dark:bg-default-800" />
-            </div>
-            {/* Category rows */}
-            <div className="space-y-2 pt-2">
-              {[1, 2, 3].map((k) => (
-                <div key={k} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-default-200 dark:bg-default-700" />
-                    <div className="h-3 w-20 bg-default-200 dark:bg-default-800 rounded" />
-                  </div>
-                  <div className="h-3 w-14 bg-default-200 dark:bg-default-800 rounded" />
-                </div>
-              ))}
-            </div>
+          {/* Simulated chart bars & line */}
+          <div className="h-64 rounded-xl bg-default-50/70 dark:bg-default-800/30 flex items-end justify-between p-4 gap-2.5">
+            {[35, 60, 45, 80, 50, 75, 40, 90, 65, 85, 55, 70].map((val, idx) => (
+              <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+                <div
+                  className="w-full bg-linear-to-t from-blue-500/40 to-indigo-500/20 dark:from-blue-600/30 dark:to-indigo-600/10 rounded-t-md"
+                  style={{ height: `${val}%` }}
+                />
+                <div className="h-2 w-6 bg-default-200 dark:bg-default-800 rounded" />
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Transactions Table Skeleton */}
-        <div className="p-4 sm:p-5 rounded-2xl border border-default-200/60 dark:border-default-800 bg-white/70 dark:bg-gray-900/60 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-default-100 dark:border-default-800">
-            <div className="h-4 w-40 bg-default-200 dark:bg-default-800 rounded" />
+        {/* 6. Dedicated Quick Operation Hub Skeleton */}
+        <div className="p-3.5 rounded-2xl border border-default-200/80 dark:border-default-800 bg-white/70 dark:bg-gray-900/60">
+          <div className="flex items-center gap-2 overflow-x-auto">
+            {[1, 2, 3, 4, 5].map((btn) => (
+              <div key={btn} className="h-8 w-32 rounded-xl bg-default-100 dark:bg-default-800 shrink-0" />
+            ))}
+          </div>
+        </div>
+
+        {/* 7. Asset & Portfolio Breakdown Skeleton (Full-Width) */}
+        <div className="w-full p-4 sm:p-5 rounded-2xl border border-default-200/80 dark:border-default-800 bg-white/70 dark:bg-gray-900/60 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="h-4 w-40 bg-default-300 dark:bg-default-700 rounded" />
+              <div className="h-3 w-52 bg-default-100 dark:bg-default-800/60 rounded" />
+            </div>
+            <div className="h-6 w-24 bg-default-200 dark:bg-default-800 rounded-lg" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {[1, 2, 3, 4].map((asset) => (
+              <div key={asset} className="p-3 rounded-xl border border-default-100 dark:border-default-800/80 bg-default-50/50 dark:bg-default-900/40 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="h-3 w-20 bg-default-200 dark:bg-default-800 rounded" />
+                  <div className="w-6 h-6 rounded bg-default-200 dark:bg-default-800" />
+                </div>
+                <div className="h-5 w-28 bg-default-300 dark:bg-default-700 rounded" />
+                <div className="h-2 w-full bg-default-200/60 dark:bg-default-800/60 rounded-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 8. Spending Breakdown & Financial Goals Row (2 Columns Equal Height) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+          {/* Expense Breakdown Skeleton */}
+          <div className="h-full p-4 sm:p-5 rounded-2xl border border-default-200/80 dark:border-default-800 bg-white/70 dark:bg-gray-900/60 space-y-4 flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="h-4 w-36 bg-default-300 dark:bg-default-700 rounded" />
+                <div className="h-3 w-28 bg-default-100 dark:bg-default-800/60 rounded" />
+              </div>
+              <div className="h-6 w-20 bg-default-200 dark:bg-default-800 rounded-lg" />
+            </div>
+            <div className="space-y-3 py-2">
+              {[1, 2, 3, 4].map((c) => (
+                <div key={c} className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-default-300 dark:bg-default-700" />
+                      <div className="h-3.5 w-24 bg-default-200 dark:bg-default-800 rounded" />
+                    </div>
+                    <div className="h-3.5 w-20 bg-default-200 dark:bg-default-800 rounded" />
+                  </div>
+                  <div className="h-2 w-full bg-default-100 dark:bg-default-800/60 rounded-full" />
+                </div>
+              ))}
+            </div>
+            <div className="h-8 w-full bg-default-100 dark:bg-default-800/50 rounded-xl" />
+          </div>
+
+          {/* Goals & Wishlist Quick Widget Skeleton */}
+          <div className="h-full p-4 sm:p-5 rounded-2xl border border-default-200/80 dark:border-default-800 bg-white/70 dark:bg-gray-900/60 space-y-4 flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="h-4 w-36 bg-default-300 dark:bg-default-700 rounded" />
+                <div className="h-3 w-32 bg-default-100 dark:bg-default-800/60 rounded" />
+              </div>
+              <div className="h-6 w-16 bg-default-200 dark:bg-default-800 rounded-lg" />
+            </div>
+            <div className="space-y-3 py-2">
+              {[1, 2, 3].map((g) => (
+                <div key={g} className="p-3 rounded-xl border border-default-100 dark:border-default-800/70 bg-default-50/50 dark:bg-default-900/40 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="h-3.5 w-28 bg-default-200 dark:bg-default-800 rounded" />
+                    <div className="h-4 w-12 bg-emerald-500/20 rounded-md" />
+                  </div>
+                  <div className="h-2 w-full bg-default-200/70 dark:bg-default-800/70 rounded-full" />
+                  <div className="flex justify-between text-[10px]">
+                    <div className="h-2.5 w-16 bg-default-200 dark:bg-default-800 rounded" />
+                    <div className="h-2.5 w-16 bg-default-200 dark:bg-default-800 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="h-8 w-full bg-default-100 dark:bg-default-800/50 rounded-xl" />
+          </div>
+        </div>
+
+        {/* 9. Transactions Table Skeleton */}
+        <div className="p-4 sm:p-5 rounded-2xl border border-default-200/80 dark:border-default-800 bg-white/70 dark:bg-gray-900/60 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-default-100 dark:border-default-800">
+            <div className="h-5 w-44 bg-default-300 dark:bg-default-700 rounded-lg" />
             <div className="flex items-center gap-2">
-              <div className="h-7 w-48 bg-default-100 dark:bg-default-800 rounded-lg" />
-              <div className="h-7 w-20 bg-default-100 dark:bg-default-800 rounded-lg" />
+              <div className="h-8 w-48 bg-default-100 dark:bg-default-800 rounded-xl" />
+              <div className="h-8 w-20 bg-default-100 dark:bg-default-800 rounded-xl" />
             </div>
           </div>
-          {/* Table Rows Skeleton */}
+
           <div className="space-y-3">
-            {[1, 2, 3, 4, 5].map((row) => (
-              <div key={row} className="flex items-center justify-between py-2 border-b border-default-100/70 dark:border-default-800/40">
+            {[1, 2, 3, 4, 5, 6].map((row) => (
+              <div
+                key={row}
+                className="flex items-center justify-between py-2.5 border-b border-default-100/70 dark:border-default-800/40"
+              >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-default-200 dark:bg-default-800 shrink-0" />
-                  <div className="space-y-1">
-                    <div className="h-3.5 w-36 sm:w-48 bg-default-200 dark:bg-default-800 rounded" />
-                    <div className="h-2.5 w-20 bg-default-100 dark:bg-default-800/60 rounded" />
+                  <div className="w-9 h-9 rounded-xl bg-default-200 dark:bg-default-800 shrink-0" />
+                  <div className="space-y-1.5">
+                    <div className="h-4 w-40 sm:w-56 bg-default-200 dark:bg-default-800 rounded" />
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 w-16 bg-default-100 dark:bg-default-800/60 rounded" />
+                      <div className="h-3 w-20 bg-default-100 dark:bg-default-800/60 rounded" />
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="h-3.5 w-16 bg-default-200/60 dark:bg-default-800/60 rounded hidden sm:block" />
-                  <div className="h-4 w-24 bg-default-200 dark:bg-default-800 rounded" />
+                  <div className="h-4 w-20 bg-default-200/60 dark:bg-default-800/60 rounded hidden sm:block" />
+                  <div className="h-5 w-24 bg-default-300 dark:bg-default-700 rounded-md" />
                 </div>
               </div>
             ))}

@@ -43,7 +43,7 @@ export function exportToExcel(
 
   // 1. SHEET 1: Executive Summary
   const summaryData = [
-    ["NOVAJOURNAL FINANCIAL STATEMENT & AUDIT LEDGER"],
+    ["NOVAFINANCE FINANCIAL STATEMENT & AUDIT LEDGER"],
     ["Generated:", new Date().toLocaleString("id-ID")],
     ["Workspace Entity:", workspaceName],
     ["Operating Currency:", currency],
@@ -58,13 +58,16 @@ export function exportToExcel(
     [],
     ["LIQUIDITY VAULTS & ACCOUNT BALANCES"],
     ["Account Name", "Type", "Current Balance", "Currency"],
-    ...accounts.map((acc) => [
+  ];
+
+  accounts.forEach((acc) => {
+    summaryData.push([
       acc.name || "Main Wallet",
       (acc.type || "Cash").toUpperCase(),
       typeof acc.balance === "string" ? parseFloat(acc.balance) : Number(acc.balance || 0),
       acc.currency || currency,
-    ]),
-  ];
+    ]);
+  });
 
   const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
 
@@ -78,56 +81,38 @@ export function exportToExcel(
 
   XLSX.utils.book_append_sheet(wb, wsSummary, "Executive Summary");
 
-  // 2. SHEET 2: Transaction Ledger
-  const ledgerHeaders = [
-    "No",
-    "Transaction ID",
-    "Date & Time",
-    "Description",
-    "Type",
-    `Amount (${currency})`,
-    "Category",
-    "Account / Wallet",
-    "Notes",
+  // 2. SHEET 2: Transaction Ledger (Full audit trail)
+  const ledgerHeader = [
+    ["Transaction Date", "Type", "Title / Note", "Category", "Nominal Amount", "Account / Wallet", "Reference ID"],
   ];
 
-  const ledgerRows = transactions.map((tx, idx) => {
-    const amt = typeof tx.amount === "string" ? parseFloat(tx.amount) : Number(tx.amount || 0);
-    const categoryName = typeof tx.category === "object" ? tx.category?.name : tx.category || "General";
-    const accountName = typeof tx.account === "object" ? tx.account?.name : tx.account || "Main Account";
+  const ledgerRows = transactions.map((tx) => [
+    tx.date ? new Date(tx.date).toLocaleDateString("id-ID") : "-",
+    tx.type === "income" ? "INCOME (Credit)" : "EXPENSE (Debit)",
+    tx.note || tx.description || "-",
+    typeof tx.category === "object" ? tx.category?.name : tx.category || "General",
+    typeof tx.amount === "string" ? parseFloat(tx.amount) : Number(tx.amount || 0),
+    typeof tx.account === "object" ? tx.account?.name : tx.account || tx.wallet || "Main Vault",
+    tx.id || "-",
+  ]);
 
-    return [
-      idx + 1,
-      tx.id || "",
-      tx.date ? new Date(tx.date).toLocaleString("id-ID") : "",
-      tx.description || "Untitled Transaction",
-      (tx.type || "expense").toUpperCase(),
-      amt,
-      categoryName,
-      accountName,
-      tx.notes || "",
-    ];
-  });
+  const wsLedger = XLSX.utils.aoa_to_sheet([...ledgerHeader, ...ledgerRows]);
 
-  const wsLedger = XLSX.utils.aoa_to_sheet([ledgerHeaders, ...ledgerRows]);
-
-  // Set column widths for ledger
+  // Styling Column widths
   wsLedger["!cols"] = [
-    { wch: 6 },
-    { wch: 28 },
-    { wch: 20 },
-    { wch: 35 },
-    { wch: 12 },
     { wch: 18 },
+    { wch: 18 },
+    { wch: 32 },
     { wch: 20 },
     { wch: 20 },
-    { wch: 30 },
+    { wch: 20 },
+    { wch: 26 },
   ];
 
   XLSX.utils.book_append_sheet(wb, wsLedger, "Transaction Ledger");
 
   // Write and download file
-  const filename = `novajournal-${workspaceName.toLowerCase().replace(/\s+/g, "-")}-statement-${dateStr}.xlsx`;
+  const filename = `novafinance-${workspaceName.toLowerCase().replace(/\s+/g, "-")}-statement-${dateStr}.xlsx`;
   XLSX.writeFile(wb, filename);
 }
 
@@ -163,7 +148,7 @@ export function exportToPdf(
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
-  doc.text("NOVAJOURNAL FINANCIAL STATEMENT", 14, 14);
+  doc.text("NOVAFINANCE FINANCIAL STATEMENT", 14, 14);
 
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
@@ -276,12 +261,12 @@ export function exportToPdf(
     doc.setFontSize(7.5);
     doc.setTextColor(148, 163, 184);
     doc.text(
-      `NovaJournal Financial Core Engine • Halaman ${i} dari ${pageCount} • Dokumen rahasia terenkripsi`,
+      `NovaFinance Financial Core Engine • Halaman ${i} dari ${pageCount} • Dokumen rahasia terenkripsi`,
       14,
       290
     );
   }
 
-  const filename = `novajournal-${workspaceName.toLowerCase().replace(/\s+/g, "-")}-statement-${dateStr}.pdf`;
+  const filename = `novafinance-${workspaceName.toLowerCase().replace(/\s+/g, "-")}-statement-${dateStr}.pdf`;
   doc.save(filename);
 }
