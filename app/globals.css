@@ -307,3 +307,159 @@ html.enable-nebula-glow body {
   background-attachment: fixed;
 }
 
+/* Background Layout: Fluid Cosmic Wave */
+html[data-bg-style="fluid"] body,
+body[data-bg-style="fluid"] {
+  background-image: 
+    radial-gradient(circle at 12% 18%, rgba(99, 102, 241, 0.14) 0%, transparent 45%),
+    radial-gradient(circle at 88% 28%, rgba(236, 72, 153, 0.12) 0%, transparent 42%),
+    radial-gradient(circle at 50% 85%, rgba(59, 130, 246, 0.12) 0%, transparent 50%) !important;
+  background-attachment: fixed !important;
+}
+
+/* Background Layout: Polosan Minimalist */
+html[data-bg-style="plain"] body,
+body[data-bg-style="plain"] {
+  background-image: none !important;
+}
+
+/* Backdrop Glass Effect (Kaca Akrilik) */
+html[data-backdrop-glass="true"] header,
+html[data-backdrop-glass="true"] aside,
+html[data-backdrop-glass="true"] .card,
+html[data-backdrop-glass="true"] .bg-white\/90,
+html[data-backdrop-glass="true"] .bg-white\/95,
+html[data-backdrop-glass="true"] .bg-white\/80,
+html[data-backdrop-glass="true"] .bg-white\/70,
+html[data-backdrop-glass="true"] .dark\:bg-gray-900\/90,
+html[data-backdrop-glass="true"] .dark\:bg-gray-900\/95,
+html[data-backdrop-glass="true"] .dark\:bg-gray-900\/80,
+html[data-backdrop-glass="true"] .dark\:bg-gray-900\/70 {
+  backdrop-filter: blur(16px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+}
+
+html[data-backdrop-glass="false"] header,
+html[data-backdrop-glass="false"] aside,
+html[data-backdrop-glass="false"] .bg-white\/90,
+html[data-backdrop-glass="false"] .dark\:bg-gray-900\/90 {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Custom Dimensions Override */
+html[data-density-sidebar="custom"] aside:not(.w-14) {
+  width: var(--sidebar-custom-w, 15rem) !important;
+}
+html[data-density-navbar="custom"] header,
+html[data-density-navbar="custom"] nav {
+  min-height: var(--navbar-custom-h, 3.75rem) !important;
+}
+html[data-density-layout="custom"] {
+  --density-card-p: var(--layout-custom-p, 1.25rem);
+  --density-gap: var(--layout-custom-gap, 0.875rem);
+}
+
+/* UI Typography & Font Family Engine */
+[data-font="inter"] {
+  font-family: var(--font-inter, 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif) !important;
+}
+[data-font="jakarta"] {
+  font-family: 'Plus Jakarta Sans', var(--font-inter, 'Inter'), -apple-system, sans-serif !important;
+}
+[data-font="outfit"] {
+  font-family: 'Outfit', -apple-system, sans-serif !important;
+}
+[data-font="geist"] {
+  font-family: 'Geist', var(--font-geist-sans), monospace, sans-serif !important;
+}
+[data-font="fira"] {
+  font-family: 'Fira Code', var(--font-geist-mono), monospace !important;
+}
+[data-font="playfair"] {
+  font-family: 'Playfair Display', Georgia, Cambria, serif !important;
+}
+
+/* Tierlist Animated Loops */
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradientFlow 3s ease infinite;
+}
+
+@keyframes badgeShimmer {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+  70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+/* ==========================================================================
+   CLEAN & MINIMALIST GLOBAL SCROLLBAR SYSTEM (THEME ACCENT INTEGRATED)
+   Ultra-sleek 6px, rounded pill thumb, theme-aware hover glow, transparent track
+   ========================================================================== */
+html,
+body,
+* {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent !important;
+}
+
+.dark,
+.dark html,
+.dark body,
+.dark * {
+  scrollbar-color: rgba(148, 163, 184, 0.22) transparent !important;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+*::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+*::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35) !important;
+  border-radius: 9999px !important;
+  border: 1px solid transparent !important;
+  background-clip: padding-box !important;
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover,
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color, #2563eb) !important;
+  box-shadow: 0 0 10px var(--primary-ring, rgba(37, 99, 235, 0.4)) !important;
+}
+
+.dark html::-webkit-scrollbar-thumb,
+.dark body::-webkit-scrollbar-thumb,
+.dark *::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.22) !important;
+}
+
+.dark html::-webkit-scrollbar-thumb:hover,
+.dark body::-webkit-scrollbar-thumb:hover,
+.dark *::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-color, #3b82f6) !important;
+  box-shadow: 0 0 12px var(--primary-ring, rgba(59, 130, 246, 0.4)) !important;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent !important;
+}
+
+
+
