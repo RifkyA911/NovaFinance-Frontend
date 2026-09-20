@@ -37,13 +37,17 @@ import {
   CheckCheck,
   Clock,
   Palette,
+  Globe,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useTheme } from "next-themes";
 import { getEffectiveRole, ROLES } from "@/app/lib/rbac";
-import { playNovaThemeSound, playSoftChime, playNovaSpaceSound } from "@/app/lib/sound";
+import { playNovaThemeSound, playSoftChime, playNovaSpaceSound, playRealisticClick } from "@/app/lib/sound";
+import { api } from "@/app/lib/api";
+import { useIntlLanguage, DICTIONARY } from "@/app/lib/intl";
+import { triggerThemeTransition } from "./ThemeTransitionOverlay";
 
 const NAVBAR_PALETTES = [
   { id: "blue", name: "Modern Blue", hex: "#2563eb" },
@@ -212,11 +216,59 @@ const searchMenuItems: SearchMenuItem[] = [
   },
   {
     id: "settings",
-    label: "Settings",
+    label: "Settings Hub",
     path: "/settings",
-    group: "System",
+    group: "Settings & Configuration",
     icon: Settings,
-    description: "User profile, currency and preferences",
+    description: "Central preferences, shortcuts and audio settings",
+  },
+  {
+    id: "regional",
+    label: "Regional, Currency & Date Format",
+    path: "/regional",
+    group: "Settings & Configuration",
+    icon: Globe,
+    description: "Base currency, financial date format, decimal separator, and timezone",
+  },
+  {
+    id: "profile",
+    label: "User Profile",
+    path: "/profile",
+    group: "Settings & Configuration",
+    icon: User,
+    description: "Avatar crop, bio, professional job title and email",
+  },
+  {
+    id: "brand",
+    label: "Company Brand & Identity",
+    path: "/brand",
+    group: "Settings & Configuration",
+    icon: Building2,
+    description: "Corporate logo, brand name, sidebar badge, and white-label",
+  },
+  {
+    id: "appearance",
+    label: "Appearance & Theme",
+    path: "/appearance",
+    group: "Settings & Configuration",
+    icon: Palette,
+    description: "Dark/light mode, custom hex colors, font selector, and UI density",
+  },
+  {
+    id: "ai-hub",
+    label: "AI Hub & Copilot",
+    path: "/ai-hub",
+    group: "Settings & Configuration",
+    icon: Zap,
+    description: "API keys (Gemini, Groq, DeepSeek, Claude), persona, and TTS voice",
+  },
+  {
+    id: "security",
+    label: "Security & Vault",
+    path: "/security",
+    group: "Settings & Configuration",
+    icon: ShieldCheck,
+    description: "TLS 1.3 encryption, active sessions, and multi-tenant security",
   },
 ];
 
@@ -230,7 +282,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
     setMounted(true);
   }, []);
   const isDarkTheme = mounted && (resolvedTheme === "dark" || theme === "dark");
-  const [lang, setLang] = useState<"en" | "id">("en");
+  const { lang, setLang, t, isId } = useIntlLanguage();
 
   // Notifications Prototype State
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
@@ -241,20 +293,60 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
   const [customAvatar, setCustomAvatar] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
     const updateAvatar = () => {
       try {
         const av = localStorage.getItem("novajournal_user_avatar");
-        setCustomAvatar(av);
-      } catch {}
+        setCustomAvatar(av || (user as any)?.image || null);
+      } catch {
+        setCustomAvatar((user as any)?.image || null);
+      }
     };
     updateAvatar();
+
+    // Fetch database profile if not yet cached or to ensure fresh avatar
+    api.getUserProfile().then((res) => {
+      if (isMounted && res.success && res.data?.image) {
+        setCustomAvatar(res.data.image);
+        try {
+          localStorage.setItem("novajournal_user_avatar", res.data.image);
+        } catch {}
+      }
+    }).catch(() => {});
+
     window.addEventListener("novajournal_avatar_changed", updateAvatar);
     window.addEventListener("storage", updateAvatar);
     return () => {
+      isMounted = false;
       window.removeEventListener("novajournal_avatar_changed", updateAvatar);
       window.removeEventListener("storage", updateAvatar);
     };
-  }, []);
+  }, [user]);
+
+  // Brand Logo and Custom Name sync
+  const [navBrandLogo, setNavBrandLogo] = useState<string | null>(null);
+  const [navBrandMode, setNavBrandMode] = useState<"square" | "wide">("square");
+  const [navBrandName, setNavBrandName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const updateBrand = () => {
+      const ws = selectedWorkspace as any;
+      const cachedLogo = localStorage.getItem("novajournal_custom_brand_logo");
+      const cachedMode = localStorage.getItem("novajournal_brand_logo_mode") as any;
+      const cachedName = localStorage.getItem("novajournal_custom_brand_name");
+      setNavBrandLogo(cachedLogo || ws?.customBrandLogo || null);
+      if (cachedMode === "square" || cachedMode === "wide") setNavBrandMode(cachedMode);
+      else if (ws?.customBrandMode === "square" || ws?.customBrandMode === "wide") setNavBrandMode(ws.customBrandMode);
+      setNavBrandName(cachedName || ws?.customBrandName || null);
+    };
+    updateBrand();
+    window.addEventListener("novajournal_brand_config_changed", updateBrand);
+    window.addEventListener("storage", updateBrand);
+    return () => {
+      window.removeEventListener("novajournal_brand_config_changed", updateBrand);
+      window.removeEventListener("storage", updateBrand);
+    };
+  }, [selectedWorkspace]);
 
   // Theme Palette Selection State & Sync
   const [activePalette, setActivePalette] = useState("blue");
@@ -301,22 +393,6 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
     return true;
   });
 
-  useEffect(() => {
-    const saved = localStorage.getItem("novajournal_lang");
-    if (saved === "en" || saved === "id") setLang(saved);
-
-    const handleLang = () => {
-      const s = localStorage.getItem("novajournal_lang");
-      if (s === "en" || s === "id") setLang(s);
-    };
-    window.addEventListener("novajournal_lang_change", handleLang);
-    window.addEventListener("storage", handleLang);
-    return () => {
-      window.removeEventListener("novajournal_lang_change", handleLang);
-      window.removeEventListener("storage", handleLang);
-    };
-  }, []);
-
   const [activeRole, setActiveRole] = useState<string>("owner");
   useEffect(() => {
     const syncRole = () => {
@@ -329,10 +405,63 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
   }, [selectedWorkspace]);
 
   const switchLang = (target: "en" | "id") => {
+    playRealisticClick(0.3);
     setLang(target);
-    localStorage.setItem("novajournal_lang", target);
-    window.dispatchEvent(new Event("novajournal_lang_change"));
   };
+
+  // Granular Navbar Appearance States
+  const [navbarDensity, setNavbarDensity] = useState<"compact" | "comfortable" | "spacious">("comfortable");
+  const [navbarHeightPx, setNavbarHeightPx] = useState(56);
+  const [navbarStickyGlass, setNavbarStickyGlass] = useState(true);
+  const [navbarGlassBg, setNavbarGlassBg] = useState(true);
+  const [showOnlinePing, setShowOnlinePing] = useState(true);
+  const [showRoleBadge, setShowRoleBadge] = useState(true);
+  const [showFiatPill, setShowFiatPill] = useState(true);
+  const [showLangSwitcher, setShowLangSwitcher] = useState(true);
+  const [navbarAvatarSize, setNavbarAvatarSize] = useState<number>(28);
+
+  useEffect(() => {
+    const loadNavbarPrefs = () => {
+      const den = localStorage.getItem("novajournal_navbar_density") as any;
+      if (den === "compact" || den === "comfortable" || den === "spacious") setNavbarDensity(den);
+      const navHCustom = localStorage.getItem("novajournal_navbar_height_custom");
+      let computedNavH = den === "compact" ? 48 : den === "spacious" ? 64 : 56;
+      if (navHCustom) computedNavH = Number(navHCustom) || computedNavH;
+      setNavbarHeightPx(computedNavH);
+
+      const sticky = localStorage.getItem("novajournal_navbar_sticky_glass");
+      if (sticky !== null) setNavbarStickyGlass(sticky !== "false");
+
+      const glassBg = localStorage.getItem("novajournal_navbar_glass_bg");
+      if (glassBg !== null) setNavbarGlassBg(glassBg !== "false");
+
+      const ping = localStorage.getItem("novajournal_navbar_online_ping");
+      if (ping !== null) setShowOnlinePing(ping !== "false");
+
+      const role = localStorage.getItem("novajournal_navbar_role_badge");
+      if (role !== null) setShowRoleBadge(role !== "false");
+
+      const fiat = localStorage.getItem("novajournal_navbar_fiat_pill");
+      if (fiat !== null) setShowFiatPill(fiat !== "false");
+
+      const langSwitch = localStorage.getItem("novajournal_navbar_lang_switcher");
+      if (langSwitch !== null) setShowLangSwitcher(langSwitch !== "false");
+
+      const savedAvatarSize = localStorage.getItem("novajournal_navbar_avatar_size");
+      if (savedAvatarSize) setNavbarAvatarSize(Number(savedAvatarSize) || 28);
+    };
+    loadNavbarPrefs();
+    window.addEventListener("novajournal_appearance_config_changed", loadNavbarPrefs);
+    window.addEventListener("novajournal_navbar_config_changed", loadNavbarPrefs);
+    window.addEventListener("novajournal_avatar_changed", loadNavbarPrefs);
+    window.addEventListener("storage", loadNavbarPrefs);
+    return () => {
+      window.removeEventListener("novajournal_appearance_config_changed", loadNavbarPrefs);
+      window.removeEventListener("novajournal_navbar_config_changed", loadNavbarPrefs);
+      window.removeEventListener("novajournal_avatar_changed", loadNavbarPrefs);
+      window.removeEventListener("storage", loadNavbarPrefs);
+    };
+  }, []);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -433,7 +562,18 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
   };
 
   return (
-    <header className="h-12 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-2xs flex items-center justify-between px-3 md:px-4 shrink-0 z-30 transition-colors">
+    <header
+      style={{ height: `var(--navbar-height, ${navbarHeightPx}px)` }}
+      className={`${
+        navbarStickyGlass ? "sticky top-0 z-40" : "relative"
+      } ${
+        navbarGlassBg
+          ? "backdrop-blur-md bg-white/40 dark:bg-gray-950/40"
+          : "bg-white dark:bg-gray-950"
+      } ${
+        navbarDensity === "compact" ? "px-2.5 md:px-3" : "px-3 md:px-4"
+      } border-b border-default-200/60 dark:border-default-800/60 shadow-2xs flex items-center justify-between shrink-0 transition-all`}
+    >
       {/* Left - Mobile Sidebar Toggle & HeroUI Workspace Selector (No plus button) */}
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Mobile Sidebar Toggle */}
@@ -469,15 +609,16 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                   {selectedWorkspace?.name || "Pilih Workspace"}
                 </span>
                 {/* Fiat Badge */}
-                {(() => {
-                  const fiat = getCurrencyFiat(selectedWorkspace?.currency);
-                  return (
-                    <span className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-mono font-medium bg-default-200/60 dark:bg-default-700/60 text-default-600 dark:text-default-300 shrink-0">
-                      <span>{fiat.flag}</span>
-                      <span>{selectedWorkspace?.currency || "IDR"}</span>
-                    </span>
-                  );
-                })()}
+                {showFiatPill &&
+                  (() => {
+                    const fiat = getCurrencyFiat(selectedWorkspace?.currency);
+                    return (
+                      <span className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-mono font-medium bg-default-200/60 dark:bg-default-700/60 text-default-600 dark:text-default-300 shrink-0">
+                        <span>{fiat.flag}</span>
+                        <span>{selectedWorkspace?.currency || "IDR"}</span>
+                      </span>
+                    );
+                  })()}
                 <ChevronDown className="w-3 h-3 text-default-400 shrink-0 ml-0.5" />
               </Dropdown.Trigger>
               <Dropdown.Popover className="min-w-64 z-50 p-1.5 shadow-xl bg-white dark:bg-gray-900 rounded-xl border border-default-200/80 dark:border-default-800">
@@ -650,72 +791,77 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
       {/* Right - Online Status, Role Badge, Theme Toggler & User Dropdown */}
       <div className="flex items-center gap-2 sm:gap-2.5">
         {/* Online Status Indicator Badge */}
-        <div
-          className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold select-none shadow-2xs"
-          title="Status Akun: Online & Terkoneksi"
-        >
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-          <span className="text-[10px] tracking-wide">Online</span>
-        </div>
+        {showOnlinePing && (
+          <div
+            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold select-none shadow-2xs"
+            title="Status Akun: Online & Terkoneksi"
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="text-[10px] tracking-wide">Online</span>
+          </div>
+        )}
 
         {/* Role Type UI Badge */}
-        {(() => {
-          const currentRole = (activeRole || "owner").toUpperCase();
-          const isOwner = currentRole === "OWNER";
-          const isAdmin = currentRole === "ADMIN";
-          const isStaff = currentRole === "STAFF";
-          const isViewer = currentRole === "VIEWER";
+        {showRoleBadge &&
+          (() => {
+            const currentRole = (activeRole || "owner").toUpperCase();
+            const isOwner = currentRole === "OWNER";
+            const isAdmin = currentRole === "ADMIN";
+            const isStaff = currentRole === "STAFF";
+            const isViewer = currentRole === "VIEWER";
 
-          return (
-            <div
-              className={`hidden md:flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase border shadow-2xs ${
-                isOwner
-                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
-                  : isAdmin
-                  ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30"
-                  : isStaff
-                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
-                  : "bg-default-100 text-default-600 dark:text-default-400 border-default-200 dark:border-default-700"
-              }`}
-              title={`Role Akses: ${currentRole} (Click Users & RBAC to manage)`}
-            >
-              {isOwner && <ShieldCheck className="w-3 h-3 text-amber-500" />}
-              {isAdmin && <Zap className="w-3 h-3 text-purple-500" />}
-              {isStaff && <User className="w-3 h-3 text-blue-500" />}
-              {isViewer && <Lock className="w-3 h-3 text-default-400" />}
-              <span>{currentRole}</span>
-            </div>
-          );
-        })()}
+            return (
+              <div
+                className={`hidden md:flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase border shadow-2xs ${
+                  isOwner
+                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                    : isAdmin
+                    ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30"
+                    : isStaff
+                    ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
+                    : "bg-default-100 text-default-600 dark:text-default-400 border-default-200 dark:border-default-700"
+                }`}
+                title={`Role Akses: ${currentRole} (Click Users & RBAC to manage)`}
+              >
+                {isOwner && <ShieldCheck className="w-3 h-3 text-amber-500" />}
+                {isAdmin && <Zap className="w-3 h-3 text-purple-500" />}
+                {isStaff && <User className="w-3 h-3 text-blue-500" />}
+                {isViewer && <Lock className="w-3 h-3 text-default-400" />}
+                <span>{currentRole}</span>
+              </div>
+            );
+          })()}
 
         {/* Quick Language Switcher */}
-        <div className="flex items-center bg-default-100/80 dark:bg-default-800/60 p-0.5 rounded-lg border border-default-200/60 dark:border-default-700/60 text-[10px] font-bold select-none">
-          <button
-            type="button"
-            onClick={() => switchLang("en")}
-            className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
-              lang === "en"
-                ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-2xs"
-                : "text-default-400 hover:text-foreground"
-            }`}
-          >
-            EN
-          </button>
-          <button
-            type="button"
-            onClick={() => switchLang("id")}
-            className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
-              lang === "id"
-                ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-2xs"
-                : "text-default-400 hover:text-foreground"
-            }`}
-          >
-            ID
-          </button>
-        </div>
+        {showLangSwitcher && (
+          <div className="flex items-center bg-default-100/80 dark:bg-default-800/60 p-0.5 rounded-lg border border-default-200/60 dark:border-default-700/60 text-[10px] font-bold select-none">
+            <button
+              type="button"
+              onClick={() => switchLang("en")}
+              className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
+                lang === "en"
+                  ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-2xs"
+                  : "text-default-400 hover:text-foreground"
+              }`}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              onClick={() => switchLang("id")}
+              className={`px-1.5 py-0.5 rounded transition-all cursor-pointer ${
+                lang === "id"
+                  ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-2xs"
+                  : "text-default-400 hover:text-foreground"
+              }`}
+            >
+              ID
+            </button>
+          </div>
+        )}
 
         {/* Notification Bell Dropdown (Prototype) */}
         <Dropdown>
@@ -831,9 +977,8 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
             variant="ghost"
             isIconOnly
             onClick={() => {
-              const nextTheme = theme === "dark" ? "light" : "dark";
-              playNovaThemeSound(nextTheme === "dark");
-              setTheme(nextTheme);
+              const nextTheme = (resolvedTheme === "dark" || theme === "dark") ? "light" : "dark";
+              triggerThemeTransition(nextTheme);
             }}
             className="h-7.5 w-7.5 cursor-pointer text-default-600 hover:text-foreground"
             aria-label="Toggle Theme"
@@ -854,7 +999,10 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           >
             {/* Avatar with live green online indicator ring */}
             <div className="relative shrink-0">
-              <div className="w-6 h-6 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-[11px] font-bold shadow-2xs overflow-hidden">
+              <div
+                style={{ width: `${navbarAvatarSize}px`, height: `${navbarAvatarSize}px` }}
+                className="rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-[11px] font-bold shadow-2xs overflow-hidden shrink-0 transition-all"
+              >
                 {customAvatar ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={customAvatar} alt="Profile" className="w-full h-full object-cover" />
@@ -862,7 +1010,9 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                   user?.name?.charAt(0)?.toUpperCase() || "U"
                 )}
               </div>
-              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-900 animate-pulse" />
+              {showOnlinePing && (
+                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-gray-900 animate-pulse" />
+              )}
             </div>
 
             <div className="hidden sm:flex flex-col text-left max-w-28">
@@ -909,7 +1059,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                           {roleConfig.label}
                         </span>
                       </div>
-                      <p className="text-[11px] text-default-500 truncate mt-0.5">{user?.email || "alexander@novajournal.io"}</p>
+                      <p className="text-[11px] text-default-500 truncate mt-0.5">{user?.email || "alexander@novafinance.io"}</p>
                       <div className="mt-1.5 flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
                         <span className="text-[10px] text-default-400 truncate">
@@ -985,7 +1135,9 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
             <Dropdown.Menu
               aria-label="User actions"
               onAction={(key) => {
-                if (key === "settings") router.push("/settings");
+                if (key === "profile") router.push("/profile");
+                else if (key === "settings") router.push("/settings");
+                else if (key === "regional") router.push("/regional");
                 else if (key === "workspaces") router.push("/workspaces");
                 else if (key === "theme") {
                   const nextTheme = theme === "dark" ? "light" : "dark";
@@ -1000,12 +1152,28 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
             >
               <Dropdown.Section>
                 <Dropdown.Item
+                  id="profile"
+                  textValue="Profile & Brand"
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-default-100 dark:hover:bg-default-800 cursor-pointer outline-none"
+                >
+                  <User className="w-3.5 h-3.5 text-default-500" />
+                  <span>Profile & Brand</span>
+                </Dropdown.Item>
+                <Dropdown.Item
                   id="settings"
                   textValue="Settings"
                   className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-default-100 dark:hover:bg-default-800 cursor-pointer outline-none"
                 >
                   <Settings className="w-3.5 h-3.5 text-default-500" />
-                  <span>Account Settings</span>
+                  <span>{isId ? "Pusat Pengaturan" : "Account Settings"}</span>
+                </Dropdown.Item>
+                <Dropdown.Item
+                  id="regional"
+                  textValue="Regional & Formats"
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-foreground hover:bg-default-100 dark:hover:bg-default-800 cursor-pointer outline-none"
+                >
+                  <Globe className="w-3.5 h-3.5 text-default-500" />
+                  <span>{isId ? "Format Regional & Tanggal" : "Regional & Date Formats"}</span>
                 </Dropdown.Item>
                 <Dropdown.Item
                   id="workspaces"
