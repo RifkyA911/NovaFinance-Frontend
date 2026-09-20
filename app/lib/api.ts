@@ -55,6 +55,11 @@ export interface Workspace {
   name: string;
   type: 'PERSONAL' | 'BUSINESS' | 'personal' | 'umkm' | 'pt';
   currency: string;
+  customBrandLogo?: string | null;
+  customBrandName?: string | null;
+  customBrandDescription?: string | null;
+  customBrandJargon?: string | null;
+  planTier?: 'basic' | 'pro' | 'enterprise';
   createdAt: string;
 }
 
@@ -232,6 +237,33 @@ class ApiClient {
     return this.request('/api/workspaces');
   }
 
+  async updateWorkspace(
+    id: string,
+    payload: {
+      name?: string | null;
+      type?: 'personal' | 'umkm' | 'pt' | null;
+      currency?: string | null;
+      customBrandLogo?: string | null;
+      customBrandName?: string | null;
+      customBrandDescription?: string | null;
+      customBrandJargon?: string | null;
+      entityType?: string | null;
+      taxId?: string | null;
+      websiteUrl?: string | null;
+      planTier?: 'basic' | 'pro' | 'enterprise' | null;
+    }
+  ): Promise<{ success: boolean; data: { workspace: Workspace } }> {
+    return this.request(`/api/workspaces/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  // Dynamic Workspace Menus
+  async getWorkspaceMenus(workspaceId: string): Promise<{ success: boolean; data: any[] }> {
+    return this.request(`/api/workspaces/${workspaceId}/menus`);
+  }
+
   // Transactions
   async getTransactions(
     workspaceId: string,
@@ -386,6 +418,73 @@ class ApiClient {
     return this.request(`/api/goals/${id}`, {
       method: 'DELETE',
     });
+  }
+
+  // User Profile & MinIO S3 Avatar
+  async getUserProfile(): Promise<{ success: boolean; data: any }> {
+    return this.request('/api/user/profile');
+  }
+
+  async updateUserProfile(payload: {
+    name?: string;
+    jobTitle?: string;
+    department?: string;
+    phone?: string;
+    bio?: string;
+    timezone?: string;
+    lang?: string;
+    image?: string;
+  }): Promise<{ success: boolean; message: string; data: any }> {
+    return this.request('/api/user/profile', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async uploadAvatar(dataUrl: string): Promise<{ success: boolean; message: string; avatarUrl: string; data: any }> {
+    return this.request('/api/user/avatar', {
+      method: 'POST',
+      body: JSON.stringify({ dataUrl }),
+    });
+  }
+
+  async uploadBrandLogo(workspaceId: string, dataUrl: string, mode: 'square' | 'wide' = 'square'): Promise<{ success: boolean; message: string; brandLogoUrl: string; data: any }> {
+    return this.request(`/api/workspaces/${workspaceId}/brand-logo`, {
+      method: 'POST',
+      body: JSON.stringify({ dataUrl, mode }),
+    });
+  }
+
+  async testAiKey(provider: 'groq' | 'gemini' | 'deepseek' | 'claude', apiKey: string): Promise<{ success: boolean; message?: string; error?: string; latencyMs?: number; modelCount?: number; models?: string[] }> {
+    return this.request('/api/ai/test-key', {
+      method: 'POST',
+      body: JSON.stringify({ provider, apiKey }),
+    });
+  }
+
+  async testAiChat(payload: { provider: string; apiKey: string; model?: string; proxyUrl?: string }): Promise<{ success: boolean; message?: string; error?: string; reply?: string; usedModel?: string; latencyMs?: number }> {
+    return this.request('/api/ai/test-chat', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async recordAuditLog(payload: {
+    workspaceId: string;
+    action: string;
+    entityType: string;
+    entityId?: string;
+    oldData?: any;
+    newData?: any;
+  }): Promise<any> {
+    try {
+      return await this.request('/api/logs', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      return null;
+    }
   }
 }
 
