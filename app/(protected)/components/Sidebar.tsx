@@ -317,15 +317,7 @@ export default function Sidebar({
         }));
     };
 
-    if (!dbMenusData?.data || !Array.isArray(dbMenusData.data) || dbMenusData.data.length === 0) {
-      return DEFAULT_MENU_GROUPS.map((g) => ({
-        ...g,
-        title: groupTitles[g.id] || g.title,
-        items: filterAndLabelItems(g.items),
-      })).filter((g) => g.items.length > 0);
-    }
-
-    // Organize database menus by their group
+    // Build complete groups starting with DEFAULT_MENU_GROUPS
     const groups: Record<string, MenuItem[]> = {
       overview: [],
       planning: [],
@@ -333,6 +325,13 @@ export default function Sidebar({
       governance: [],
       configuration: [],
     };
+
+    // Pre-populate with all default system menu items
+    for (const defGroup of DEFAULT_MENU_GROUPS) {
+      if (groups[defGroup.id]) {
+        groups[defGroup.id] = defGroup.items.map((it) => ({ ...it }));
+      }
+    }
 
     const PATH_TO_GROUP: Record<string, string> = {
       "/dashboard": "overview",
@@ -363,24 +362,40 @@ export default function Sidebar({
       "/logs": "governance",
     };
 
-    for (const item of dbMenusData.data) {
-      let g = item.group;
-      if (!g || (g === "overview" && PATH_TO_GROUP[item.path] && PATH_TO_GROUP[item.path] !== "overview")) {
-        g = PATH_TO_GROUP[item.path] || g || "overview";
+    // If database returned menus, merge them (updating existing or appending new)
+    if (dbMenusData?.data && Array.isArray(dbMenusData.data) && dbMenusData.data.length > 0) {
+      for (const item of dbMenusData.data) {
+        let g = item.group;
+        if (!g || (g === "overview" && PATH_TO_GROUP[item.path] && PATH_TO_GROUP[item.path] !== "overview")) {
+          g = PATH_TO_GROUP[item.path] || g || "overview";
+        }
+        if (!groups[g]) groups[g] = [];
+
+        // Check if this item is disabled or inactive
+        if (item.isActive === false) {
+          groups[g] = groups[g].filter((existing) => existing.path !== item.path);
+          continue;
+        }
+
+        const IconComponent = (item.icon && ICON_MAP[item.icon]) ? ICON_MAP[item.icon] : LayoutDashboard;
+        const requiresAdmin = ["/settings", "/brand", "/workspaces", "/users", "/logs", "/reports/tax-compliance", "/content-management"].includes(item.path);
+        const requiresStaff = ["/wallets", "/reports/financial-statement", "/reports/budget-variance"].includes(item.path);
+
+        const existingIdx = groups[g].findIndex((existing) => existing.path === item.path);
+        const menuItemData: MenuItem = {
+          icon: IconComponent,
+          label: getTranslatedLabel(item),
+          path: item.path || "/dashboard",
+          allowedRoles: requiresAdmin ? ["owner", "admin"] : requiresStaff ? ["owner", "admin", "staff"] : undefined,
+          requiredRoleName: requiresAdmin ? "Admin" : requiresStaff ? "Staff+" : undefined,
+        };
+
+        if (existingIdx >= 0) {
+          groups[g][existingIdx] = menuItemData;
+        } else {
+          groups[g].push(menuItemData);
+        }
       }
-      if (!groups[g]) groups[g] = [];
-      const IconComponent = (item.icon && ICON_MAP[item.icon]) ? ICON_MAP[item.icon] : LayoutDashboard;
-
-      const requiresAdmin = ["/settings", "/brand", "/workspaces", "/users", "/logs", "/reports/tax-compliance", "/content-management"].includes(item.path);
-      const requiresStaff = ["/wallets", "/reports/financial-statement", "/reports/budget-variance"].includes(item.path);
-
-      groups[g].push({
-        icon: IconComponent,
-        label: getTranslatedLabel(item),
-        path: item.path || "/dashboard",
-        allowedRoles: requiresAdmin ? ["owner", "admin"] : requiresStaff ? ["owner", "admin", "staff"] : undefined,
-        requiredRoleName: requiresAdmin ? "Admin" : requiresStaff ? "Staff+" : undefined,
-      });
     }
 
     const ORDERED_GROUP_KEYS = ["overview", "planning", "reporting", "governance", "configuration"];
@@ -457,13 +472,13 @@ export default function Sidebar({
     setBrandLogoOverride(effLogo);
     setBrandVersion((v) => v + 1);
 
-    const effName = ws?.customBrandName || scopedName || null;
+    const effName = scopedName || localStorage.getItem("novajournal_custom_brand_name") || ws?.customBrandName || null;
     setBrandNameOverride(effName);
 
-    const effMode = (ws?.customBrandMode || scopedBrandMode || "square").toLowerCase();
+    const effMode = (scopedBrandMode || localStorage.getItem("novajournal_brand_logo_mode") || ws?.customBrandMode || "square").toLowerCase();
     if (effMode === "square" || effMode === "wide") setBrandModeOverride(effMode as any);
 
-    const effFormat = (ws?.customBrandDisplay || scopedFormat || "logo-and-text").toLowerCase();
+    const effFormat = (scopedFormat || localStorage.getItem("novajournal_brand_display_format") || ws?.customBrandDisplay || "logo-and-text").toLowerCase();
     if (effFormat === "logo-and-text" || effFormat === "logo-only" || effFormat === "full-banner") {
       setBrandDisplayFormat(effFormat as any);
     }

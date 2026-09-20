@@ -4,6 +4,25 @@ All notable changes to NovaFinance will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-09-20
+
+### Fixed & Enhanced
+- **System Menu Persistence & Query Merging (`Sidebar.tsx`)**:
+  - Fixed bug where newly introduced system menus (Reporting Suite, Content Management) rendered initially but disappeared when database menus finished fetching.
+  - Implemented safe menu merging: `DEFAULT_MENU_GROUPS` are pre-populated and merged with dynamic DB menus, guaranteeing that built-in system routes are permanently retained.
+- **Interactive Corporate Brand Preview Suite (`brand/page.tsx`)**:
+  - Completely overhauled Section 3 into a comprehensive, multi-mode simulator:
+    - **Sidebar Lengkap (240px)**: Exact replica of the live sidebar header with true side-cropping visualizers, active Dashboard indicator, and Core Engine footer.
+    - **Bilah Ramping (Rail 64px)**: Demonstrates compact icon behavior.
+    - **Joint Navbar & Sidebar**: Shows seamless intersection between top navbar and sidebar header.
+    - **Komparasi Mode**: Side-by-side comparison between Kotak 1:1 and Melebar (Wide / Banner) with use-case guidance.
+  - Added interactive in-place adjustment toolbar directly above preview canvas (instant Aspect Ratio toggle, Format selector, Alignment controls, and Width range slider with presets).
+  - Added theme simulator toggle (☀️ Light vs 🌙 Dark) and toggleable dashed crop guide calipers (`showCropGuides`).
+  - Added 3 technical telemetry panels explaining true symmetrical side-cropping, dimensions, and enterprise white-label compliance.
+- **Instant Aspect Ratio & Width Synchronization (`brand/page.tsx`, `Sidebar.tsx`)**:
+  - Fixed issue where switching Kotak/Wide or adjusting px width did not immediately reflect in the sidebar.
+  - Handlers now immediately update both workspace-scoped and global storage, dispatching `novajournal_brand_config_changed` events without waiting for debounced network requests.
+
 ## [0.4.0] - 2026-09-20
 
 ### Added
