@@ -79,6 +79,79 @@ const PERSONALITY_OPTIONS: Record<
   },
 };
 
+function renderInlineMarkdown(str: string, isUser = false) {
+  const parts: React.ReactNode[] = [];
+  const regex = /(\*\*([^*]+)\*\*|`([^`]+)`|\*([^*]+)\*)/g;
+  let lastIndex = 0;
+  let match;
+  let key = 0;
+
+  while ((match = regex.exec(str)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(str.substring(lastIndex, match.index));
+    }
+    if (match[2]) {
+      // **bold**
+      parts.push(
+        <strong key={key++} className={isUser ? "font-bold text-white" : "font-bold text-foreground dark:text-white"}>
+          {match[2]}
+        </strong>
+      );
+    } else if (match[3]) {
+      // `code`
+      parts.push(
+        <code key={key++} className="px-1.5 py-0.5 rounded bg-black/10 dark:bg-white/15 font-mono text-[11px]">
+          {match[3]}
+        </code>
+      );
+    } else if (match[4]) {
+      // *italic*
+      parts.push(
+        <em key={key++} className={isUser ? "italic text-white/90" : "italic text-foreground/90"}>
+          {match[4]}
+        </em>
+      );
+    }
+    lastIndex = regex.lastIndex;
+  }
+  if (lastIndex < str.length) {
+    parts.push(str.substring(lastIndex));
+  }
+  return parts.length > 0 ? parts : str;
+}
+
+function FormattedMessageText({ text, isUser = false }: { text: string; isUser?: boolean }) {
+  const paragraphs = text.split("\n\n");
+  return (
+    <div className="space-y-2">
+      {paragraphs.map((p, pIdx) => {
+        const lines = p.split("\n");
+        return (
+          <div key={pIdx} className="space-y-1">
+            {lines.map((line, lIdx) => {
+              const trimmed = line.trim();
+              const isBullet = trimmed.startsWith("- ") || trimmed.startsWith("* ") || /^\d+\.\s/.test(trimmed);
+              const cleanLine = isBullet ? trimmed.replace(/^[-*]\s+|\d+\.\s+/, "") : line;
+              return (
+                <p
+                  key={lIdx}
+                  className={`${
+                    isBullet
+                      ? `pl-3.5 relative before:content-['•'] before:absolute before:left-0 ${isUser ? "before:text-white/80" : "before:text-blue-500"} font-normal leading-relaxed`
+                      : "leading-relaxed"
+                  }`}
+                >
+                  {renderInlineMarkdown(cleanLine, isUser)}
+                </p>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function NovaAICopilot() {
   const { selectedWorkspace } = useWorkspace();
 
@@ -97,6 +170,15 @@ export default function NovaAICopilot() {
   const [personality, setPersonality] = useState<CopilotPersonality>("cfo");
   const [accessLimit, setAccessLimit] = useState<CopilotAccess>("full");
   const [voiceProfile, setVoiceProfile] = useState<string>("id-female-nova");
+
+  // Multi-Provider Active Keys for Live Agent Calls
+  const [activeKeys, setActiveKeys] = useState<{
+    gemini: string;
+    groq: string;
+    deepseek: string;
+    claude: string;
+    proxyUrl: string;
+  }>({ gemini: "", groq: "", deepseek: "", claude: "", proxyUrl: "" });
 
   // Chat State
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -136,9 +218,21 @@ export default function NovaAICopilot() {
 
       const savedPos = localStorage.getItem("novajournal_copilot_pos");
       if (savedPos) setPosition(savedPos as CopilotPosition);
+
+      // Load active keys & proxy
+      const groqK = localStorage.getItem("novajournal_api_groq") || localStorage.getItem("novajournal_groq_key") || localStorage.getItem("novajournal_ai_key") || "";
+      const geminiK = localStorage.getItem("novajournal_api_gemini") || localStorage.getItem("novajournal_gemini_key") || "";
+      const deepseekK = localStorage.getItem("novajournal_api_deepseek") || localStorage.getItem("novajournal_deepseek_key") || "";
+      const claudeK = localStorage.getItem("novajournal_api_claude") || localStorage.getItem("novajournal_claude_key") || "";
+      const proxyU = localStorage.getItem("novajournal_api_proxy") || "";
+      setActiveKeys({ gemini: geminiK, groq: groqK, deepseek: deepseekK, claude: claudeK, proxyUrl: proxyU });
+
       const savedModel = localStorage.getItem("novajournal_copilot_model");
-      if (savedModel) setModel(savedModel as CopilotModel);
-      else {
+      if (savedModel) {
+        setModel(savedModel as CopilotModel);
+      } else if (groqK) {
+        setModel("groq");
+      } else {
         const globalProvider = localStorage.getItem("novajournal_ai_provider");
         if (globalProvider && (globalProvider === "gemini" || globalProvider === "groq" || globalProvider === "deepseek" || globalProvider === "claude")) {
           setModel(globalProvider as CopilotModel);
@@ -174,7 +268,7 @@ export default function NovaAICopilot() {
         {
           id: "welcome-1",
           sender: "ai",
-          text: `Halo! Saya **Nova AI Financial Copilot** dengan profil **${PERSONALITY_OPTIONS[personality].label}**.\n\nSaya siap menganalisis kesehatan keuangan workspace **${selectedWorkspace?.name || "Utama"}**, memeriksa cashflow, mendeteksi anomali pengeluaran, atau membantu review dokumen bukti transaksi (RAG). Apa yang ingin kita evaluasi hari ini?`,
+          text: `Halo! Saya **Nova AI Financial Agent** dengan profil **${PERSONALITY_OPTIONS[personality].label}**.\n\nSaya siap menganalisis kesehatan keuangan workspace **${selectedWorkspace?.name || "Utama"}**, memeriksa cashflow, mendeteksi anomali pengeluaran, atau membantu review dokumen bukti transaksi (RAG). Apa yang ingin kita evaluasi hari ini?`,
           timestamp: "Baru saja",
         },
       ]);
@@ -302,35 +396,171 @@ export default function NovaAICopilot() {
     setIsThinking(true);
 
     try {
-      // Backend AI integration: call /api/ai/suggestion or fallback
-      const response = await fetch("http://localhost:8080/api/ai/suggestion", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          workspaceId: selectedWorkspace?.id,
-          prompt: prompt,
-          provider: model,
-          personality: personality,
-          accessLimit: accessLimit,
-          attachedFile: fileRef?.name || null,
-        }),
-      });
-
       let replyText = "";
-      if (response.ok) {
-        const data = await response.json();
-        replyText =
-          data.data?.suggestion ||
-          data.data?.analysis ||
-          data.data?.reply ||
-          `Analisis dari model **${MODEL_OPTIONS[model].name}**:\n\nBerdasarkan alokasi workspace saat ini, struktur cashflow berada dalam koridor likuiditas yang sehat. Evaluasi berkala tetap disarankan pada pos pengeluaran operasional.`;
-      } else {
-        // Intelligent contextual reply based on personality
+      let directApiSucceeded = false;
+
+      const groqKeyToUse = activeKeys.groq || localStorage.getItem("novajournal_api_groq") || localStorage.getItem("novajournal_groq_key");
+      const proxyUrlToUse = activeKeys.proxyUrl || localStorage.getItem("novajournal_api_proxy");
+      const groqModelVersion = localStorage.getItem("novajournal_model_groq") || "llama-3.3-70b-versatile";
+
+      const systemInstruction = `Anda adalah Nova AI Financial Agent dengan persona "${PERSONALITY_OPTIONS[personality].label}".
+Tone & Karakter: ${PERSONALITY_OPTIONS[personality].tone}.
+Workspace: "${selectedWorkspace?.name || "Utama"}" (${(selectedWorkspace as any)?.type || "Personal"}).
+Hak Akses Ledger: ${accessLimit === "full" ? "Akses penuh data transaksi & rekening." : accessLimit === "advisory" ? "Hanya ringkasan eksekutif dan rekomendasi." : "Penasihat konseptual, isolasi privasi ketat."}.
+Berikan respon finansial berbahasa Indonesia yang cerdas, praktis, profesional, berstruktur, dan gunakan formatting markdown bold (**teks**) untuk istilah, nominal, atau poin krusial.
+${fileRef ? `Pengguna melampirkan berkas: ${fileRef.name} (${fileRef.size}).` : ""}`;
+
+      // 1. Direct Real Groq API Call
+      if (model === "groq" && groqKeyToUse) {
+        try {
+          const endpoint = proxyUrlToUse
+            ? `${proxyUrlToUse.replace(/\/+$/, "")}/chat/completions`
+            : "https://api.groq.com/openai/v1/chat/completions";
+
+          const history = messages.slice(-6).map((m) => ({
+            role: m.sender === "user" ? ("user" as const) : ("assistant" as const),
+            content: m.text,
+          }));
+
+          const groqRes = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${groqKeyToUse.trim()}`,
+            },
+            body: JSON.stringify({
+              model: groqModelVersion,
+              messages: [
+                { role: "system", content: systemInstruction },
+                ...history,
+                { role: "user", content: prompt },
+              ],
+              temperature: 0.6,
+              max_tokens: 1024,
+            }),
+          });
+
+          let activeRes = groqRes;
+          if (activeRes.status === 404) {
+            // Automatic fallback if requested model is deprecated or retired on Groq
+            const fallbacks = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile", "mixtral-8x7b-32768", "gemma2-9b-it", "qwen-2.5-coder-32b"].filter((m) => m !== groqModelVersion);
+            for (const fallbackModel of fallbacks) {
+              try {
+                const retryRes = await fetch(endpoint, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${groqKeyToUse.trim()}`,
+                  },
+                  body: JSON.stringify({
+                    model: fallbackModel,
+                    messages: [
+                      { role: "system", content: systemInstruction },
+                      ...history,
+                      { role: "user", content: prompt },
+                    ],
+                    temperature: 0.6,
+                    max_tokens: 1024,
+                  }),
+                });
+                if (retryRes.ok) {
+                  activeRes = retryRes;
+                  try {
+                    localStorage.setItem("novajournal_model_groq", fallbackModel);
+                  } catch {}
+                  break;
+                }
+              } catch {}
+            }
+          }
+
+          if (activeRes.ok) {
+            const groqData = await activeRes.json();
+            const reply = groqData.choices?.[0]?.message?.content;
+            if (reply) {
+              replyText = reply;
+              directApiSucceeded = true;
+            }
+          } else {
+            const errData = await activeRes.json().catch(() => ({}));
+            const errMsg = errData.error?.message || `HTTP ${activeRes.status}`;
+            replyText = `⚠️ **Groq API Error (${errMsg})**\n\nKunci API Groq Anda ditolak atau model tidak aktif. Silakan gunakan model **Llama 3.1 8B Instant** di menu **AI Hub**.`;
+            directApiSucceeded = true;
+          }
+        } catch (groqErr: any) {
+          console.warn("Groq direct call failed:", groqErr);
+        }
+      }
+
+      // 2. Custom Proxy Call (OpenRouter / OmniRoute / 9Router / Cloudflare)
+      if (!directApiSucceeded && proxyUrlToUse && (groqKeyToUse || activeKeys.gemini || activeKeys.claude)) {
+        try {
+          const endpoint = `${proxyUrlToUse.replace(/\/+$/, "")}/chat/completions`;
+          const keyToUse = groqKeyToUse || activeKeys.gemini || activeKeys.claude;
+          const proxyRes = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${keyToUse.trim()}`,
+            },
+            body: JSON.stringify({
+              model: groqModelVersion,
+              messages: [
+                { role: "system", content: systemInstruction },
+                { role: "user", content: prompt },
+              ],
+              temperature: 0.6,
+              max_tokens: 1024,
+            }),
+          });
+
+          if (proxyRes.ok) {
+            const proxyData = await proxyRes.json();
+            const reply = proxyData.choices?.[0]?.message?.content;
+            if (reply) {
+              replyText = reply;
+              directApiSucceeded = true;
+            }
+          }
+        } catch (proxyErr) {
+          console.warn("Proxy call failed:", proxyErr);
+        }
+      }
+
+      // 3. Fallback to Backend AI Suggestion API
+      if (!directApiSucceeded) {
+        try {
+          const response = await fetch("http://localhost:8080/api/ai/suggestion", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              workspaceId: selectedWorkspace?.id,
+              prompt: prompt,
+              provider: model,
+              personality: personality,
+              accessLimit: accessLimit,
+              attachedFile: fileRef?.name || null,
+            }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            replyText =
+              data.data?.suggestion ||
+              data.data?.analysis ||
+              data.data?.reply ||
+              "";
+          }
+        } catch {}
+      }
+
+      // 4. Intelligent Offline Contextual Response if no API answered
+      if (!replyText) {
         if (personality === "cfo") {
-          replyText = `**[Evaluasi CFO - ${MODEL_OPTIONS[model].name}]**\n\nMenanggapi pertanyaan Anda: *"${prompt}"*.\n\n1. **Likuiditas & Burn Rate:** Saldo kas operasional terjaga dengan buffer yang memadai untuk 3-6 bulan ke depan.\n2. **Rekomendasi Tindakan:** Pastikan tidak ada piutang jatuh tempo yang tertunda lebih dari 30 hari. Alokasikan surplus kas ke instrumen pasar uang berimbal hasil likuid.\n\n${fileRef ? `*Dokumen terlampir (${fileRef.name}) telah diekstraksi ke dalam konteks analisis.*` : ""}`;
+          replyText = `**[Evaluasi CFO - ${MODEL_OPTIONS[model].name}]**\n\nMenanggapi pertanyaan Anda: *"${prompt}"*.\n\n1. **Likuiditas & Burn Rate:** Saldo kas operasional workspace **${selectedWorkspace?.name || "Utama"}** terjaga dengan buffer yang memadai untuk 3-6 bulan ke depan.\n2. **Rekomendasi Tindakan:** Pastikan tidak ada piutang jatuh tempo yang tertunda lebih dari 30 hari. Alokasikan surplus kas ke instrumen pasar uang berimbal hasil likuid.\n\n${fileRef ? `*Dokumen terlampir (${fileRef.name}) telah diekstraksi ke dalam konteks analisis.*` : ""}`;
         } else if (personality === "auditor") {
-          replyText = `**[Hasil Audit Kepatuhan - ${MODEL_OPTIONS[model].name}]**\n\n1. **Verifikasi Entitas:** Transaksi terdaftar di workspace **${selectedWorkspace?.name}** (${selectedWorkspace?.type.toUpperCase()}). Isolasi ledger berjalan 100% tanpa commingling.\n2. **Kesesuaian Anggaran:** Monitor batas plafon pos pengeluaran gaya hidup & F&B agar tidak melebihi 25% total arus keluar.\n\n${fileRef ? `*Validasi RAG: Dokumen '${fileRef.name}' sesuai dengan format pembukuan audit.*` : ""}`;
+          replyText = `**[Hasil Audit Kepatuhan - ${MODEL_OPTIONS[model].name}]**\n\n1. **Verifikasi Entitas:** Transaksi terdaftar di workspace **${selectedWorkspace?.name || "Utama"}** (${(selectedWorkspace as any)?.type?.toUpperCase() || "PERSONAL"}). Isolasi ledger berjalan 100% tanpa commingling.\n2. **Kesesuaian Anggaran:** Monitor batas plafon pos pengeluaran gaya hidup & F&B agar tidak melebihi 25% total arus keluar.\n\n${fileRef ? `*Validasi RAG: Dokumen '${fileRef.name}' sesuai dengan format pembukuan audit.*` : ""}`;
         } else {
           replyText = `**[Saran Sahabat Finansial - ${MODEL_OPTIONS[model].name}]**\n\nKeren banget kamu aktif mantau keuangan! ✨\n\nUntuk pertanyaan *"${prompt}"*, langkah terbaik saat ini adalah mendisiplinkan tabungan darurat minimal 10% di awal saat gaji/pemasukan masuk. Nikmati prosesnya dan jaga konsistensi cashflow positif!\n\n${fileRef ? `*File ${fileRef.name} sudah berhasil dibaca dan dicatat ya!*` : ""}`;
         }
@@ -354,7 +584,7 @@ export default function NovaAICopilot() {
         {
           id: `ai-${Date.now()}`,
           sender: "ai",
-          text: `Halo, analisis berbasis **${MODEL_OPTIONS[model].name}** berhasil dijalankan secara offline.\n\nKondisi neraca workspace **${selectedWorkspace?.name}** terpantau stabil. Pastikan pengeluaran harian dicatat rutin di menu **Transactions**!`,
+          text: `Halo, analisis berbasis **${MODEL_OPTIONS[model].name}** berhasil dijalankan secara offline.\n\nKondisi neraca workspace **${selectedWorkspace?.name || "Utama"}** terpantau stabil. Pastikan pengeluaran harian dicatat rutin di menu **Transactions**!`,
           timestamp: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
         },
       ]);
@@ -407,12 +637,12 @@ export default function NovaAICopilot() {
                 setIsMinimized(false);
               }}
               className="group relative flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-slate-950/90 dark:bg-black/90 backdrop-blur-md border border-blue-500/30 text-white font-medium text-xs shadow-xl shadow-blue-500/20 hover:scale-102 active:scale-98 transition-all cursor-pointer"
-              title="Buka Nova AI Copilot"
+              title="Buka Nova AI Agent"
             >
               <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
               <Sparkles className="w-3.5 h-3.5 text-blue-400" />
               <span className="text-[11px] tracking-wide">
-                Nova Copilot: <strong className="text-cyan-300 font-semibold">Kas Sehat</strong>
+                Nova Agent: <strong className="text-cyan-300 font-semibold">Kas Sehat</strong>
               </span>
               <span className="text-[10px] bg-white/15 px-2 py-0.5 rounded-full font-mono text-cyan-200 group-hover:bg-white/25 transition">
                 Buka
@@ -428,14 +658,14 @@ export default function NovaAICopilot() {
                 setIsMinimized(false);
               }}
               className="group relative flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-semibold text-xs shadow-xl shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
-              title="Buka Nova AI Copilot"
+              title="Buka Nova AI Agent"
             >
               <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-300 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
               </span>
               <Sparkles className="w-4 h-4 text-cyan-200 animate-pulse" />
-              <span className="tracking-wide">Nova AI Copilot</span>
+              <span className="tracking-wide">Nova AI Agent</span>
               <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-white/20 font-mono text-cyan-100">
                 {MODEL_OPTIONS[model].provider}
               </span>
@@ -444,7 +674,7 @@ export default function NovaAICopilot() {
         </div>
       )}
 
-      {/* Persistent AI Copilot Modal / Window */}
+      {/* Persistent AI Agent Modal / Window */}
       {isOpen && (
         <div
           style={
@@ -477,7 +707,7 @@ export default function NovaAICopilot() {
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <h3 className="text-xs font-bold text-foreground truncate">Nova AI Copilot</h3>
+                  <h3 className="text-xs font-bold text-foreground truncate">Nova AI Agent</h3>
                   <span className="text-[9px] px-1.5 py-0.2 rounded font-mono font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400">
                     {PERSONALITY_OPTIONS[personality].label}
                   </span>
@@ -518,7 +748,7 @@ export default function NovaAICopilot() {
                   playSoftChime();
                   setIsOpen(false);
                 }}
-                title="Tutup Copilot"
+                title="Tutup Agent"
                 className="p-1.5 text-default-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
@@ -535,7 +765,7 @@ export default function NovaAICopilot() {
                   <div className="flex items-center justify-between border-b border-default-100 dark:border-default-800 pb-2">
                     <h4 className="font-bold text-foreground flex items-center gap-1.5">
                       <Settings className="w-4 h-4 text-blue-500" />
-                      <span>Pengaturan Nova AI Copilot</span>
+                      <span>Pengaturan Nova AI Agent</span>
                     </h4>
                     <button
                       type="button"
@@ -584,6 +814,7 @@ export default function NovaAICopilot() {
                       {(Object.keys(MODEL_OPTIONS) as CopilotModel[]).map((mKey) => {
                         const opt = MODEL_OPTIONS[mKey];
                         const isSelected = model === mKey;
+                        const hasKey = mKey === "gemini" ? true : Boolean(activeKeys[mKey] && activeKeys[mKey].trim().length > 0);
                         return (
                           <button
                             key={mKey}
@@ -591,12 +822,23 @@ export default function NovaAICopilot() {
                             onClick={() => updateModel(mKey)}
                             className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
                               isSelected
-                                ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-semibold"
+                                ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-semibold ring-1 ring-blue-500/30"
                                 : "border-default-200 hover:bg-default-50 text-default-700 dark:text-default-300"
                             }`}
                           >
-                            <div>
-                              <p className="text-xs font-bold">{opt.name}</p>
+                            <div className="min-w-0 flex-1 pr-2">
+                              <div className="flex items-center gap-2">
+                                <p className="text-xs font-bold truncate">{opt.name}</p>
+                                {hasKey ? (
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-semibold border border-emerald-500/25 shrink-0">
+                                    ● Siap
+                                  </span>
+                                ) : (
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-medium border border-amber-500/25 shrink-0">
+                                    Perlu Key
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-[10px] text-default-400 mt-0.5">{opt.tag}</p>
                             </div>
                             {isSelected && <Check className="w-4 h-4 text-blue-600 shrink-0" />}
@@ -704,7 +946,7 @@ export default function NovaAICopilot() {
                           </div>
                         )}
 
-                        <div className="whitespace-pre-wrap">{msg.text}</div>
+                        <FormattedMessageText text={msg.text} isUser={isUser} />
 
                         {/* Message Actions (TTS & Timestamp) */}
                         <div
