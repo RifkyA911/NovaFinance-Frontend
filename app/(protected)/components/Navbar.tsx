@@ -629,44 +629,60 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           {workspaces.length > 0 ? (
             <Dropdown>
               <Dropdown.Trigger
-                className="h-7.5 px-2.5 rounded-lg border border-default-200/80 dark:border-default-700/80 bg-default-100/70 hover:bg-default-200/60 dark:bg-default-800/60 dark:hover:bg-default-700/60 transition-colors flex items-center gap-1.5 focus:outline-none focus:ring-1.5 focus:ring-blue-500 cursor-pointer text-left max-w-56"
+                className="h-9 px-2.5 sm:px-3 rounded-xl border border-default-200/60 dark:border-default-700/60 bg-default-100/60 dark:bg-default-800/40 hover:bg-default-100 dark:hover:bg-default-800/80 shadow-2xs backdrop-blur-sm transition-all flex items-center gap-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer text-left max-w-72 select-none"
                 aria-label="Pilih Workspace"
               >
-                <div
-                  className={`w-2 h-2 rounded-full shrink-0 ${
-                    selectedWorkspace?.type === "personal"
-                      ? "bg-blue-500"
-                      : selectedWorkspace?.type === "umkm"
-                      ? "bg-emerald-500"
-                      : "bg-purple-500"
-                  }`}
-                />
-                <span className="truncate text-xs font-semibold text-foreground max-w-[100px] sm:max-w-[120px]">
-                  {selectedWorkspace?.name || "Pilih Workspace"}
+                {/* Brand / Entity Icon (Strict Square Profile) */}
+                {navBrandLogo ? (
+                  <img
+                    src={navBrandLogo}
+                    alt="Logo"
+                    className="w-5.5 h-5.5 aspect-square rounded-md object-contain shrink-0 border border-default-200/80 dark:border-default-700/80 bg-default-100/80 dark:bg-default-800/80 p-0.5 shadow-2xs"
+                  />
+                ) : (
+                  <div
+                    className={`w-5.5 h-5.5 aspect-square rounded-md flex items-center justify-center shrink-0 border shadow-2xs ${
+                      selectedWorkspace?.type === "pt" || selectedWorkspace?.type === "BUSINESS"
+                        ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/20"
+                        : selectedWorkspace?.type === "umkm"
+                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                        : "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                    }`}
+                  >
+                    <Building2 className="w-3 h-3" />
+                  </div>
+                )}
+
+                {/* Workspace / Brand Name */}
+                <span className="truncate text-xs font-semibold text-foreground max-w-[120px] sm:max-w-[160px] tracking-tight">
+                  {navBrandName || selectedWorkspace?.name || "Pilih Workspace"}
                 </span>
-                {/* Fiat Badge */}
-                {showFiatPill &&
-                  (() => {
-                    const fiat = getCurrencyFiat(selectedWorkspace?.currency);
-                    return (
-                      <span className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-mono font-medium bg-default-200/60 dark:bg-default-700/60 text-default-600 dark:text-default-300 shrink-0">
-                        <span>{fiat.flag}</span>
-                        <span>{selectedWorkspace?.currency || "IDR"}</span>
-                      </span>
-                    );
-                  })()}
-                <ChevronDown className="w-3 h-3 text-default-400 shrink-0 ml-0.5" />
+
+                {/* Clean Currency Badge */}
+                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 shrink-0 uppercase tracking-wider">
+                  {selectedWorkspace?.currency || "IDR"}
+                </span>
+
+                <ChevronDown className="w-3.5 h-3.5 text-default-400 shrink-0 ml-auto transition-transform" />
               </Dropdown.Trigger>
-              <Dropdown.Popover className="min-w-64 z-50 p-1.5 shadow-xl bg-white dark:bg-gray-900 rounded-xl border border-default-200/80 dark:border-default-800">
-                <div className="px-2.5 py-1.5 mb-1 text-[10px] font-bold text-default-400 uppercase tracking-wider border-b border-default-100 dark:border-default-800 flex items-center justify-between">
-                  <span>Pilih Entitas Workspace</span>
-                  <span className="text-[9px] font-normal normal-case font-mono">{workspaces.length} entitas</span>
+
+              <Dropdown.Popover className="min-w-72 z-50 p-2 shadow-2xl bg-white dark:bg-gray-900 rounded-2xl border border-default-200/90 dark:border-default-800">
+                {/* Header */}
+                <div className="px-2.5 py-2 mb-1 border-b border-default-100 dark:border-default-800 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-blue-500" />
+                    <span className="text-xs font-bold text-foreground">Workspace & Entitas</span>
+                  </div>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-default-100 dark:bg-default-800 text-default-600 dark:text-default-400">
+                    {workspaces.length} Entitas
+                  </span>
                 </div>
 
-                <div className="space-y-0.5 max-h-60 overflow-y-auto">
+                {/* Workspaces List */}
+                <div className="space-y-1 max-h-64 overflow-y-auto pr-0.5">
                   {workspaces.map((ws) => {
                     const isSelected = selectedWorkspace?.id === ws.id;
-                    const fiat = getCurrencyFiat(ws.currency);
+                    const wsType = (ws.type || "personal").toUpperCase();
                     return (
                       <button
                         key={ws.id}
@@ -677,53 +693,57 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                             setSelectedWorkspace(ws);
                           }
                         }}
-                        className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs cursor-pointer transition-colors text-left ${
+                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs cursor-pointer transition-all text-left border ${
                           isSelected
-                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold"
-                            : "hover:bg-default-100 dark:hover:bg-default-800 text-foreground"
+                            ? "bg-blue-50/70 dark:bg-blue-950/30 border-blue-500/40 text-blue-600 dark:text-blue-400 shadow-2xs font-semibold"
+                            : "border-transparent hover:bg-default-100/70 dark:hover:bg-default-800/70 text-foreground"
                         }`}
                       >
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
                           <div
-                            className={`w-2 h-2 rounded-full shrink-0 ${
-                              ws.type === "personal"
-                                ? "bg-blue-500"
-                                : ws.type === "umkm"
-                                ? "bg-emerald-500"
-                                : "bg-purple-500"
+                            className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                              isSelected
+                                ? "bg-blue-500 text-white shadow-2xs"
+                                : "bg-default-100 dark:bg-default-800 text-default-600 dark:text-default-300"
                             }`}
-                          />
+                          >
+                            <Building2 className="w-3.5 h-3.5" />
+                          </div>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-xs">{ws.name}</p>
-                            <div className="flex items-center gap-1.5 text-[10px] text-default-400">
-                              <span className="capitalize">{ws.type}</span>
+                            <p className="truncate text-xs font-bold text-foreground leading-tight">
+                              {(ws as any)?.customBrandName || ws.name}
+                            </p>
+                            <div className="flex items-center gap-1.5 text-[10px] text-default-400 mt-0.5">
+                              <span className="font-semibold text-default-500">{wsType}</span>
                               <span>•</span>
-                              <span className="font-mono text-default-500">
-                                {fiat.flag} {ws.currency} ({fiat.symbol})
+                              <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
+                                {ws.currency || "IDR"}
                               </span>
                             </div>
                           </div>
                         </div>
                         {isSelected && (
-                          <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 ml-1.5" />
+                          <div className="w-5 h-5 rounded-full bg-blue-500/15 flex items-center justify-center shrink-0 ml-2">
+                            <Check className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                          </div>
                         )}
                       </button>
                     );
                   })}
                 </div>
 
-                {/* Bottom action: Add New Workspace */}
-                <div className="mt-1.5 pt-1.5 border-t border-default-100 dark:border-default-800">
+                {/* Bottom Action: Clean Single-Plus Add Workspace */}
+                <div className="mt-2 pt-2 border-t border-default-100 dark:border-default-800 flex items-center gap-1.5">
                   <button
                     type="button"
                     onClick={() => {
                       playSoftChime();
                       router.push("/workspaces");
                     }}
-                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors cursor-pointer"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all shadow-xs cursor-pointer active:scale-98"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>+ Add New Workspace</span>
+                    <span>Tambah Workspace Baru</span>
                   </button>
                 </div>
               </Dropdown.Popover>
