@@ -2099,11 +2099,15 @@ export default function CompanyBrandPage() {
                                 )}
                                 {sidebarBrandDisplayMode !== "icon" && (
                                   <div className="flex flex-col min-w-0 leading-tight">
-                                    <span className="text-xs font-bold text-foreground truncate">
+                                    <span className={`text-xs font-bold truncate ${
+                                      previewTheme === "dark" ? "text-white" : "text-gray-900"
+                                    }`}>
                                       {customBrandName || "Nova Solusi Finansial"}
                                     </span>
                                     {effectiveSubtext && (
-                                      <span className="text-[9px] text-default-400 font-medium truncate">
+                                      <span className={`text-[9px] font-medium truncate ${
+                                        previewTheme === "dark" ? "text-zinc-400" : "text-zinc-500"
+                                      }`}>
                                         {effectiveSubtext}
                                       </span>
                                     )}
@@ -2295,7 +2299,11 @@ export default function CompanyBrandPage() {
                                 {customBrandName ? customBrandName.charAt(0).toUpperCase() : "C"}
                               </div>
                             )}
-                            <span className="text-xs font-bold truncate">{customBrandName || "Nova Solusi"}</span>
+                            <span className={`text-xs font-bold truncate ${
+                              previewTheme === "dark" ? "text-white" : "text-gray-900"
+                            }`}>
+                              {customBrandName || "Nova Solusi"}
+                            </span>
                           </div>
                           {showSidebarBrandBadge && (
                             brandBadgeStyle === "dot" ? (
