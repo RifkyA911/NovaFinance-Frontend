@@ -85,10 +85,12 @@ export const mutationFunctions = {
   uploadAvatar: (dataUrl: string) => api.uploadAvatar(dataUrl),
   uploadBrandLogo: (workspaceId: string, dataUrl: string, mode: 'square' | 'wide' = 'square') =>
     api.uploadBrandLogo(workspaceId, dataUrl, mode),
-  testAiKey: (provider: 'groq' | 'gemini' | 'deepseek' | 'claude', apiKey: string) =>
+  testAiKey: (provider: 'groq' | 'gemini' | 'deepseek' | 'claude' | 'openai' | 'gpt', apiKey: string) =>
     api.testAiKey(provider, apiKey),
   testAiChat: (payload: { provider: string; apiKey: string; model?: string; proxyUrl?: string }) =>
     api.testAiChat(payload),
+  ragUpload: (payload: { workspaceId: string; content: string; fileName?: string; useRabbitMQ?: boolean; categoryHint?: string; amountHint?: number }) =>
+    api.ragUpload(payload),
   recordAuditLog: (payload: { workspaceId: string; action: string; entityType: string; entityId?: string; oldData?: any; newData?: any }) =>
     api.recordAuditLog(payload),
 };
