@@ -455,7 +455,7 @@ class ApiClient {
     });
   }
 
-  async testAiKey(provider: 'groq' | 'gemini' | 'deepseek' | 'claude', apiKey: string): Promise<{ success: boolean; message?: string; error?: string; latencyMs?: number; modelCount?: number; models?: string[] }> {
+  async testAiKey(provider: 'groq' | 'gemini' | 'deepseek' | 'claude' | 'openai' | 'gpt', apiKey: string): Promise<{ success: boolean; message?: string; error?: string; latencyMs?: number; modelCount?: number; models?: string[] }> {
     return this.request('/api/ai/test-key', {
       method: 'POST',
       body: JSON.stringify({ provider, apiKey }),
@@ -464,6 +464,20 @@ class ApiClient {
 
   async testAiChat(payload: { provider: string; apiKey: string; model?: string; proxyUrl?: string }): Promise<{ success: boolean; message?: string; error?: string; reply?: string; usedModel?: string; latencyMs?: number }> {
     return this.request('/api/ai/test-chat', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async ragUpload(payload: {
+    workspaceId: string;
+    content: string;
+    fileName?: string;
+    useRabbitMQ?: boolean;
+    categoryHint?: string;
+    amountHint?: number;
+  }): Promise<{ success: boolean; data?: any; error?: string }> {
+    return this.request('/api/ai/rag-upload', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
