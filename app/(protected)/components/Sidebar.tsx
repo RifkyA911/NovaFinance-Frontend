@@ -210,7 +210,7 @@ const DEFAULT_MENU_GROUPS: MenuGroup[] = [
       },
       {
         icon: Cpu,
-        label: "AI Hub & Copilot",
+        label: "Nova AI",
         path: "/ai-hub",
       },
       {
@@ -941,6 +941,28 @@ export default function Sidebar({
 
         {/* Grouped Accordion Navigation */}
         <nav className="flex-1 px-2 py-2 space-y-2.5 overflow-y-auto overflow-x-hidden no-scrollbar">
+          {/* Corporate Brand Entity Header Strip above Overview */}
+          {!collapsed && (
+            <div className="mx-1 mb-2 px-2.5 py-1.5 rounded-xl border border-default-200/70 dark:border-default-800/70 bg-default-50/60 dark:bg-default-900/40 flex items-center justify-between gap-2 shadow-2xs">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-5 h-5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                  <Building2 className="w-3 h-3" />
+                </div>
+                <div className="min-w-0 leading-tight">
+                  <span className="text-[11px] font-bold text-foreground truncate block">
+                    {brandNameOverride || (selectedWorkspace as any)?.customBrandName || "PT Nova Solusi Finansial"}
+                  </span>
+                  <span className="text-[9px] text-default-400 truncate block">
+                    {(selectedWorkspace as any)?.entityType || "Corporate Entity"} · {selectedWorkspace?.name || "Utama"}
+                  </span>
+                </div>
+              </div>
+              <span className="text-[8.5px] font-bold px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 uppercase shrink-0">
+                {selectedWorkspace?.type || "PT"}
+              </span>
+            </div>
+          )}
+
           {menuGroups.map((group, groupIdx) => {
             const isGroupOpen = openGroups[group.id] !== false;
 
