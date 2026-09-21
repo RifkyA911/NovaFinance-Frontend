@@ -208,7 +208,21 @@ export default function CompanyBrandPage() {
   // Sidebar Brand Badge & Display Controls
   const [showSidebarBrandBadge, setShowSidebarBrandBadge] = useState(true);
   const [sidebarBrandDisplayMode, setSidebarBrandDisplayMode] = useState<"full" | "icon">("full");
-  const [brandBadgeStyle, setBrandBadgeStyle] = useState<"full" | "icon-only">("full");
+  const [brandBadgeStyle, setBrandBadgeStyle] = useState<"full" | "icon-only" | "dot">("full");
+  const [logoAspectRatio, setLogoAspectRatio] = useState<number>(3);
+
+  // Measure natural aspect ratio of brand logo for accurate symmetrical image-percentage scaling
+  useEffect(() => {
+    if (!customBrandLogo) return;
+    const img = new Image();
+    img.onload = () => {
+      if (img.naturalWidth && img.naturalHeight) {
+        setLogoAspectRatio(img.naturalWidth / img.naturalHeight);
+        setImageNatSize({ w: img.naturalWidth, h: img.naturalHeight });
+      }
+    };
+    img.src = customBrandLogo;
+  }, [customBrandLogo]);
 
   // Autosave status
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
@@ -375,7 +389,7 @@ export default function CompanyBrandPage() {
     if (savedMode === "icon" || savedMode === "full") setSidebarBrandDisplayMode(savedMode);
 
     const savedBadgeStyle = localStorage.getItem("novajournal_brand_badge_style");
-    if (savedBadgeStyle === "icon-only" || savedBadgeStyle === "full") setBrandBadgeStyle(savedBadgeStyle);
+    if (savedBadgeStyle === "icon-only" || savedBadgeStyle === "full" || savedBadgeStyle === "dot") setBrandBadgeStyle(savedBadgeStyle);
 
     setIsInitialized(true);
   }, [selectedWorkspace]);
@@ -1205,7 +1219,7 @@ export default function CompanyBrandPage() {
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
                       <Percent className="w-3.5 h-3.5 text-blue-500" />
-                      Skala Bentang & Satuan
+                      Skala Bentang Logo
                     </span>
                     {/* Unit Switcher */}
                     <div className="flex items-center gap-1 p-0.5 rounded-lg bg-default-200/60 dark:bg-default-700/60 border border-default-200/80 dark:border-default-700/80">
@@ -1218,7 +1232,7 @@ export default function CompanyBrandPage() {
                             : "text-default-500 hover:text-foreground"
                         }`}
                       >
-                        % Persen
+                        % Gambar
                       </button>
                       <button
                         type="button"
@@ -1233,9 +1247,14 @@ export default function CompanyBrandPage() {
                       </button>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between pt-1">
+                  <p className="text-[10px] text-default-400 leading-tight">
+                    {brandLogoUnit === "percent"
+                      ? "Dihitung dari lebar asli gambar logo (100% = utuh). Nilai lebih kecil memotong sayap kiri & kanan secara simetris."
+                      : "Lebar jendela absolut dalam piksel. Gambar tetap dipotong simetris dari sisi kiri & kanan."}
+                  </p>
+                  <div className="flex items-center justify-between pt-1.5">
                     <span className="text-[11px] text-default-500">
-                      {brandLogoUnit === "percent" ? "Rentang skala 15% - 100%" : "Rentang absolut 30px - 260px"}
+                      {brandLogoUnit === "percent" ? "Rentang skala: 15% - 100%" : "Rentang absolut: 30px - 260px"}
                     </span>
                     <span className="font-mono text-xs font-bold text-violet-600 dark:text-violet-400 bg-violet-500/10 px-2 py-0.5 rounded border border-violet-500/20">
                       {brandLogoWidth}{brandLogoUnit === "percent" ? "%" : "px"}
@@ -1248,7 +1267,7 @@ export default function CompanyBrandPage() {
                     type="range"
                     min={brandLogoUnit === "percent" ? 15 : 30}
                     max={brandLogoUnit === "percent" ? 100 : 260}
-                    step={5}
+                    step={brandLogoUnit === "percent" ? 1 : 5}
                     value={brandLogoWidth}
                     onChange={(e) => handleLogoWidthChange(Number(e.target.value))}
                     className="w-full h-1.5 bg-default-200 dark:bg-default-700 rounded-lg appearance-none cursor-pointer accent-violet-600"
@@ -1256,7 +1275,7 @@ export default function CompanyBrandPage() {
                   {/* Presets */}
                   <div className="flex items-center justify-between gap-1 pt-1.5">
                     {(brandLogoUnit === "percent"
-                      ? [25, 50, 75, 100]
+                      ? [25, 50, 75, 90, 100]
                       : [60, 100, 140, 180, 240]
                     ).map((preset) => (
                       <button
@@ -1284,7 +1303,7 @@ export default function CompanyBrandPage() {
                     Perataan Horizontal (Placement)
                   </span>
                   <p className="text-[11px] text-default-500">
-                    Posisi koordinat logo di dalam kotak header navigasi sidebar.
+                    Posisi koordinat wadah logo di dalam header navigasi sidebar.
                   </p>
                 </div>
                 <div className="grid grid-cols-3 gap-1.5">
@@ -1314,74 +1333,108 @@ export default function CompanyBrandPage() {
               </div>
 
               {/* Card 4: Visibilitas & Format Badge Tier Lisensi */}
-              <div className="p-4 rounded-xl border border-default-200/80 dark:border-default-700/80 bg-default-50/60 dark:bg-default-800/40 space-y-2.5 flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <div>
+              <div className="p-4 rounded-xl border border-default-200/80 dark:border-default-700/80 bg-default-50/60 dark:bg-default-800/40 space-y-3 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                      <Crown className="w-3.5 h-3.5 text-blue-500" />
+                      <ShieldCheck className="w-4 h-4 text-violet-600 dark:text-violet-400" />
                       Badge Lisensi Tier
                     </span>
-                    <p className="text-[11px] text-default-500 mt-0.5">
-                      Tampilkan badge status Enterprise / Pro di header sidebar.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={showSidebarBrandBadge}
-                    onClick={() => {
-                      const next = !showSidebarBrandBadge;
-                      setShowSidebarBrandBadge(next);
-                      localStorage.setItem("novajournal_sidebar_brand_badge", String(next));
-                      window.dispatchEvent(new Event("novajournal_brand_config_changed"));
-                      playRealisticClick();
-                    }}
-                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer ${
-                      showSidebarBrandBadge ? "bg-violet-600" : "bg-default-300 dark:bg-default-700"
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-xs transition-transform ${
-                        showSidebarBrandBadge ? "translate-x-4" : "translate-x-0.5"
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={showSidebarBrandBadge}
+                      onClick={() => {
+                        const next = !showSidebarBrandBadge;
+                        setShowSidebarBrandBadge(next);
+                        localStorage.setItem("novajournal_sidebar_brand_badge", String(next));
+                        if (selectedWorkspace?.id) {
+                          localStorage.setItem(`novajournal_sidebar_brand_badge_${selectedWorkspace.id}`, String(next));
+                        }
+                        window.dispatchEvent(new Event("novajournal_brand_config_changed"));
+                        playRealisticClick();
+                      }}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer ${
+                        showSidebarBrandBadge ? "bg-violet-600" : "bg-default-300 dark:bg-default-700"
                       }`}
-                    />
-                  </button>
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-xs transition-transform ${
+                          showSidebarBrandBadge ? "translate-x-4" : "translate-x-0.5"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-default-500 mt-1">
+                    Tampilkan badge verifikasi lisensi Enterprise atau Pro di sudut header navigasi sidebar.
+                  </p>
                 </div>
 
-                {showSidebarBrandBadge && (
-                  <div className="grid grid-cols-2 gap-2 pt-1 border-t border-default-200/60 dark:border-default-700/60">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setBrandBadgeStyle("full");
-                        localStorage.setItem("novajournal_brand_badge_style", "full");
-                        window.dispatchEvent(new Event("novajournal_brand_config_changed"));
-                        playRealisticClick();
-                      }}
-                      className={`p-1.5 rounded-lg border text-center text-xs font-semibold cursor-pointer transition ${
-                        brandBadgeStyle === "full"
-                          ? "bg-violet-600 text-white border-violet-600 shadow-xs font-bold"
-                          : "bg-white dark:bg-default-900 border-default-200 dark:border-default-700 text-default-600"
-                      }`}
-                    >
-                      👑 Ikon + Teks
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setBrandBadgeStyle("icon-only");
-                        localStorage.setItem("novajournal_brand_badge_style", "icon-only");
-                        window.dispatchEvent(new Event("novajournal_brand_config_changed"));
-                        playRealisticClick();
-                      }}
-                      className={`p-1.5 rounded-lg border text-center text-xs font-semibold cursor-pointer transition ${
-                        brandBadgeStyle === "icon-only"
-                          ? "bg-violet-600 text-white border-violet-600 shadow-xs font-bold"
-                          : "bg-white dark:bg-default-900 border-default-200 dark:border-default-700 text-default-600"
-                      }`}
-                    >
-                      👑 Hanya Ikon
-                    </button>
+                {showSidebarBrandBadge ? (
+                  <div className="space-y-2 pt-2 border-t border-default-200/60 dark:border-default-700/60">
+                    <span className="text-[10px] font-bold text-default-400 uppercase tracking-wider block">
+                      Gaya & Format Penampilan
+                    </span>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {[
+                        { id: "full" as const, label: "Ikon + Teks", icon: Crown },
+                        { id: "icon-only" as const, label: "Hanya Ikon", icon: Sparkles },
+                        { id: "dot" as const, label: "Dot Aksen", icon: ShieldCheck },
+                      ].map((style) => {
+                        const IconComp = style.icon;
+                        const isSelected = brandBadgeStyle === style.id;
+                        return (
+                          <button
+                            key={style.id}
+                            type="button"
+                            onClick={() => {
+                              setBrandBadgeStyle(style.id);
+                              localStorage.setItem("novajournal_brand_badge_style", style.id);
+                              if (selectedWorkspace?.id) {
+                                localStorage.setItem(`novajournal_brand_badge_style_${selectedWorkspace.id}`, style.id);
+                              }
+                              window.dispatchEvent(new Event("novajournal_brand_config_changed"));
+                              playRealisticClick();
+                            }}
+                            className={`p-2 rounded-lg border text-center transition-all cursor-pointer flex flex-col items-center gap-1 ${
+                              isSelected
+                                ? "bg-violet-600 text-white border-violet-600 shadow-xs font-bold"
+                                : "bg-white dark:bg-default-900 border-default-200 dark:border-default-700 text-default-600 hover:bg-default-100"
+                            }`}
+                          >
+                            <IconComp className={`w-3.5 h-3.5 ${isSelected ? "text-white" : "text-violet-500"}`} />
+                            <span className="text-[10.5px] leading-tight block">{style.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Live Badge Preview Widget */}
+                    <div className="p-2 rounded-lg bg-white dark:bg-default-900 border border-default-200/70 dark:border-default-700/70 flex items-center justify-between">
+                      <span className="text-[10px] text-default-400 font-medium">Pratinjau Badge:</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`flex items-center ${
+                          brandBadgeStyle === "icon-only"
+                            ? "p-1 rounded-md"
+                            : brandBadgeStyle === "dot"
+                            ? "p-1 rounded-full"
+                            : "gap-1 px-2 py-0.5 rounded-md"
+                        } bg-gradient-to-r from-violet-500/15 to-purple-500/15 text-violet-600 dark:text-violet-400 border border-violet-500/30 text-[10px] font-bold select-none shadow-2xs`}>
+                          {brandBadgeStyle === "dot" ? (
+                            <span className="w-2 h-2 rounded-full bg-violet-500 shadow-[0_0_6px_rgba(139,92,246,0.8)]" />
+                          ) : (
+                            <>
+                              <Crown className="w-3 h-3 text-violet-500 shrink-0" />
+                              {brandBadgeStyle !== "icon-only" && <span>Enterprise</span>}
+                            </>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-2 rounded-lg bg-default-100 dark:bg-default-800 text-[11px] text-default-400 text-center font-medium">
+                    Badge disembunyikan dari sidebar navigasi.
                   </div>
                 )}
               </div>
@@ -1633,8 +1686,8 @@ export default function CompanyBrandPage() {
                 </span>
               </div>
 
-              {/* Baris 1: 3 Segmented Layout Controls */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* Baris 1: 4 Segmented Layout Controls */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {/* Control 1: Aspect Ratio */}
                 <div className="p-3 rounded-xl bg-white dark:bg-default-900 border border-default-200 dark:border-default-700 space-y-2">
                   <label className="text-[11px] font-semibold text-default-600 block">Rasio Aspek Logo</label>
@@ -1671,31 +1724,31 @@ export default function CompanyBrandPage() {
                     <button
                       type="button"
                       onClick={() => handleDisplayFormatChange("logo-and-text")}
-                      className={`py-1.5 text-center rounded-md text-[11px] font-semibold cursor-pointer transition ${
+                      className={`py-1.5 text-center rounded-md text-[10.5px] font-semibold cursor-pointer transition ${
                         customBrandDisplay === "logo-and-text"
                           ? "bg-violet-600 text-white shadow-2xs font-bold"
                           : "text-default-600 hover:text-foreground"
                       }`}
                       title="Logo + Nama & Jargon Perusahaan"
                     >
-                      Logo+Teks
+                      Teks
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDisplayFormatChange("logo-only")}
-                      className={`py-1.5 text-center rounded-md text-[11px] font-semibold cursor-pointer transition ${
+                      className={`py-1.5 text-center rounded-md text-[10.5px] font-semibold cursor-pointer transition ${
                         customBrandDisplay === "logo-only"
                           ? "bg-violet-600 text-white shadow-2xs font-bold"
                           : "text-default-600 hover:text-foreground"
                       }`}
                       title="Hanya Tampilkan Logo Simbol"
                     >
-                      Logo Saja
+                      Logo
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDisplayFormatChange("full-banner")}
-                      className={`py-1.5 text-center rounded-md text-[11px] font-semibold cursor-pointer transition ${
+                      className={`py-1.5 text-center rounded-md text-[10.5px] font-semibold cursor-pointer transition ${
                         customBrandDisplay === "full-banner"
                           ? "bg-violet-600 text-white shadow-2xs font-bold"
                           : "text-default-600 hover:text-foreground"
@@ -1716,13 +1769,60 @@ export default function CompanyBrandPage() {
                         key={pos}
                         type="button"
                         onClick={() => handleLogoPlacementChange(pos)}
-                        className={`py-1.5 text-center rounded-md text-[11px] font-semibold cursor-pointer transition ${
+                        className={`py-1.5 text-center rounded-md text-[10.5px] font-semibold cursor-pointer transition ${
                           brandLogoPlacement === pos
                             ? "bg-violet-600 text-white shadow-2xs font-bold"
                             : "text-default-600 hover:text-foreground"
                         }`}
                       >
                         {pos === "left" ? "Kiri" : pos === "center" ? "Tengah" : "Kanan"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Control 4: Tier Badge */}
+                <div className="p-3 rounded-xl bg-white dark:bg-default-900 border border-default-200 dark:border-default-700 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-semibold text-default-600">Badge Lisensi Tier</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = !showSidebarBrandBadge;
+                        setShowSidebarBrandBadge(next);
+                        localStorage.setItem("novajournal_sidebar_brand_badge", String(next));
+                        window.dispatchEvent(new Event("novajournal_brand_config_changed"));
+                        playRealisticClick();
+                      }}
+                      className="text-[10px] font-bold text-violet-600 hover:underline cursor-pointer"
+                    >
+                      {showSidebarBrandBadge ? "Aktif" : "Mati"}
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1 p-0.5 rounded-lg bg-default-100 dark:bg-default-800 border border-default-200/60 dark:border-default-700/60">
+                    {[
+                      { id: "full" as const, label: "Teks" },
+                      { id: "icon-only" as const, label: "Ikon" },
+                      { id: "dot" as const, label: "Dot" },
+                    ].map((st) => (
+                      <button
+                        key={st.id}
+                        type="button"
+                        onClick={() => {
+                          setShowSidebarBrandBadge(true);
+                          setBrandBadgeStyle(st.id);
+                          localStorage.setItem("novajournal_sidebar_brand_badge", "true");
+                          localStorage.setItem("novajournal_brand_badge_style", st.id);
+                          window.dispatchEvent(new Event("novajournal_brand_config_changed"));
+                          playRealisticClick();
+                        }}
+                        className={`py-1.5 text-center rounded-md text-[10.5px] font-semibold cursor-pointer transition ${
+                          showSidebarBrandBadge && brandBadgeStyle === st.id
+                            ? "bg-violet-600 text-white shadow-2xs font-bold"
+                            : "text-default-600 hover:text-foreground"
+                        }`}
+                      >
+                        {st.label}
                       </button>
                     ))}
                   </div>
@@ -1738,7 +1838,7 @@ export default function CompanyBrandPage() {
                       <span>Skala Bentang Lebar Logo</span>
                     </label>
                     <span className="text-[11px] text-default-400">
-                      ({brandLogoUnit === "percent" ? "Mode Persentase Responsif" : "Mode Piksel Absolut"})
+                      ({brandLogoUnit === "percent" ? "Mode Persentase Gambar Asli" : "Mode Piksel Absolut"})
                     </span>
                   </div>
 
@@ -1754,7 +1854,7 @@ export default function CompanyBrandPage() {
                             : "text-default-500 hover:text-foreground"
                         }`}
                       >
-                        % Persentase
+                        % Gambar
                       </button>
                       <button
                         type="button"
@@ -1779,7 +1879,7 @@ export default function CompanyBrandPage() {
                   type="range"
                   min={brandLogoUnit === "percent" ? 15 : 30}
                   max={brandLogoUnit === "percent" ? 100 : 260}
-                  step={5}
+                  step={brandLogoUnit === "percent" ? 1 : 5}
                   value={brandLogoWidth}
                   onChange={(e) => handleLogoWidthChange(Number(e.target.value))}
                   className="w-full h-2 bg-default-200 dark:bg-default-700 rounded-lg appearance-none cursor-pointer accent-violet-600"
@@ -1790,7 +1890,7 @@ export default function CompanyBrandPage() {
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="text-[10px] text-default-400 font-semibold mr-1">Preset Cepat:</span>
                     {(brandLogoUnit === "percent"
-                      ? [25, 50, 75, 100]
+                      ? [25, 50, 75, 90, 100]
                       : [60, 100, 140, 180, 240]
                     ).map((preset) => (
                       <button
@@ -1808,8 +1908,8 @@ export default function CompanyBrandPage() {
                     ))}
                   </div>
 
-                  <p className="text-[10px] text-default-400 italic">
-                    * Pemotongan sisi simetris (true side-crop) otomatis memangkas sayap samping gambar tanpa distorsi atau melar.
+                  <p className="text-[10px] text-default-400">
+                    * Persentase dihitung dari lebar asli gambar logo (100% = utuh). Pemotongan selalu simetris dari sayap kiri & kanan.
                   </p>
                 </div>
               </div>
@@ -1817,7 +1917,28 @@ export default function CompanyBrandPage() {
 
             {/* Simulated Canvas Viewports */}
             {(() => {
-              const logoWidthStyle = brandLogoUnit === "percent" ? `${brandLogoWidth}%` : `${brandLogoWidth}px`;
+              const fullBannerH = 40;
+              const logoOnlyH = 40;
+              const logoAndTextH = 36;
+
+              const safeRatio = Math.max(0.5, Math.min(10, logoAspectRatio || 3));
+              const fullBannerNatW = Math.round(fullBannerH * safeRatio);
+              const logoOnlyNatW = Math.round(logoOnlyH * safeRatio);
+              const logoAndTextNatW = Math.round(logoAndTextH * safeRatio);
+
+              const getScaledContainerW = (natW: number, maxSpace: number) => {
+                if (brandLogoUnit === "percent") {
+                  const scaled = Math.round(natW * (brandLogoWidth / 100));
+                  return Math.min(maxSpace, Math.max(24, scaled));
+                } else {
+                  return Math.min(maxSpace, Math.max(24, brandLogoWidth));
+                }
+              };
+
+              const fullBannerContainerW = getScaledContainerW(fullBannerNatW, 200);
+              const logoOnlyContainerW = getScaledContainerW(logoOnlyNatW, 200);
+              const logoAndTextContainerW = getScaledContainerW(logoAndTextNatW, 120);
+
               const frameClass = brandLogoFrame === "bordered"
                 ? "border border-default-300 dark:border-default-700 p-0.5"
                 : brandLogoFrame === "card"
@@ -1877,19 +1998,19 @@ export default function CompanyBrandPage() {
                                 brandLogoPlacement === "center" ? "justify-center" : brandLogoPlacement === "right" ? "justify-end" : "justify-start"
                               }`}>
                                 <div
-                                  style={{ width: logoWidthStyle }}
+                                  style={{ width: `${fullBannerContainerW}px` }}
                                   className={`relative h-10 shrink-0 overflow-hidden rounded-none select-none ${frameClass}`}
                                 >
                                   <img
                                     src={customBrandLogo}
                                     alt="Corporate Banner"
-                                    className={`h-10 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
-                                      brandLogoPlacement === "center"
-                                        ? "left-1/2 -translate-x-1/2"
-                                        : brandLogoPlacement === "right"
-                                        ? "right-0"
-                                        : "left-0"
-                                    }`}
+                                    style={{
+                                      width: `${fullBannerNatW}px`,
+                                      minWidth: `${fullBannerNatW}px`,
+                                      maxWidth: "none",
+                                      height: `${fullBannerH}px`,
+                                    }}
+                                    className="rounded-none select-none pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
                                   />
                                   {showCropGuides && (
                                     <div className="absolute inset-0 border border-dashed border-amber-400/80 pointer-events-none flex items-center justify-between px-0.5">
@@ -1905,19 +2026,19 @@ export default function CompanyBrandPage() {
                               }`}>
                                 {customBrandMode === "wide" ? (
                                   <div
-                                    style={{ width: logoWidthStyle }}
+                                    style={{ width: `${logoOnlyContainerW}px` }}
                                     className={`relative h-10 shrink-0 overflow-hidden rounded-none select-none ${frameClass}`}
                                   >
                                     <img
                                       src={customBrandLogo}
                                       alt="Corporate Logo"
-                                      className={`h-10 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
-                                        brandLogoPlacement === "center"
-                                          ? "left-1/2 -translate-x-1/2"
-                                          : brandLogoPlacement === "right"
-                                          ? "right-0"
-                                          : "left-0"
-                                      }`}
+                                      style={{
+                                        width: `${logoOnlyNatW}px`,
+                                        minWidth: `${logoOnlyNatW}px`,
+                                        maxWidth: "none",
+                                        height: `${logoOnlyH}px`,
+                                      }}
+                                      className="rounded-none select-none pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
                                     />
                                     {showCropGuides && (
                                       <div className="absolute inset-0 border border-dashed border-amber-400/80 pointer-events-none flex items-center justify-between px-0.5">
@@ -1927,11 +2048,13 @@ export default function CompanyBrandPage() {
                                     )}
                                   </div>
                                 ) : (
-                                  <img
-                                    src={customBrandLogo}
-                                    alt="Corporate Logo"
-                                    className={`w-8 h-8 rounded-none object-contain shadow-2xs border border-default-200/60 dark:border-default-700/60 ${frameClass}`}
-                                  />
+                                  <div className={`w-8 h-8 shrink-0 overflow-hidden rounded-none shadow-2xs border border-default-200/60 dark:border-default-700/60 ${frameClass}`}>
+                                    <img
+                                      src={customBrandLogo}
+                                      alt="Corporate Logo"
+                                      className="w-full h-full object-cover rounded-none select-none pointer-events-none"
+                                    />
+                                  </div>
                                 )}
                               </div>
                             ) : (
@@ -1939,19 +2062,19 @@ export default function CompanyBrandPage() {
                                 {customBrandLogo ? (
                                   customBrandMode === "wide" ? (
                                     <div
-                                      style={{ width: brandLogoUnit === "percent" ? `${Math.min(brandLogoWidth, 65)}%` : `${brandLogoWidth}px`, maxWidth: brandLogoUnit === "percent" ? "130px" : undefined }}
+                                      style={{ width: `${logoAndTextContainerW}px` }}
                                       className={`relative h-9 shrink-0 overflow-hidden rounded-none select-none ${frameClass}`}
                                     >
                                       <img
                                         src={customBrandLogo}
                                         alt="Company Logo"
-                                        className={`h-9 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
-                                          brandLogoPlacement === "center"
-                                            ? "left-1/2 -translate-x-1/2"
-                                            : brandLogoPlacement === "right"
-                                            ? "right-0"
-                                            : "left-0"
-                                        }`}
+                                        style={{
+                                          width: `${logoAndTextNatW}px`,
+                                          minWidth: `${logoAndTextNatW}px`,
+                                          maxWidth: "none",
+                                          height: `${logoAndTextH}px`,
+                                        }}
+                                        className="rounded-none select-none pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
                                       />
                                       {showCropGuides && (
                                         <div className="absolute inset-0 border border-dashed border-amber-400/80 pointer-events-none flex items-center justify-between px-0.5">
@@ -1961,11 +2084,13 @@ export default function CompanyBrandPage() {
                                       )}
                                     </div>
                                   ) : (
-                                    <img
-                                      src={customBrandLogo}
-                                      alt="Company Logo"
-                                      className={`w-7 h-7 rounded-none object-contain shadow-2xs shrink-0 border border-default-200/60 dark:border-default-700/60 ${frameClass}`}
-                                    />
+                                    <div className={`w-7 h-7 shrink-0 overflow-hidden rounded-none shadow-2xs border border-default-200/60 dark:border-default-700/60 ${frameClass}`}>
+                                      <img
+                                        src={customBrandLogo}
+                                        alt="Company Logo"
+                                        className="w-full h-full object-cover rounded-none select-none pointer-events-none"
+                                      />
+                                    </div>
                                   )
                                 ) : (
                                   <div className="w-7 h-7 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xs shadow-2xs shrink-0">
@@ -1989,12 +2114,22 @@ export default function CompanyBrandPage() {
 
                             {/* Enterprise Badge */}
                             {showSidebarBrandBadge && (
-                              <span className={`flex items-center ${
-                                brandBadgeStyle === "icon-only" ? "p-1 rounded-md" : "gap-1 px-1.5 py-0.5 rounded-md"
-                              } bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/30 text-[9px] font-bold shrink-0 ml-1`}>
-                                <Crown className="w-2.5 h-2.5 text-violet-500" />
-                                {brandBadgeStyle !== "icon-only" && <span>Enterprise</span>}
-                              </span>
+                              brandBadgeStyle === "dot" ? (
+                                <span
+                                  title="Enterprise Workspace Verified"
+                                  className="relative flex h-2.5 w-2.5 shrink-0 ml-1"
+                                >
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-violet-600 shadow-[0_0_8px_rgba(139,92,246,0.6)]"></span>
+                                </span>
+                              ) : (
+                                <span className={`flex items-center ${
+                                  brandBadgeStyle === "icon-only" ? "p-1 rounded-md" : "gap-1 px-1.5 py-0.5 rounded-md"
+                                } bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/30 text-[9px] font-bold shrink-0 ml-1`}>
+                                  <Crown className="w-2.5 h-2.5 text-violet-500" />
+                                  {brandBadgeStyle === "full" && <span>Enterprise</span>}
+                                </span>
+                              )
                             )}
                           </div>
                         </div>
@@ -2092,11 +2227,13 @@ export default function CompanyBrandPage() {
                         {/* Collapsed Header */}
                         <div style={{ height: "56px" }} className="w-full flex items-center justify-center border-b border-default-200/60 dark:border-default-800/60 px-1">
                           {customBrandLogo ? (
-                            <img
-                              src={customBrandLogo}
-                              alt="Logo"
-                              className="w-8 h-8 rounded-none object-contain"
-                            />
+                            <div className="w-8 h-8 shrink-0 overflow-hidden rounded-none shadow-2xs">
+                              <img
+                                src={customBrandLogo}
+                                alt="Logo"
+                                className="w-full h-full object-cover rounded-none select-none pointer-events-none"
+                              />
+                            </div>
                           ) : (
                             <div className="w-7 h-7 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs">
                               {customBrandName ? customBrandName.charAt(0).toUpperCase() : "C"}
@@ -2135,15 +2272,23 @@ export default function CompanyBrandPage() {
                           <div className="flex items-center gap-2 min-w-0">
                             {customBrandLogo ? (
                               customBrandMode === "wide" ? (
-                                <div style={{ width: brandLogoUnit === "percent" ? `${Math.min(brandLogoWidth, 55)}%` : `${Math.min(brandLogoWidth, 120)}px` }} className={`relative h-8 shrink-0 overflow-hidden rounded-none ${frameClass}`}>
+                                <div style={{ width: `${logoAndTextContainerW}px` }} className={`relative h-8 shrink-0 overflow-hidden rounded-none select-none ${frameClass}`}>
                                   <img
                                     src={customBrandLogo}
                                     alt="Logo"
-                                    className="h-8 w-auto max-w-none rounded-none absolute top-1/2 -translate-y-1/2 left-0"
+                                    style={{
+                                      width: `${logoAndTextNatW}px`,
+                                      minWidth: `${logoAndTextNatW}px`,
+                                      maxWidth: "none",
+                                      height: "32px",
+                                    }}
+                                    className="rounded-none select-none pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
                                   />
                                 </div>
                               ) : (
-                                <img src={customBrandLogo} alt="Logo" className={`w-7 h-7 rounded-none object-contain ${frameClass}`} />
+                                <div className={`w-7 h-7 shrink-0 overflow-hidden rounded-none shadow-2xs ${frameClass}`}>
+                                  <img src={customBrandLogo} alt="Logo" className="w-full h-full object-cover rounded-none select-none pointer-events-none" />
+                                </div>
                               )
                             ) : (
                               <div className="w-7 h-7 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-xs">
@@ -2152,7 +2297,16 @@ export default function CompanyBrandPage() {
                             )}
                             <span className="text-xs font-bold truncate">{customBrandName || "Nova Solusi"}</span>
                           </div>
-                          <Crown className="w-3 h-3 text-violet-500 shrink-0" />
+                          {showSidebarBrandBadge && (
+                            brandBadgeStyle === "dot" ? (
+                              <span className="relative flex h-2 w-2 shrink-0 ml-1">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-600"></span>
+                              </span>
+                            ) : (
+                              <Crown className="w-3 h-3 text-violet-500 shrink-0" />
+                            )
+                          )}
                         </div>
 
                         {/* Simulated Navbar (Right) */}
@@ -2194,11 +2348,13 @@ export default function CompanyBrandPage() {
                           </div>
                           <div className="h-20 rounded-xl bg-default-50 dark:bg-default-800/40 border border-dashed border-default-200 dark:border-default-700 flex items-center justify-center p-2">
                             {customBrandLogo ? (
-                              <img
-                                src={customBrandLogo}
-                                alt="Square Logo"
-                                className="w-12 h-12 rounded-none object-contain shadow-2xs border border-default-200 dark:border-default-700"
-                              />
+                              <div className="w-12 h-12 shrink-0 overflow-hidden rounded-none shadow-2xs border border-default-200 dark:border-default-700">
+                                <img
+                                  src={customBrandLogo}
+                                  alt="Square Logo"
+                                  className="w-full h-full object-cover rounded-none select-none pointer-events-none"
+                                />
+                              </div>
                             ) : (
                               <div className="w-10 h-10 rounded-xl bg-linear-to-br from-indigo-500 to-purple-600 text-white font-bold flex items-center justify-center">
                                 {customBrandName ? customBrandName.charAt(0).toUpperCase() : "C"}
@@ -2206,7 +2362,7 @@ export default function CompanyBrandPage() {
                             )}
                           </div>
                           <p className="text-[10px] text-default-400 leading-relaxed">
-                            Cocok untuk monogram lambang, inisial holding, atau icon shield tanpa teks horizontal panjang.
+                            Format persegi 1:1 dengan auto-crop gambar ke tengah. Monogram lambang, inisial holding, atau icon shield tanpa distorsi.
                           </p>
                           <button
                             type="button"
@@ -2233,20 +2389,20 @@ export default function CompanyBrandPage() {
                           </div>
                           <div className="h-20 rounded-xl bg-default-50 dark:bg-default-800/40 border border-dashed border-default-200 dark:border-default-700 flex items-center justify-center p-2">
                             <div
-                              style={{ width: brandLogoUnit === "percent" ? `${brandLogoWidth}%` : `${Math.min(brandLogoWidth, 200)}px` }}
+                              style={{ width: `${getScaledContainerW(fullBannerNatW, 220)}px` }}
                               className={`relative h-10 overflow-hidden rounded-none border border-violet-500/40 select-none ${frameClass}`}
                             >
                               {customBrandLogo ? (
                                 <img
                                   src={customBrandLogo}
                                   alt="Wide Logo"
-                                  className={`h-10 w-auto max-w-none rounded-none absolute top-1/2 -translate-y-1/2 ${
-                                    brandLogoPlacement === "center"
-                                      ? "left-1/2 -translate-x-1/2"
-                                      : brandLogoPlacement === "right"
-                                      ? "right-0"
-                                      : "left-0"
-                                  }`}
+                                  style={{
+                                    width: `${fullBannerNatW}px`,
+                                    minWidth: `${fullBannerNatW}px`,
+                                    maxWidth: "none",
+                                    height: `${fullBannerH}px`,
+                                  }}
+                                  className="rounded-none select-none pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
                                 />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-xs font-bold text-default-400">
@@ -2769,28 +2925,36 @@ export default function CompanyBrandPage() {
                   <div className={`w-full flex items-center ${
                     brandLogoPlacement === "center" ? "justify-center" : brandLogoPlacement === "right" ? "justify-end" : "justify-start"
                   }`}>
-                    {customBrandLogo ? (
-                      <div
-                        style={{
-                          width: brandLogoUnit === "percent" ? `${brandLogoWidth}%` : `${brandLogoWidth}px`,
-                          maxWidth: "100%",
-                        }}
-                        className="relative h-10 shrink-0 overflow-hidden rounded-none select-none transition-all duration-150"
-                      >
-                        <img
-                          key={customBrandLogo}
-                          src={customBrandLogo}
-                          alt="Simulated Logo"
-                          className={`h-10 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
-                            brandLogoPlacement === "center"
-                              ? "left-1/2 -translate-x-1/2"
-                              : brandLogoPlacement === "right"
-                              ? "right-0"
-                              : "left-0"
-                          }`}
-                        />
-                      </div>
-                    ) : (
+                    {customBrandLogo ? (() => {
+                      const modalBannerH = 40;
+                      const modalSafeRatio = Math.max(0.5, Math.min(10, logoAspectRatio || 3));
+                      const modalBannerNatW = Math.round(modalBannerH * modalSafeRatio);
+                      const modalContainerW = brandLogoUnit === "percent"
+                        ? Math.min(380, Math.max(24, Math.round(modalBannerNatW * (brandLogoWidth / 100))))
+                        : Math.min(380, Math.max(24, brandLogoWidth));
+                      return (
+                        <div
+                          style={{
+                            width: `${modalContainerW}px`,
+                            maxWidth: "100%",
+                          }}
+                          className="relative h-10 shrink-0 overflow-hidden rounded-none select-none transition-all duration-150"
+                        >
+                          <img
+                            key={customBrandLogo}
+                            src={customBrandLogo}
+                            alt="Simulated Logo"
+                            style={{
+                              width: `${modalBannerNatW}px`,
+                              minWidth: `${modalBannerNatW}px`,
+                              maxWidth: "none",
+                              height: `${modalBannerH}px`,
+                            }}
+                            className="rounded-none select-none pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+                          />
+                        </div>
+                      );
+                    })() : (
                       <div
                         style={{
                           width: brandLogoUnit === "percent" ? `${brandLogoWidth}%` : `${brandLogoWidth}px`,

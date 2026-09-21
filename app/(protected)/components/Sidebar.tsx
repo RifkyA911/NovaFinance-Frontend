@@ -436,7 +436,7 @@ export default function Sidebar({
   // Sidebar Company Brand Badge & Display Mode preferences
   const [brandBadgeVisible, setBrandBadgeVisible] = useState(true);
   const [brandDisplayMode, setBrandDisplayMode] = useState<"full" | "icon">("full");
-  const [brandBadgeStyle, setBrandBadgeStyle] = useState<"full" | "icon-only">("full");
+  const [brandBadgeStyle, setBrandBadgeStyle] = useState<"full" | "icon-only" | "dot">("full");
   const [brandDisplayFormat, setBrandDisplayFormat] = useState<"logo-and-text" | "logo-only" | "full-banner">("logo-and-text");
   const [brandLogoOverride, setBrandLogoOverride] = useState<string | null>(null);
   const [brandModeOverride, setBrandModeOverride] = useState<"square" | "wide" | null>(null);
@@ -447,6 +447,23 @@ export default function Sidebar({
   const [brandSubtextMode, setBrandSubtextMode] = useState<"jargon" | "entity" | "none">("jargon");
   const [brandLogoFrame, setBrandLogoFrame] = useState<"none" | "bordered" | "card" | "contrast">("none");
   const [brandVersion, setBrandVersion] = useState(0);
+  const [logoAspectRatio, setLogoAspectRatio] = useState<number>(3);
+
+  // Measure natural aspect ratio of brand logo for accurate symmetrical image-percentage scaling
+  useEffect(() => {
+    const ws = selectedWorkspace as any;
+    const wsId = ws?.id;
+    const scopedLogo = wsId ? localStorage.getItem(`novajournal_custom_brand_logo_${wsId}`) : null;
+    const targetLogo = scopedLogo || brandLogoOverride || ws?.customBrandLogo;
+    if (!targetLogo) return;
+    const img = new Image();
+    img.onload = () => {
+      if (img.naturalWidth && img.naturalHeight) {
+        setLogoAspectRatio(img.naturalWidth / img.naturalHeight);
+      }
+    };
+    img.src = targetLogo;
+  }, [brandLogoOverride, selectedWorkspace, brandVersion]);
 
   // Granular Sidebar Appearance Preferences
   const [sidebarDensity, setSidebarDensity] = useState<"compact" | "comfortable" | "spacious">("comfortable");
@@ -676,7 +693,32 @@ export default function Sidebar({
                 <div className="flex items-center justify-between w-full min-w-0 pr-0.5">
                   {/* Brand Display Layout */}
                   {(() => {
-                    const logoWidthStyle = brandLogoUnit === "percent" ? `${brandLogoWidth}%` : `${brandLogoWidth}px`;
+                    const fullBannerH = 38;
+                    const logoOnlyH = 38;
+                    const logoAndTextH = 32;
+
+                    // Compute true natural width of image based on measured aspect ratio
+                    const safeRatio = Math.max(0.5, Math.min(10, logoAspectRatio || 3));
+                    const fullBannerNatW = Math.round(fullBannerH * safeRatio);
+                    const logoOnlyNatW = Math.round(logoOnlyH * safeRatio);
+                    const logoAndTextNatW = Math.round(logoAndTextH * safeRatio);
+
+                    // Compute container width:
+                    // When unit is percent, calculate percent of the image's natural width!
+                    // Symmetrical crop is achieved because the img is centered (left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2)
+                    const getScaledContainerW = (natW: number, maxSpace: number) => {
+                      if (brandLogoUnit === "percent") {
+                        const scaled = Math.round(natW * (brandLogoWidth / 100));
+                        return Math.min(maxSpace, Math.max(24, scaled));
+                      } else {
+                        return Math.min(maxSpace, Math.max(24, brandLogoWidth));
+                      }
+                    };
+
+                    const fullBannerContainerW = getScaledContainerW(fullBannerNatW, 190);
+                    const logoOnlyContainerW = getScaledContainerW(logoOnlyNatW, 190);
+                    const logoAndTextContainerW = getScaledContainerW(logoAndTextNatW, 115);
+
                     const frameClass = brandLogoFrame === "bordered"
                       ? "border border-default-300 dark:border-default-700 p-0.5"
                       : brandLogoFrame === "card"
@@ -696,20 +738,20 @@ export default function Sidebar({
                         brandLogoPlacement === "center" ? "justify-center" : brandLogoPlacement === "right" ? "justify-end" : "justify-start"
                       }`}>
                         <div
-                          style={{ width: logoWidthStyle }}
+                          style={{ width: `${fullBannerContainerW}px` }}
                           className={`relative h-10 shrink-0 overflow-hidden rounded-none select-none ${frameClass}`}
                         >
                           <img
                             key={`${customBrandLogo}-${brandVersion}`}
                             src={customBrandLogo}
                             alt="Corporate Banner"
-                            className={`h-10 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
-                              brandLogoPlacement === "center"
-                                ? "left-1/2 -translate-x-1/2"
-                                : brandLogoPlacement === "right"
-                                ? "right-0"
-                                : "left-0"
-                            }`}
+                            style={{
+                              width: `${fullBannerNatW}px`,
+                              minWidth: `${fullBannerNatW}px`,
+                              maxWidth: "none",
+                              height: `${fullBannerH}px`,
+                            }}
+                            className="rounded-none select-none pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
                           />
                         </div>
                       </div>
@@ -719,29 +761,31 @@ export default function Sidebar({
                       }`}>
                         {customBrandMode === "wide" ? (
                           <div
-                            style={{ width: logoWidthStyle }}
+                            style={{ width: `${logoOnlyContainerW}px` }}
                             className={`relative h-10 shrink-0 overflow-hidden rounded-none select-none ${frameClass}`}
                           >
                             <img
                               key={`${customBrandLogo}-${brandVersion}`}
                               src={customBrandLogo}
                               alt="Corporate Logo"
-                              className={`h-10 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
-                                brandLogoPlacement === "center"
-                                  ? "left-1/2 -translate-x-1/2"
-                                  : brandLogoPlacement === "right"
-                                  ? "right-0"
-                                  : "left-0"
-                              }`}
+                              style={{
+                                width: `${logoOnlyNatW}px`,
+                                minWidth: `${logoOnlyNatW}px`,
+                                maxWidth: "none",
+                                height: `${logoOnlyH}px`,
+                              }}
+                              className="rounded-none select-none pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
                             />
                           </div>
                         ) : (
-                          <img
-                            key={`${customBrandLogo}-${brandVersion}`}
-                            src={customBrandLogo}
-                            alt="Corporate Logo"
-                            className={`w-8 h-8 rounded-none object-contain shadow-2xs border border-default-200/60 dark:border-default-700/60 ${frameClass}`}
-                          />
+                          <div className={`w-8 h-8 shrink-0 overflow-hidden rounded-none shadow-2xs border border-default-200/60 dark:border-default-700/60 ${frameClass}`}>
+                            <img
+                              key={`${customBrandLogo}-${brandVersion}`}
+                              src={customBrandLogo}
+                              alt="Corporate Logo"
+                              className="w-full h-full object-cover rounded-none select-none pointer-events-none"
+                            />
+                          </div>
                         )}
                       </div>
                     ) : (
@@ -750,29 +794,31 @@ export default function Sidebar({
                           customBrandLogo ? (
                             customBrandMode === "wide" ? (
                               <div
-                                style={{ width: brandLogoUnit === "percent" ? `${Math.min(brandLogoWidth, 65)}%` : `${brandLogoWidth}px`, maxWidth: brandLogoUnit === "percent" ? "130px" : undefined }}
-                                className={`relative h-9 shrink-0 overflow-hidden rounded-none select-none ${frameClass}`}
+                                style={{ width: `${logoAndTextContainerW}px` }}
+                                className={`relative h-8.5 shrink-0 overflow-hidden rounded-none select-none ${frameClass}`}
                               >
                                 <img
                                   key={`${customBrandLogo}-${brandVersion}`}
                                   src={customBrandLogo}
                                   alt="Company Logo"
-                                  className={`h-9 w-auto max-w-none rounded-none select-none pointer-events-none absolute top-1/2 -translate-y-1/2 ${
-                                    brandLogoPlacement === "center"
-                                      ? "left-1/2 -translate-x-1/2"
-                                      : brandLogoPlacement === "right"
-                                      ? "right-0"
-                                      : "left-0"
-                                  }`}
+                                  style={{
+                                    width: `${logoAndTextNatW}px`,
+                                    minWidth: `${logoAndTextNatW}px`,
+                                    maxWidth: "none",
+                                    height: `${logoAndTextH}px`,
+                                  }}
+                                  className="rounded-none select-none pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
                                 />
                               </div>
                             ) : (
-                              <img
-                                key={`${customBrandLogo}-${brandVersion}`}
-                                src={customBrandLogo}
-                                alt="Company Logo"
-                                className={`w-7 h-7 rounded-none object-contain shadow-2xs shrink-0 border border-default-200/60 dark:border-default-700/60 ${frameClass}`}
-                              />
+                              <div className={`w-7 h-7 shrink-0 overflow-hidden rounded-none shadow-2xs border border-default-200/60 dark:border-default-700/60 ${frameClass}`}>
+                                <img
+                                  key={`${customBrandLogo}-${brandVersion}`}
+                                  src={customBrandLogo}
+                                  alt="Company Logo"
+                                  className="w-full h-full object-cover rounded-none select-none pointer-events-none"
+                                />
+                              </div>
                             )
                           ) : (
                             <div className="w-7 h-7 rounded-lg bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xs shadow-2xs shrink-0">
@@ -809,32 +855,49 @@ export default function Sidebar({
                   {/* Tierlist Sleek Icon Badge (Show/Hide controlled by brandBadgeVisible & brandBadgeStyle) */}
                   {brandBadgeVisible && (
                     <div className="shrink-0 ml-1">
-                      {planTier === "enterprise" && (
+                      {isEnterprise ? (
                         <span
                           className={`flex items-center ${
-                            brandBadgeStyle === "icon-only" ? "p-1 rounded-md" : "gap-1 px-1.5 py-0.5 rounded-md"
-                          } bg-violet-500/10 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400 border border-violet-500/30 text-[9.5px] font-bold tracking-tight select-none`}
-                          title="Enterprise Tier"
+                            brandBadgeStyle === "icon-only"
+                              ? "p-1 rounded-md"
+                              : brandBadgeStyle === "dot"
+                              ? "p-1 rounded-full"
+                              : "gap-1 px-1.5 py-0.5 rounded-md"
+                          } bg-gradient-to-r from-violet-500/15 to-purple-500/15 text-violet-600 dark:text-violet-400 border border-violet-500/30 text-[9.5px] font-bold tracking-tight select-none shadow-2xs`}
+                          title="Enterprise Tier Verified"
                         >
-                          <Crown className="w-2.5 h-2.5 text-violet-500 shrink-0" />
-                          {brandBadgeStyle !== "icon-only" && <span>Enterprise</span>}
+                          {brandBadgeStyle === "dot" ? (
+                            <span className="w-1.5 h-1.5 rounded-full bg-violet-500 shadow-[0_0_6px_rgba(139,92,246,0.8)]" />
+                          ) : (
+                            <>
+                              <Crown className="w-2.5 h-2.5 text-violet-500 shrink-0" />
+                              {brandBadgeStyle !== "icon-only" && <span>Enterprise</span>}
+                            </>
+                          )}
                         </span>
-                      )}
-                      {planTier === "pro" && (
+                      ) : planTier === "pro" ? (
                         <span
                           className={`flex items-center ${
-                            brandBadgeStyle === "icon-only" ? "px-1 py-0.5 rounded-md" : "gap-1 px-1.5 py-0.5 rounded-md"
+                            brandBadgeStyle === "icon-only"
+                              ? "p-1 rounded-md"
+                              : brandBadgeStyle === "dot"
+                              ? "p-1 rounded-full"
+                              : "gap-1 px-1.5 py-0.5 rounded-md"
                           } bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[9.5px] font-bold tracking-tight select-none`}
                           title="Pro Tier"
                         >
-                          {brandBadgeStyle === "icon-only" ? (
+                          {brandBadgeStyle === "dot" ? (
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]" />
+                          ) : brandBadgeStyle === "icon-only" ? (
                             <Sparkles className="w-2.5 h-2.5 text-emerald-500 shrink-0" />
                           ) : (
-                            <span>PRO</span>
+                            <>
+                              <Sparkles className="w-2.5 h-2.5 text-emerald-500 shrink-0" />
+                              <span>PRO</span>
+                            </>
                           )}
                         </span>
-                      )}
-                      {planTier === "basic" && (
+                      ) : (
                         <span
                           className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-default-100 dark:bg-default-800 text-default-500 border border-default-200 dark:border-default-700 text-[9.5px] font-medium tracking-tight select-none"
                           title="Basic Tier"
