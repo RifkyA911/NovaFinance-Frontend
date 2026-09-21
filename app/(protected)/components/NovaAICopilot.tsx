@@ -79,6 +79,22 @@ const PERSONALITY_OPTIONS: Record<
   },
 };
 
+const AI_VAULT_SALT = "NovaJournal_Copilot_Vault_Salt_2026!#";
+
+function decryptAiKey(ciphertext: string): string {
+  if (!ciphertext) return "";
+  try {
+    const raw = atob(ciphertext);
+    let decoded = "";
+    for (let i = 0; i < raw.length; i++) {
+      decoded += String.fromCharCode(raw.charCodeAt(i) ^ AI_VAULT_SALT.charCodeAt(i % AI_VAULT_SALT.length));
+    }
+    return decodeURIComponent(decoded);
+  } catch {
+    return ciphertext;
+  }
+}
+
 function renderInlineMarkdown(str: string, isUser = false) {
   const parts: React.ReactNode[] = [];
   const regex = /(\*\*([^*]+)\*\*|`([^`]+)`|\*([^*]+)\*)/g;
@@ -219,17 +235,31 @@ export default function NovaAICopilot() {
       const savedPos = localStorage.getItem("novajournal_copilot_pos");
       if (savedPos) setPosition(savedPos as CopilotPosition);
 
-      // Load active keys & proxy
-      const groqK = localStorage.getItem("novajournal_api_groq") || localStorage.getItem("novajournal_groq_key") || localStorage.getItem("novajournal_ai_key") || "";
-      const geminiK = localStorage.getItem("novajournal_api_gemini") || localStorage.getItem("novajournal_gemini_key") || "";
-      const deepseekK = localStorage.getItem("novajournal_api_deepseek") || localStorage.getItem("novajournal_deepseek_key") || "";
-      const claudeK = localStorage.getItem("novajournal_api_claude") || localStorage.getItem("novajournal_claude_key") || "";
+      // Load active keys & proxy (support both encrypted and plain vault storage)
+      const groqEnc = localStorage.getItem("novajournal_enc_api_groq");
+      const groqPlain = localStorage.getItem("novajournal_api_groq") || localStorage.getItem("novajournal_groq_key") || localStorage.getItem("novajournal_ai_key") || "";
+      const groqK = groqPlain || (groqEnc ? decryptAiKey(groqEnc) : "");
+
+      const geminiEnc = localStorage.getItem("novajournal_enc_api_gemini");
+      const geminiPlain = localStorage.getItem("novajournal_api_gemini") || localStorage.getItem("novajournal_gemini_key") || "";
+      const geminiK = geminiPlain || (geminiEnc ? decryptAiKey(geminiEnc) : "");
+
+      const deepseekEnc = localStorage.getItem("novajournal_enc_api_deepseek");
+      const deepseekPlain = localStorage.getItem("novajournal_api_deepseek") || localStorage.getItem("novajournal_deepseek_key") || "";
+      const deepseekK = deepseekPlain || (deepseekEnc ? decryptAiKey(deepseekEnc) : "");
+
+      const claudeEnc = localStorage.getItem("novajournal_enc_api_claude");
+      const claudePlain = localStorage.getItem("novajournal_api_claude") || localStorage.getItem("novajournal_claude_key") || "";
+      const claudeK = claudePlain || (claudeEnc ? decryptAiKey(claudeEnc) : "");
+
       const proxyU = localStorage.getItem("novajournal_api_proxy") || "";
       setActiveKeys({ gemini: geminiK, groq: groqK, deepseek: deepseekK, claude: claudeK, proxyUrl: proxyU });
 
       const savedModel = localStorage.getItem("novajournal_copilot_model");
       if (savedModel) {
         setModel(savedModel as CopilotModel);
+      } else if (geminiK) {
+        setModel("gemini");
       } else if (groqK) {
         setModel("groq");
       } else {
@@ -399,19 +429,137 @@ export default function NovaAICopilot() {
       let replyText = "";
       let directApiSucceeded = false;
 
+      // 0. pgvector Semantic Search (Vector RAG Ledger Retrieval)
+      let vectorContextPrompt = "";
+      let vectorResult: any = null;
+
+      if (selectedWorkspace?.id && prompt.length >= 2) {
+        try {
+          const vRes = await fetch("http://localhost:8080/api/ai/semantic-search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              workspaceId: selectedWorkspace.id,
+              query: prompt,
+              limit: 5,
+              threshold: 0.10,
+            }),
+          });
+          if (vRes.ok) {
+            const vJson = await vRes.json();
+            if (vJson.success && vJson.data) {
+              vectorResult = vJson.data;
+              if (vJson.data.transactions?.length > 0) {
+                vectorContextPrompt = `\n\n[DATA LEDGER PGVECTOR (HNSW MATCH DARI POSTGRESQL 16)]:\n` +
+                  (vJson.data.transactions || []).map((t: any) =>
+                    `- [${t.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}] "${t.description || t.content}" (Rp ${Number(t.amount).toLocaleString('id-ID')}) | Kategori: ${t.category_name || '-'} | Tanggal: ${t.date ? String(t.date).split('T')[0].split(' ')[0] : '-'} | Kecocokan: ${(t.similarity * 100).toFixed(1)}%`
+                  ).join("\n");
+              }
+            }
+          }
+        } catch (e) {
+          console.warn("Vector semantic lookup bypassed:", e);
+        }
+      }
+
       const groqKeyToUse = activeKeys.groq || localStorage.getItem("novajournal_api_groq") || localStorage.getItem("novajournal_groq_key");
+      const geminiKeyToUse = activeKeys.gemini || localStorage.getItem("novajournal_api_gemini") || localStorage.getItem("novajournal_gemini_key") || (localStorage.getItem("novajournal_enc_api_gemini") ? decryptAiKey(localStorage.getItem("novajournal_enc_api_gemini")!) : "");
+      const deepseekKeyToUse = activeKeys.deepseek || localStorage.getItem("novajournal_api_deepseek") || localStorage.getItem("novajournal_deepseek_key") || (localStorage.getItem("novajournal_enc_api_deepseek") ? decryptAiKey(localStorage.getItem("novajournal_enc_api_deepseek")!) : "");
+      const claudeKeyToUse = activeKeys.claude || localStorage.getItem("novajournal_api_claude") || localStorage.getItem("novajournal_claude_key") || (localStorage.getItem("novajournal_enc_api_claude") ? decryptAiKey(localStorage.getItem("novajournal_enc_api_claude")!) : "");
       const proxyUrlToUse = activeKeys.proxyUrl || localStorage.getItem("novajournal_api_proxy");
       const groqModelVersion = localStorage.getItem("novajournal_model_groq") || "llama-3.3-70b-versatile";
+      let geminiModelVersion = localStorage.getItem("novajournal_model_gemini") || "gemini-3.6-flash";
+      if (geminiModelVersion === "gemini-2.0-flash" || geminiModelVersion === "gemini-2.0-flash-exp") {
+        geminiModelVersion = "gemini-3.6-flash";
+        try { localStorage.setItem("novajournal_model_gemini", "gemini-3.6-flash"); } catch {}
+      }
 
       const systemInstruction = `Anda adalah Nova AI Financial Agent dengan persona "${PERSONALITY_OPTIONS[personality].label}".
 Tone & Karakter: ${PERSONALITY_OPTIONS[personality].tone}.
 Workspace: "${selectedWorkspace?.name || "Utama"}" (${(selectedWorkspace as any)?.type || "Personal"}).
 Hak Akses Ledger: ${accessLimit === "full" ? "Akses penuh data transaksi & rekening." : accessLimit === "advisory" ? "Hanya ringkasan eksekutif dan rekomendasi." : "Penasihat konseptual, isolasi privasi ketat."}.
 Berikan respon finansial berbahasa Indonesia yang cerdas, praktis, profesional, berstruktur, dan gunakan formatting markdown bold (**teks**) untuk istilah, nominal, atau poin krusial.
+${vectorContextPrompt ? `${vectorContextPrompt}\n\nGunakan data transaksi riil di atas untuk menjawab kueri pengguna secara presisi dan faktual.` : ""}
 ${fileRef ? `Pengguna melampirkan berkas: ${fileRef.name} (${fileRef.size}).` : ""}`;
 
-      // 1. Direct Real Groq API Call
-      if (model === "groq" && groqKeyToUse) {
+      // 1. Direct Real Google Gemini API Call (Google AI Studio)
+      if (model === "gemini" && geminiKeyToUse) {
+        try {
+          const history = messages.slice(-6).map((m) => ({
+            role: m.sender === "user" ? "user" : "model",
+            parts: [{ text: m.text }],
+          }));
+
+          const geminiPayload = {
+            system_instruction: {
+              parts: [{ text: systemInstruction }],
+            },
+            contents: [
+              ...history,
+              {
+                role: "user",
+                parts: [{ text: prompt }],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.6,
+              maxOutputTokens: 1024,
+            },
+          };
+
+          let geminiRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${geminiModelVersion}:generateContent?key=${geminiKeyToUse.trim()}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(geminiPayload),
+            }
+          );
+
+          if (!geminiRes.ok && (geminiRes.status === 404 || geminiRes.status === 400)) {
+            const fallbacks = ["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+            for (const fb of fallbacks) {
+              if (fb === geminiModelVersion) continue;
+              try {
+                const retryRes = await fetch(
+                  `https://generativelanguage.googleapis.com/v1beta/models/${fb}:generateContent?key=${geminiKeyToUse.trim()}`,
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(geminiPayload),
+                  }
+                );
+                if (retryRes.ok) {
+                  geminiRes = retryRes;
+                  try {
+                    localStorage.setItem("novajournal_model_gemini", fb);
+                  } catch {}
+                  break;
+                }
+              } catch {}
+            }
+          }
+
+          if (geminiRes.ok) {
+            const gData = await geminiRes.json();
+            const reply = gData.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (reply) {
+              replyText = reply;
+              directApiSucceeded = true;
+            }
+          } else {
+            const errData = await geminiRes.json().catch(() => ({}));
+            const errMsg = errData.error?.message || `HTTP ${geminiRes.status}`;
+            replyText = `⚠️ **Google Gemini API Error (${errMsg})**\n\nPastikan API key dari Google AI Studio valid dan kuota akun aktif.`;
+            directApiSucceeded = true;
+          }
+        } catch (geminiErr: any) {
+          console.warn("Gemini direct call failed:", geminiErr);
+        }
+      }
+
+      // 2. Direct Real Groq API Call
+      if (!directApiSucceeded && model === "groq" && groqKeyToUse) {
         try {
           const endpoint = proxyUrlToUse
             ? `${proxyUrlToUse.replace(/\/+$/, "")}/chat/completions`
@@ -492,8 +640,43 @@ ${fileRef ? `Pengguna melampirkan berkas: ${fileRef.name} (${fileRef.size}).` : 
         }
       }
 
-      // 2. Custom Proxy Call (OpenRouter / OmniRoute / 9Router / Cloudflare)
-      if (!directApiSucceeded && proxyUrlToUse && (groqKeyToUse || activeKeys.gemini || activeKeys.claude)) {
+      // 3. Direct DeepSeek API Call
+      if (!directApiSucceeded && model === "deepseek" && deepseekKeyToUse) {
+        try {
+          const deepseekRes = await fetch("https://api.deepseek.com/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${deepseekKeyToUse.trim()}`,
+            },
+            body: JSON.stringify({
+              model: "deepseek-chat",
+              messages: [
+                { role: "system", content: systemInstruction },
+                ...messages.slice(-6).map((m) => ({
+                  role: m.sender === "user" ? ("user" as const) : ("assistant" as const),
+                  content: m.text,
+                })),
+                { role: "user", content: prompt },
+              ],
+              temperature: 0.6,
+            }),
+          });
+          if (deepseekRes.ok) {
+            const dsData = await deepseekRes.json();
+            const reply = dsData.choices?.[0]?.message?.content;
+            if (reply) {
+              replyText = reply;
+              directApiSucceeded = true;
+            }
+          }
+        } catch (dsErr) {
+          console.warn("DeepSeek call failed:", dsErr);
+        }
+      }
+
+      // 4. Custom Proxy Call (OpenRouter / OmniRoute / 9Router / Cloudflare)
+      if (!directApiSucceeded && proxyUrlToUse && (groqKeyToUse || geminiKeyToUse || deepseekKeyToUse || claudeKeyToUse)) {
         try {
           const endpoint = `${proxyUrlToUse.replace(/\/+$/, "")}/chat/completions`;
           const keyToUse = groqKeyToUse || activeKeys.gemini || activeKeys.claude;
@@ -557,7 +740,15 @@ ${fileRef ? `Pengguna melampirkan berkas: ${fileRef.name} (${fileRef.size}).` : 
 
       // 4. Intelligent Offline Contextual Response if no API answered
       if (!replyText) {
-        if (personality === "cfo") {
+        if (vectorResult?.transactions?.length > 0) {
+          const txList = vectorResult.transactions;
+          const totalMatched = txList.reduce((acc: number, t: any) => acc + (parseFloat(t.amount) || 0), 0);
+          replyText = `**[Temuan AI Ledger - pgvector HNSW Engine]**\n\n${vectorResult.answerSynthesis}\n\n**Daftar Transaksi Ditemukan:**\n` +
+            txList.map((t: any, idx: number) =>
+              `${idx + 1}. **${t.description || 'Transaksi'}**\n   • **Nominal:** Rp ${Number(t.amount).toLocaleString('id-ID')} (${t.type === 'income' ? 'Pemasukan' : 'Pengeluaran'})\n   • **Kategori:** \`${t.category_name || '-'}\` | **Akun:** ${t.account_name || '-'}\n   • **Skor Kecocokan:** ${(t.similarity * 100).toFixed(1)}%`
+            ).join('\n\n') +
+            `\n\n📊 **Total Akumulasi Teridentifikasi:** **Rp ${totalMatched.toLocaleString('id-ID')}**\n*Diambil langsung dari PostgreSQL 16 vector store.*`;
+        } else if (personality === "cfo") {
           replyText = `**[Evaluasi CFO - ${MODEL_OPTIONS[model].name}]**\n\nMenanggapi pertanyaan Anda: *"${prompt}"*.\n\n1. **Likuiditas & Burn Rate:** Saldo kas operasional workspace **${selectedWorkspace?.name || "Utama"}** terjaga dengan buffer yang memadai untuk 3-6 bulan ke depan.\n2. **Rekomendasi Tindakan:** Pastikan tidak ada piutang jatuh tempo yang tertunda lebih dari 30 hari. Alokasikan surplus kas ke instrumen pasar uang berimbal hasil likuid.\n\n${fileRef ? `*Dokumen terlampir (${fileRef.name}) telah diekstraksi ke dalam konteks analisis.*` : ""}`;
         } else if (personality === "auditor") {
           replyText = `**[Hasil Audit Kepatuhan - ${MODEL_OPTIONS[model].name}]**\n\n1. **Verifikasi Entitas:** Transaksi terdaftar di workspace **${selectedWorkspace?.name || "Utama"}** (${(selectedWorkspace as any)?.type?.toUpperCase() || "PERSONAL"}). Isolasi ledger berjalan 100% tanpa commingling.\n2. **Kesesuaian Anggaran:** Monitor batas plafon pos pengeluaran gaya hidup & F&B agar tidak melebihi 25% total arus keluar.\n\n${fileRef ? `*Validasi RAG: Dokumen '${fileRef.name}' sesuai dengan format pembukuan audit.*` : ""}`;
