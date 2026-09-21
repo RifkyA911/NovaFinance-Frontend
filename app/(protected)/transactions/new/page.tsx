@@ -145,6 +145,45 @@ export default function NewTransactionPage() {
     Record<string, UploadedDocumentResult>
   >({});
   const [isAiAutoFilled, setIsAiAutoFilled] = useState(false);
+  const [duplicateCheck, setDuplicateCheck] = useState<{
+    isDuplicate: boolean;
+    warning?: string;
+    similarity?: number;
+  } | null>(null);
+
+  // Debounced pgvector duplicate transaction detection
+  useEffect(() => {
+    if (!selectedWorkspace?.id || !formData.description.trim() || !formData.amount) {
+      setDuplicateCheck(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch("http://localhost:8080/api/ai/check-duplicate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            workspaceId: selectedWorkspace.id,
+            description: formData.description.trim(),
+            amount: Number(formData.amount),
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.data?.isPotentialDuplicate) {
+            setDuplicateCheck({
+              isDuplicate: true,
+              warning: data.data.warning,
+              similarity: data.data.similarity,
+            });
+          } else {
+            setDuplicateCheck(null);
+          }
+        }
+      } catch {}
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [selectedWorkspace?.id, formData.description, formData.amount]);
 
   // Queries
   const categoriesQuery = useQuery({
@@ -857,6 +896,15 @@ export default function NewTransactionPage() {
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full h-10 px-3.5 text-xs sm:text-sm rounded-xl bg-default-50 dark:bg-default-900 border border-default-200 dark:border-default-800 text-foreground placeholder:text-default-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
+                {duplicateCheck && (
+                  <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs animate-in fade-in slide-in-from-top-1">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
+                    <div className="flex-1 min-w-0">
+                      <span className="font-bold block">AI Vector Match: Potensi Transaksi Ganda</span>
+                      <p className="text-[11px] mt-0.5 leading-relaxed opacity-90">{duplicateCheck.warning}</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* ROW 2: NOMINAL AMOUNT (Left 1/2) + QUICK ADJUST (Right 1/2) */}
