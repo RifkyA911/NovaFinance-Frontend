@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Sparkles,
   Send,
@@ -16,6 +16,11 @@ import {
   Calendar,
   Zap,
   Key,
+  UploadCloud,
+  FileText,
+  Layers,
+  Radio,
+  Activity,
 } from "lucide-react";
 import { Button, Card } from "@heroui/react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -57,6 +62,18 @@ export default function MagicQuickAdd({ categories, accounts }: MagicQuickAddPro
   const [apiKey, setApiKey] = useState("");
   const [keySaved, setKeySaved] = useState(false);
 
+  // RAG & RabbitMQ Pipeline State
+  const [useRabbitMQ, setUseRabbitMQ] = useState(false);
+  const [isRagUploading, setIsRagUploading] = useState(false);
+  const [ragStatus, setRagStatus] = useState<{
+    fileName?: string;
+    jobId?: string;
+    queue?: string;
+    similarity?: number;
+    message?: string;
+  } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     const saved = localStorage.getItem("novajournal_ai_key");
     if (saved) setApiKey(saved);
@@ -66,6 +83,64 @@ export default function MagicQuickAdd({ categories, accounts }: MagicQuickAddPro
     localStorage.setItem("novajournal_ai_key", apiKey.trim());
     setKeySaved(true);
     setTimeout(() => setKeySaved(false), 2000);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!selectedWorkspace?.id) {
+      setErrorMsg("Pilih workspace terlebih dahulu sebelum upload dokumen.");
+      return;
+    }
+
+    setIsRagUploading(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+    setRagStatus(null);
+
+    try {
+      const textContent = await file.text().catch(() => "");
+      const sampleContent = textContent.trim() || `Dokumen transaksi: ${file.name} (Ukuran: ${(file.size / 1024).toFixed(1)} KB)`;
+
+      const res = await mutationFunctions.ragUpload({
+        workspaceId: selectedWorkspace.id,
+        content: sampleContent,
+        fileName: file.name,
+        useRabbitMQ,
+      });
+
+      if (!res.success) {
+        throw new Error(res.error || "Gagal mengunggah dokumen ke pipeline RAG.");
+      }
+
+      if (res.data?.mode === "rabbitmq_async") {
+        setRagStatus({
+          fileName: file.name,
+          jobId: res.data.jobId,
+          queue: res.data.queue,
+          message: res.data.message,
+        });
+        setSuccessMsg(`🚀 [RabbitMQ Queue] Dokumen "${file.name}" dialihkan ke worker queue ${res.data.queue} (Job #${res.data.jobId})!`);
+      } else {
+        const topMatch = res.data?.ragContext?.[0];
+        setRagStatus({
+          fileName: file.name,
+          similarity: topMatch?.similarity,
+          message: `RAG pgvector selesai! ${topMatch ? `Kecocokan semantik: ${(topMatch.similarity * 100).toFixed(1)}%` : ""}`,
+        });
+        setSuccessMsg(`📄 [pgvector RAG] Analisis dokumen "${file.name}" berhasil.`);
+      }
+
+      const promptName = file.name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ");
+      setInputPrompt(promptName);
+      handleParse(promptName);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Gagal memproses file.");
+    } finally {
+      setIsRagUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   const handleParse = async (textToParse?: string) => {
@@ -198,14 +273,81 @@ export default function MagicQuickAdd({ categories, accounts }: MagicQuickAddPro
           </div>
         </div>
 
-        <button
-          onClick={() => setShowSettings(!showSettings)}
-          className="p-1 rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          title="Pengaturan API Key (Gemini / Groq)"
-        >
-          <Settings2 className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-1.5">
+          {/* RabbitMQ Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setUseRabbitMQ(!useRabbitMQ)}
+            className={`inline-flex items-center gap-1 text-[10.5px] px-2.5 py-1 rounded-lg border font-semibold transition-all cursor-pointer ${
+              useRabbitMQ
+                ? "bg-orange-500/15 border-orange-500/30 text-orange-600 dark:text-orange-400 shadow-2xs"
+                : "bg-white/80 dark:bg-gray-800/80 border-default-200 dark:border-default-700 text-default-500 hover:text-foreground"
+            }`}
+            title="Aktifkan pemrosesan dokumen asinkron via RabbitMQ broker"
+          >
+            <Radio className={`w-3 h-3 ${useRabbitMQ ? "animate-pulse text-orange-500" : ""}`} />
+            <span>RabbitMQ {useRabbitMQ ? "ON" : "OFF"}</span>
+          </button>
+
+          {/* RAG Upload Document Button */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            onChange={handleFileUpload}
+            className="hidden"
+            accept="image/*,.pdf,.txt,.csv"
+          />
+          <Button
+            size="sm"
+            variant="outline"
+            isDisabled={isRagUploading || loading}
+            onPress={() => fileInputRef.current?.click()}
+            className="h-7.5 px-2.5 text-[11px] font-semibold bg-white dark:bg-gray-800 border-default-200 dark:border-default-700 text-foreground hover:bg-default-100 cursor-pointer shadow-2xs"
+          >
+            {isRagUploading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin mr-1 text-blue-500" />
+            ) : (
+              <UploadCloud className="w-3.5 h-3.5 mr-1 text-blue-500" />
+            )}
+            <span>Upload Struk (RAG)</span>
+          </Button>
+
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="p-1 rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+            title="Pengaturan API Key (Gemini / Groq)"
+          >
+            <Settings2 className="w-4 h-4" />
+          </button>
+        </div>
       </div>
+
+      {/* Live RAG / RabbitMQ Notification Banner */}
+      {ragStatus && (
+        <div className="mb-2.5 p-2 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 text-[11px] flex items-center justify-between text-foreground animate-in fade-in">
+          <div className="flex items-center gap-2">
+            {ragStatus.jobId ? (
+              <span className="px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-600 dark:text-orange-400 font-mono font-bold text-[9.5px]">
+                RABBITMQ
+              </span>
+            ) : (
+              <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-600 dark:text-blue-400 font-mono font-bold text-[9.5px]">
+                PGVECTOR RAG
+              </span>
+            )}
+            <span className="truncate">
+              {ragStatus.fileName}: {ragStatus.message || "Proses inferensi selesai"}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setRagStatus(null)}
+            className="text-default-400 hover:text-foreground cursor-pointer shrink-0 ml-2"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Settings Row (Collapsible) */}
       {showSettings && (
