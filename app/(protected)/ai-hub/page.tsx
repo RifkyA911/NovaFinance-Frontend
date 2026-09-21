@@ -26,6 +26,7 @@ import {
   ChevronUp,
   X,
   Layers,
+  Terminal,
 } from "lucide-react";
 import { playSoftChime, playNovaSpaceSound, playNovaSuccessSound, playNovaErrorSound, playRealisticClick } from "@/app/lib/sound";
 import { mutationFunctions } from "@/app/lib/queries";
@@ -88,13 +89,19 @@ export default function AiHubPage() {
     setTimeout(() => setNoticeMessage(null), 4000);
   };
 
-  // API Key Connectivity Testing
+  // API Key Connectivity & Live Prompt Testing
   const [testingKey, setTestingKey] = useState<Record<string, boolean>>({});
-  const [testResults, setTestResults] = useState<Record<string, { ok: boolean; msg: string; latency?: number }>>({});
+  const [testingChat, setTestingChat] = useState<Record<string, boolean>>({});
+  const [testResults, setTestResults] = useState<
+    Record<string, { ok: boolean; msg: string; reply?: string; latency?: number; usedModel?: string }>
+  >({});
 
-  const handleTestKey = async (provider: "groq" | "gemini" | "deepseek" | "claude", keyVal: string) => {
+  const handleTestKey = async (
+    provider: "gemini" | "openai" | "claude" | "deepseek" | "groq",
+    keyVal: string
+  ) => {
     if (!keyVal || !keyVal.trim()) {
-      showNotice(`Kunci API ${provider.toUpperCase()} masih kosong! Masukkan kunci terlebih dahulu.`);
+      showNotice(`Kunci API ${provider.toUpperCase()} masih kosong! Masukkan kunci terlebih dahulu.`, true);
       playNovaErrorSound();
       return;
     }
@@ -107,106 +114,132 @@ export default function AiHubPage() {
       if (res.success) {
         playNovaSuccessSound();
         const msg = res.message || `Koneksi ${provider.toUpperCase()} Berhasil!`;
-        setTestResults((prev) => ({ ...prev, [provider]: { ok: true, msg, latency: res.latencyMs } }));
+        setTestResults((prev) => ({
+          ...prev,
+          [provider]: { ok: true, msg, latency: res.latencyMs },
+        }));
         showNotice(`✅ ${msg} (${res.latencyMs || 0}ms)`);
 
         if (res.models && res.models.length > 0 && provider === "groq") {
           try {
             localStorage.setItem("novajournal_groq_discovered_models", JSON.stringify(res.models));
           } catch {}
-          if (!res.models.includes(groqModelVersion)) {
-            const autoModel = res.models.find((m: string) => m.includes("8b-instant") || m.includes("70b") || m.includes("llama")) || res.models[0];
-            if (autoModel) {
-              setGroqModelVersion(autoModel);
-              try { localStorage.setItem("novajournal_model_groq", autoModel); } catch {}
-            }
-          }
         }
 
         if (selectedWorkspace?.id) {
-          mutationFunctions.recordAuditLog({
-            workspaceId: selectedWorkspace.id,
-            action: `ai.key_tested.${provider}`,
-            entityType: "ai_configuration",
-            newData: { provider, latencyMs: res.latencyMs, status: "success" },
-          }).catch(() => {});
+          mutationFunctions
+            .recordAuditLog({
+              workspaceId: selectedWorkspace.id,
+              action: `ai.key_tested.${provider}`,
+              entityType: "ai_configuration",
+              newData: { provider, latencyMs: res.latencyMs, status: "success" },
+            })
+            .catch(() => {});
         }
       } else {
         playNovaErrorSound();
         const err = res.error || `Kunci ${provider.toUpperCase()} ditolak atau tidak valid.`;
-        setTestResults((prev) => ({ ...prev, [provider]: { ok: false, msg: err, latency: res.latencyMs } }));
-        showNotice(`❌ Gagal: ${err}`);
+        setTestResults((prev) => ({
+          ...prev,
+          [provider]: { ok: false, msg: err, latency: res.latencyMs },
+        }));
+        showNotice(`❌ Gagal: ${err}`, true);
       }
     } catch (e: any) {
       playNovaErrorSound();
       const err = e.message || "Gagal menguji koneksi ke server AI.";
       setTestResults((prev) => ({ ...prev, [provider]: { ok: false, msg: err } }));
-      showNotice(`❌ Error: ${err}`);
+      showNotice(`❌ Error: ${err}`, true);
     } finally {
       setTestingKey((prev) => ({ ...prev, [provider]: false }));
     }
   };
 
-  const [testingChatGroq, setTestingChatGroq] = useState(false);
-  const handleTestChatGroq = async () => {
-    if (!groqKey || !groqKey.trim()) {
-      showNotice("Masukkan API Key Groq terlebih dahulu di kolom Kunci API Groq!", true);
+  const handleTestChat = async (
+    provider: "gemini" | "openai" | "claude" | "deepseek" | "groq",
+    keyVal: string,
+    modelVal: string
+  ) => {
+    if (!keyVal || !keyVal.trim()) {
+      showNotice(`Masukkan API Key ${provider.toUpperCase()} terlebih dahulu di kolom Kunci API!`, true);
       playNovaErrorSound();
       return;
     }
-    setTestingChatGroq(true);
+    setTestingChat((prev) => ({ ...prev, [provider]: true }));
     playRealisticClick();
     try {
       const res = await mutationFunctions.testAiChat({
-        provider: "groq",
-        apiKey: groqKey.trim(),
-        model: groqModelVersion,
+        provider,
+        apiKey: keyVal.trim(),
+        model: modelVal,
         proxyUrl: customProxyUrl,
       });
       if (res.success) {
         playNovaSuccessSound();
-        if (res.usedModel && res.usedModel !== groqModelVersion) {
-          setGroqModelVersion(res.usedModel);
-          try { localStorage.setItem("novajournal_model_groq", res.usedModel); } catch {}
-        }
         showNotice(`🎉 ${res.message || "Eksekusi Chat Berhasil!"} (${res.latencyMs || 0}ms)`);
         setTestResults((prev) => ({
           ...prev,
-          groq: { ok: true, msg: `Chat Berhasil (${res.usedModel}): "${res.reply}"`, latency: res.latencyMs },
+          [provider]: {
+            ok: true,
+            msg: res.message || "Chat Sukses",
+            reply: res.reply,
+            usedModel: res.usedModel || modelVal,
+            latency: res.latencyMs,
+          },
         }));
       } else {
         playNovaErrorSound();
         showNotice(`❌ Chat Test Gagal: ${res.error}`, true);
         setTestResults((prev) => ({
           ...prev,
-          groq: { ok: false, msg: res.error || "Gagal", latency: res.latencyMs },
+          [provider]: { ok: false, msg: res.error || "Gagal", latency: res.latencyMs },
         }));
       }
     } catch (e: any) {
       playNovaErrorSound();
       showNotice(`❌ Chat Error: ${e.message}`, true);
+      setTestResults((prev) => ({
+        ...prev,
+        [provider]: { ok: false, msg: e.message || "Gagal", latency: 0 },
+      }));
     } finally {
-      setTestingChatGroq(false);
+      setTestingChat((prev) => ({ ...prev, [provider]: false }));
     }
   };
 
-  // Section 1: Multi-Provider API Keys
+  // Section 1: Multi-Provider API Keys (Order: Gemini -> OpenAI -> Claude -> DeepSeek -> Groq)
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
   const [geminiKey, setGeminiKey] = useState("");
-  const [groqKey, setGroqKey] = useState("");
-  const [deepseekKey, setDeepseekKey] = useState("");
+  const [openaiKey, setOpenaiKey] = useState("");
   const [claudeKey, setClaudeKey] = useState("");
+  const [deepseekKey, setDeepseekKey] = useState("");
+  const [groqKey, setGroqKey] = useState("");
   const [customProxyUrl, setCustomProxyUrl] = useState("");
-  const [geminiModelVersion, setGeminiModelVersion] = useState("gemini-2.0-flash");
-  const [groqModelVersion, setGroqModelVersion] = useState("llama-3.3-70b-versatile");
+
+  const [geminiModelVersion, setGeminiModelVersion] = useState("gemini-2.5-flash");
+  const [openaiModelVersion, setOpenaiModelVersion] = useState("gpt-6-astra");
+  const [claudeModelVersion, setClaudeModelVersion] = useState("claude-3-7-sonnet-20250219");
   const [deepseekModelVersion, setDeepseekModelVersion] = useState("deepseek-chat");
-  const [claudeModelVersion, setClaudeModelVersion] = useState("claude-3-5-sonnet-20241022");
+  const [groqModelVersion, setGroqModelVersion] = useState("llama-3.3-70b-versatile");
   const [aiRoutingStrategy, setAiRoutingStrategy] = useState<"fallback" | "round-robin" | "cost-first">("fallback");
+
+  // Individual Card Fold/Collapse State for the 5 Providers
+  const [foldedCards, setFoldedCards] = useState<Record<string, boolean>>({
+    gemini: false,
+    openai: false,
+    claude: false,
+    deepseek: false,
+    groq: false,
+  });
+  const toggleCardFold = (key: string) => {
+    playSoftChime();
+    setFoldedCards((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   // Section 2: Nova AI Copilot & Voice
   const [showCopilot, setShowCopilot] = useState(true);
   const [copilotMode, setCopilotMode] = useState<"full" | "icon" | "summary">("full");
-  const [copilotModel, setCopilotModel] = useState<"gemini" | "groq" | "deepseek" | "claude">("gemini");
+  const [copilotModel, setCopilotModel] = useState<"gemini" | "openai" | "claude" | "deepseek" | "groq">("gemini");
   const [copilotPersona, setCopilotPersona] = useState<"cfo" | "buddy" | "auditor" | "analyst">("cfo");
   const [copilotVoice, setCopilotVoice] = useState("id-female-nova");
   const [copilotAccess, setCopilotAccess] = useState<"full" | "advisory" | "restricted">("full");
@@ -308,24 +341,30 @@ export default function AiHubPage() {
       const gPlain = localStorage.getItem("novajournal_api_gemini") || localStorage.getItem("novajournal_gemini_key");
       setGeminiKey(gEnc ? decryptAiKey(gEnc) : gPlain || "");
 
-      const groqEnc = localStorage.getItem("novajournal_enc_api_groq");
-      const groqPlain = localStorage.getItem("novajournal_api_groq") || localStorage.getItem("novajournal_groq_key") || localStorage.getItem("novajournal_ai_key");
-      setGroqKey(groqEnc ? decryptAiKey(groqEnc) : groqPlain || "");
-
-      const dsEnc = localStorage.getItem("novajournal_enc_api_deepseek");
-      const dsPlain = localStorage.getItem("novajournal_api_deepseek") || localStorage.getItem("novajournal_deepseek_key");
-      setDeepseekKey(dsEnc ? decryptAiKey(dsEnc) : dsPlain || "");
+      const opEnc = localStorage.getItem("novajournal_enc_api_openai");
+      const opPlain = localStorage.getItem("novajournal_api_openai") || localStorage.getItem("novajournal_openai_key");
+      setOpenaiKey(opEnc ? decryptAiKey(opEnc) : opPlain || "");
 
       const clEnc = localStorage.getItem("novajournal_enc_api_claude");
       const clPlain = localStorage.getItem("novajournal_api_claude") || localStorage.getItem("novajournal_claude_key");
       setClaudeKey(clEnc ? decryptAiKey(clEnc) : clPlain || "");
 
+      const dsEnc = localStorage.getItem("novajournal_enc_api_deepseek");
+      const dsPlain = localStorage.getItem("novajournal_api_deepseek") || localStorage.getItem("novajournal_deepseek_key");
+      setDeepseekKey(dsEnc ? decryptAiKey(dsEnc) : dsPlain || "");
+
+      const groqEnc = localStorage.getItem("novajournal_enc_api_groq");
+      const groqPlain = localStorage.getItem("novajournal_api_groq") || localStorage.getItem("novajournal_groq_key") || localStorage.getItem("novajournal_ai_key");
+      setGroqKey(groqEnc ? decryptAiKey(groqEnc) : groqPlain || "");
+
       setCustomProxyUrl(localStorage.getItem("novajournal_api_proxy") || "");
 
-      setGeminiModelVersion(localStorage.getItem("novajournal_model_gemini") || "gemini-2.0-flash");
-      setGroqModelVersion(localStorage.getItem("novajournal_model_groq") || "llama-3.3-70b-versatile");
+      const gModel = localStorage.getItem("novajournal_model_gemini");
+      setGeminiModelVersion(gModel && !gModel.includes("2.0-flash") && !gModel.includes("3.6-flash") ? gModel : "gemini-2.5-flash");
+      setOpenaiModelVersion(localStorage.getItem("novajournal_model_openai") || "gpt-6-astra");
+      setClaudeModelVersion(localStorage.getItem("novajournal_model_claude") || "claude-3-7-sonnet-20250219");
       setDeepseekModelVersion(localStorage.getItem("novajournal_model_deepseek") || "deepseek-chat");
-      setClaudeModelVersion(localStorage.getItem("novajournal_model_claude") || "claude-3-5-sonnet-20241022");
+      setGroqModelVersion(localStorage.getItem("novajournal_model_groq") || "llama-3.3-70b-versatile");
 
       const savedStrategy = localStorage.getItem("novajournal_ai_strategy");
       if (savedStrategy) setAiRoutingStrategy(savedStrategy as any);
@@ -386,25 +425,30 @@ export default function AiHubPage() {
         localStorage.setItem("novajournal_api_gemini", geminiKey);
         localStorage.setItem("novajournal_gemini_key", geminiKey);
 
-        localStorage.setItem("novajournal_enc_api_groq", encryptAiKey(groqKey));
-        localStorage.setItem("novajournal_api_groq", groqKey);
-        localStorage.setItem("novajournal_groq_key", groqKey);
-
-        localStorage.setItem("novajournal_enc_api_deepseek", encryptAiKey(deepseekKey));
-        localStorage.setItem("novajournal_api_deepseek", deepseekKey);
-        localStorage.setItem("novajournal_deepseek_key", deepseekKey);
+        localStorage.setItem("novajournal_enc_api_openai", encryptAiKey(openaiKey));
+        localStorage.setItem("novajournal_api_openai", openaiKey);
+        localStorage.setItem("novajournal_openai_key", openaiKey);
 
         localStorage.setItem("novajournal_enc_api_claude", encryptAiKey(claudeKey));
         localStorage.setItem("novajournal_api_claude", claudeKey);
         localStorage.setItem("novajournal_claude_key", claudeKey);
 
+        localStorage.setItem("novajournal_enc_api_deepseek", encryptAiKey(deepseekKey));
+        localStorage.setItem("novajournal_api_deepseek", deepseekKey);
+        localStorage.setItem("novajournal_deepseek_key", deepseekKey);
+
+        localStorage.setItem("novajournal_enc_api_groq", encryptAiKey(groqKey));
+        localStorage.setItem("novajournal_api_groq", groqKey);
+        localStorage.setItem("novajournal_groq_key", groqKey);
+
         localStorage.setItem("novajournal_api_proxy", customProxyUrl);
         localStorage.setItem("novajournal_ai_strategy", aiRoutingStrategy);
 
         localStorage.setItem("novajournal_model_gemini", geminiModelVersion);
-        localStorage.setItem("novajournal_model_groq", groqModelVersion);
-        localStorage.setItem("novajournal_model_deepseek", deepseekModelVersion);
+        localStorage.setItem("novajournal_model_openai", openaiModelVersion);
         localStorage.setItem("novajournal_model_claude", claudeModelVersion);
+        localStorage.setItem("novajournal_model_deepseek", deepseekModelVersion);
+        localStorage.setItem("novajournal_model_groq", groqModelVersion);
 
         localStorage.setItem("novajournal_copilot_visible", String(showCopilot));
         localStorage.setItem("novajournal_copilot_mode", copilotMode);
@@ -437,15 +481,17 @@ export default function AiHubPage() {
     };
   }, [
     geminiKey,
-    groqKey,
-    deepseekKey,
+    openaiKey,
     claudeKey,
+    deepseekKey,
+    groqKey,
     customProxyUrl,
     aiRoutingStrategy,
     geminiModelVersion,
-    groqModelVersion,
-    deepseekModelVersion,
+    openaiModelVersion,
     claudeModelVersion,
+    deepseekModelVersion,
+    groqModelVersion,
     showCopilot,
     copilotMode,
     copilotModel,
@@ -611,13 +657,13 @@ export default function AiHubPage() {
                 1. Kunci API Multi-Model (Zero Single-Point-of-Failure)
               </h2>
               <p className="text-[11px] text-default-400">
-                Google Gemini, Groq Cloud OCR, DeepSeek R1, dan Claude 3.5 Sonnet dengan failover otomatis.
+                Google Gemini, ChatGPT (OpenAI), Anthropic Claude, DeepSeek, dan Groq Cloud dengan failover otomatis.
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] px-2 py-0.5 rounded-md bg-default-100 dark:bg-default-800 text-default-500 font-mono">
-              {[geminiKey, groqKey, deepseekKey, claudeKey].filter(Boolean).length || 1} Aktif
+              {[geminiKey, openaiKey, claudeKey, deepseekKey, groqKey].filter(Boolean).length} / 5 Terkonfigurasi
             </span>
             <div className="w-8 h-8 rounded-lg flex items-center justify-center text-default-400 hover:text-foreground">
               {foldedSections.keys ? <ChevronDown className="w-5 h-5" /> : <ChevronUp className="w-5 h-5" />}
@@ -628,327 +674,806 @@ export default function AiHubPage() {
         {!foldedSections.keys && (
           <div className="p-4 sm:p-5 pt-0 border-t border-default-100 dark:border-default-800">
             <div className="space-y-4 pt-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* 5 Full-Row Provider Cards: Gemini -> ChatGPT -> Claude -> DeepSeek -> Groq */}
+              <div className="space-y-4">
                 {/* 1. Google Gemini */}
-                <div className="p-4 rounded-xl border border-default-200/80 dark:border-default-700/80 bg-default-50/50 dark:bg-default-900/30 space-y-3 flex flex-col justify-between shadow-2xs">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">✨</span>
-                        <div>
-                          <span className="text-xs font-bold text-foreground block">Google Gemini</span>
-                          <span className="text-[10px] text-default-400">Multimodal & Core Engine</span>
-                        </div>
+                <div className="w-full p-4 sm:p-5 rounded-2xl border border-default-200/80 dark:border-default-700/80 bg-white dark:bg-gray-900/60 shadow-xs hover:border-blue-500/40 transition-all space-y-3.5">
+                  <div className="flex items-center justify-between pb-3 border-b border-default-200/60 dark:border-default-700/60">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0 border border-blue-500/20 p-1.5">
+                        <img src="/assets/ai/gemini.svg" alt="Google Gemini" className="w-5 h-5" />
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[9.5px] px-2 py-0.5 rounded-full font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                          Google AI
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-foreground truncate">1. Google Gemini</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold shrink-0">
+                            Google DeepMind Flagship
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-default-400 block truncate">
+                          Multimodal vision, ekstraksi bukti transaksi, dan penalaran finansial mutakhir
                         </span>
-                        <span className={`w-2 h-2 rounded-full ${geminiKey ? "bg-emerald-500" : "bg-default-300 dark:bg-default-700"}`} title={geminiKey ? "Kunci Terisi" : "Belum Diisi"} />
                       </div>
                     </div>
-
-                    <div className="relative">
-                      <input
-                        type={showKeys.gemini ? "text" : "password"}
-                        placeholder="AIzaSy..."
-                        value={geminiKey}
-                        onChange={(e) => setGeminiKey(e.target.value)}
-                        className="w-full h-9 pl-3 pr-9 text-xs rounded-xl border border-default-200 dark:border-default-700 bg-white dark:bg-default-800 text-foreground font-mono focus:outline-none focus:ring-1.5 focus:ring-purple-500"
-                      />
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full font-medium ${
+                        geminiKey ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                      }`}>
+                        <span className={`w-2 h-2 rounded-full ${geminiKey ? "bg-emerald-500" : "bg-amber-500"}`} />
+                        {geminiKey ? "Terkonfigurasi" : "Belum Ada Key"}
+                      </span>
+                      {testResults.gemini?.latency !== undefined && (
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-default-100 dark:bg-default-800 text-default-600">
+                          {testResults.gemini.latency}ms
+                        </span>
+                      )}
                       <button
                         type="button"
-                        onClick={() => toggleKeyVisibility("gemini")}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-default-400 hover:text-foreground cursor-pointer"
+                        onClick={() => toggleCardFold("gemini")}
+                        className="p-1.5 rounded-lg text-default-400 hover:text-foreground hover:bg-default-100 dark:hover:bg-default-800 transition cursor-pointer"
+                        title={foldedCards.gemini ? "Buka Kartu" : "Lipat Kartu"}
                       >
-                        {showKeys.gemini ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {foldedCards.gemini ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
                       </button>
                     </div>
-
-                    {/* Model Version Selection */}
-                    <div className="flex items-center gap-2 pt-0.5">
-                      <label className="text-[10px] font-semibold text-default-500 whitespace-nowrap">Model / Versi:</label>
-                      <select
-                        value={geminiModelVersion}
-                        onChange={(e) => {
-                          setGeminiModelVersion(e.target.value);
-                          localStorage.setItem("novajournal_model_gemini", e.target.value);
-                        }}
-                        className="flex-1 h-7.5 px-2 text-[11px] rounded-lg border border-default-200 dark:border-default-700 bg-white dark:bg-default-800 text-foreground font-medium focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-                      >
-                        <option value="gemini-2.0-flash">Gemini 2.0 Flash (Default - Cepat & Cerdas)</option>
-                        <option value="gemini-2.0-pro-exp">Gemini 2.0 Pro Exp (Penalaran Kompleks)</option>
-                        <option value="gemini-1.5-flash">Gemini 1.5 Flash (Ringan & Hemat Kuota)</option>
-                        <option value="gemini-1.5-pro">Gemini 1.5 Pro (Konteks Raksasa 1M)</option>
-                      </select>
-                    </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="min-w-0 flex-1 pr-2">
-                      {testResults.gemini ? (
-                        <div className={`text-[10px] flex items-center gap-1 font-semibold ${testResults.gemini.ok ? "text-emerald-600 dark:text-emerald-400" : "text-rose-500"}`}>
-                          <span>{testResults.gemini.ok ? "✓" : "⚠"}</span>
-                          <span className="truncate">{testResults.gemini.msg}</span>
+                  {foldedCards.gemini ? (
+                    <div className="text-xs text-default-500 flex items-center justify-between pt-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-default-400">Model Aktif:</span>
+                        <span className="font-mono text-[11px] font-semibold text-foreground bg-default-100 dark:bg-default-800 px-2 py-0.5 rounded">
+                          {geminiModelVersion}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-default-400">Klik ikon panah untuk membuka pengaturan & tes</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-3.5 pt-1">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="md:col-span-2 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-semibold text-foreground">Kunci API (API Key)</label>
+                            <a
+                              href="https://aistudio.google.com/app/apikey"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10.5px] text-blue-600 dark:text-blue-400 hover:underline"
+                            >
+                              Dapatkan API Key di Google AI Studio →
+                            </a>
+                          </div>
+                          <div className="relative">
+                            <input
+                              type={showKeys.gemini ? "text" : "password"}
+                              placeholder="AIzaSy..."
+                              value={geminiKey}
+                              onChange={(e) => setGeminiKey(e.target.value)}
+                              className="w-full h-9 pl-3 pr-10 text-xs rounded-xl border border-default-200 dark:border-default-700 bg-default-50/50 dark:bg-default-800/60 text-foreground font-mono focus:outline-none focus:ring-1.5 focus:ring-blue-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => toggleKeyVisibility("gemini")}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-default-400 hover:text-foreground cursor-pointer"
+                            >
+                              {showKeys.gemini ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
                         </div>
-                      ) : (
-                        <span className="text-[10px] text-default-400">Siap diuji</span>
+
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-foreground">Model Versi Aktif</label>
+                          <select
+                            value={geminiModelVersion}
+                            onChange={(e) => {
+                              setGeminiModelVersion(e.target.value);
+                              localStorage.setItem("novajournal_model_gemini", e.target.value);
+                            }}
+                            className="w-full h-9 px-3 text-xs rounded-xl border border-default-200 dark:border-default-700 bg-default-50/50 dark:bg-default-800/60 text-foreground font-medium focus:outline-none focus:ring-1.5 focus:ring-blue-500 cursor-pointer"
+                          >
+                            <option value="gemini-2.5-flash">Gemini 2.5 Flash (Tercepat & Stabil · Direkomendasikan)</option>
+                            <option value="gemini-3.8-flash">Gemini 3.8 Flash (Frontier Sept 2026)</option>
+                            <option value="gemini-2.5-pro">Gemini 2.5 Pro (Penalaran Kompleks)</option>
+                            <option value="gemini-1.5-flash">Gemini 1.5 Flash (Hemat Kuota)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Standardized Test Suite Toolbar */}
+                      <div className="p-3 rounded-xl bg-default-50 dark:bg-default-800/40 border border-default-200/60 dark:border-default-700/60 flex flex-wrap items-center justify-between gap-2.5">
+                        <div className="flex items-center gap-2">
+                          <Terminal className="w-4 h-4 text-blue-500 shrink-0" />
+                          <span className="text-xs font-bold text-foreground">Skenario Tes & Diagnostik:</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            isDisabled={testingKey.gemini || !geminiKey.trim()}
+                            onPress={() => handleTestKey("gemini", geminiKey)}
+                            className="h-7.5 px-3 text-xs font-semibold cursor-pointer bg-default-200/70 hover:bg-default-300 dark:bg-default-700 dark:hover:bg-default-600 text-foreground border border-default-300 dark:border-default-600"
+                          >
+                            {testingKey.gemini ? "Memeriksa..." : "1. Uji Koneksi (Ping)"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            isDisabled={testingChat.gemini || !geminiKey.trim()}
+                            onPress={() => handleTestChat("gemini", geminiKey, geminiModelVersion)}
+                            className="h-7.5 px-3 text-xs font-semibold cursor-pointer bg-blue-600 hover:bg-blue-700 text-white shadow-xs"
+                          >
+                            {testingChat.gemini ? "Menjalankan..." : "2. Tes Prompt (Live Chat)"}
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Diagnostic Output */}
+                      {testResults.gemini && (
+                        <div className={`p-3 rounded-xl border text-xs ${
+                          testResults.gemini.ok
+                            ? "bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-500/30 text-emerald-800 dark:text-emerald-300"
+                            : "bg-rose-50/60 dark:bg-rose-950/20 border-rose-500/30 text-rose-800 dark:text-rose-300"
+                        }`}>
+                          <div className="flex items-center justify-between font-semibold">
+                            <span className="flex items-center gap-1.5">
+                              {testResults.gemini.ok ? "✓ " : "⚠ "}
+                              {testResults.gemini.msg}
+                            </span>
+                            {testResults.gemini.latency !== undefined && (
+                              <span className="font-mono text-[11px] opacity-80">{testResults.gemini.latency} ms</span>
+                            )}
+                          </div>
+                          {testResults.gemini.reply && (
+                            <div className="mt-2 p-2.5 rounded-lg bg-white/80 dark:bg-gray-900/80 border border-default-200 dark:border-default-700 text-foreground font-mono text-[11px]">
+                              <span className="text-[10px] font-bold text-default-400 block mb-1 uppercase tracking-wide">
+                                Respon Live [{testResults.gemini.usedModel || geminiModelVersion}]:
+                              </span>
+                              <p className="whitespace-pre-wrap leading-relaxed">{testResults.gemini.reply}</p>
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      isDisabled={testingKey.gemini || !geminiKey.trim()}
-                      onPress={() => handleTestKey("gemini", geminiKey)}
-                      className="h-8 px-3 text-xs font-semibold shrink-0 cursor-pointer bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30"
-                    >
-                      {testingKey.gemini ? "Menguji..." : "Tes Gemini"}
-                    </Button>
-                  </div>
+                  )}
                 </div>
 
-                {/* 2. Groq Cloud OCR */}
-                <div className="p-4 rounded-xl border border-default-200/80 dark:border-default-700/80 bg-default-50/50 dark:bg-default-900/30 space-y-3 flex flex-col justify-between shadow-2xs">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">⚡</span>
-                        <div>
-                          <span className="text-xs font-bold text-foreground block">Groq Cloud LPU</span>
-                          <span className="text-[10px] text-default-400">Ultra Fast Inference & OCR</span>
-                        </div>
+                {/* 2. ChatGPT (OpenAI) */}
+                <div className="w-full p-4 sm:p-5 rounded-2xl border border-default-200/80 dark:border-default-700/80 bg-white dark:bg-gray-900/60 shadow-xs hover:border-emerald-500/40 transition-all space-y-3.5">
+                  <div className="flex items-center justify-between pb-3 border-b border-default-200/60 dark:border-default-700/60">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0 border border-emerald-500/20 p-1.5">
+                        <img src="/assets/ai/openai.svg" alt="OpenAI ChatGPT" className="w-5 h-5" />
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[9.5px] px-2 py-0.5 rounded-full font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                          &lt;200ms Latency
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-foreground truncate">2. ChatGPT (OpenAI)</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold shrink-0">
+                            Omni & Reasoning Flagship
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-default-400 block truncate">
+                          GPT-4o multimodal, o3-mini penalaran cepat, dan pemrosesan audit presisi tinggi
                         </span>
-                        <span className={`w-2 h-2 rounded-full ${groqKey ? "bg-emerald-500" : "bg-default-300 dark:bg-default-700"}`} title={groqKey ? "Kunci Terisi" : "Belum Diisi"} />
                       </div>
                     </div>
-
-                    <div className="relative">
-                      <input
-                        type={showKeys.groq ? "text" : "password"}
-                        placeholder="gsk_..."
-                        value={groqKey}
-                        onChange={(e) => setGroqKey(e.target.value)}
-                        className="w-full h-9 pl-3 pr-9 text-xs rounded-xl border border-default-200 dark:border-default-700 bg-white dark:bg-default-800 text-foreground font-mono focus:outline-none focus:ring-1.5 focus:ring-purple-500"
-                      />
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full font-medium ${
+                        openaiKey ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                      }`}>
+                        <span className={`w-2 h-2 rounded-full ${openaiKey ? "bg-emerald-500" : "bg-amber-500"}`} />
+                        {openaiKey ? "Terkonfigurasi" : "Belum Ada Key"}
+                      </span>
+                      {testResults.openai?.latency !== undefined && (
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-default-100 dark:bg-default-800 text-default-600">
+                          {testResults.openai.latency}ms
+                        </span>
+                      )}
                       <button
                         type="button"
-                        onClick={() => toggleKeyVisibility("groq")}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-default-400 hover:text-foreground cursor-pointer"
+                        onClick={() => toggleCardFold("openai")}
+                        className="p-1.5 rounded-lg text-default-400 hover:text-foreground hover:bg-default-100 dark:hover:bg-default-800 transition cursor-pointer"
+                        title={foldedCards.openai ? "Buka Kartu" : "Lipat Kartu"}
                       >
-                        {showKeys.groq ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {foldedCards.openai ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
                       </button>
                     </div>
-
-                    {/* Model Version Selection */}
-                    <div className="flex items-center gap-2 pt-0.5">
-                      <label className="text-[10px] font-semibold text-default-500 whitespace-nowrap">Model / Versi:</label>
-                      <select
-                        value={groqModelVersion}
-                        onChange={(e) => {
-                          setGroqModelVersion(e.target.value);
-                          localStorage.setItem("novajournal_model_groq", e.target.value);
-                        }}
-                        className="flex-1 h-7.5 px-2 text-[11px] rounded-lg border border-default-200 dark:border-default-700 bg-white dark:bg-default-800 text-foreground font-medium focus:outline-none focus:ring-1 focus:ring-amber-500 cursor-pointer"
-                      >
-                        <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant (Aktif & Direkomendasikan)</option>
-                        <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile</option>
-                        <option value="mixtral-8x7b-32768">Mixtral 8x7B (32k Context Window)</option>
-                        <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 Distill 70B</option>
-                        <option value="gemma2-9b-it">Google Gemma 2 9B IT</option>
-                        <option value="qwen-2.5-coder-32b">Qwen 2.5 Coder 32B</option>
-                      </select>
-                    </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-default-200/50 dark:border-default-700/50 mt-1">
-                    <div className="min-w-0 flex-1 pr-1">
-                      {testResults.groq ? (
-                        <div className={`text-[10px] flex items-center gap-1 font-semibold ${testResults.groq.ok ? "text-emerald-600 dark:text-emerald-400" : "text-rose-500"}`}>
-                          <span>{testResults.groq.ok ? "✓" : "⚠"}</span>
-                          <span className="truncate">{testResults.groq.msg}</span>
+                  {foldedCards.openai ? (
+                    <div className="text-xs text-default-500 flex items-center justify-between pt-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-default-400">Model Aktif:</span>
+                        <span className="font-mono text-[11px] font-semibold text-foreground bg-default-100 dark:bg-default-800 px-2 py-0.5 rounded">
+                          {openaiModelVersion}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-default-400">Klik ikon panah untuk membuka pengaturan & tes</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-3.5 pt-1">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="md:col-span-2 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-semibold text-foreground">Kunci API (API Key)</label>
+                            <a
+                              href="https://platform.openai.com/api-keys"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10.5px] text-emerald-600 dark:text-emerald-400 hover:underline"
+                            >
+                              Dapatkan API Key di OpenAI Platform →
+                            </a>
+                          </div>
+                          <div className="relative">
+                            <input
+                              type={showKeys.openai ? "text" : "password"}
+                              placeholder="sk-proj-..."
+                              value={openaiKey}
+                              onChange={(e) => setOpenaiKey(e.target.value)}
+                              className="w-full h-9 pl-3 pr-10 text-xs rounded-xl border border-default-200 dark:border-default-700 bg-default-50/50 dark:bg-default-800/60 text-foreground font-mono focus:outline-none focus:ring-1.5 focus:ring-emerald-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => toggleKeyVisibility("openai")}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-default-400 hover:text-foreground cursor-pointer"
+                            >
+                              {showKeys.openai ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
                         </div>
-                      ) : (
-                        <span className="text-[10px] text-default-400">Siap diuji</span>
+
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-foreground">Model Versi Aktif</label>
+                          <select
+                            value={openaiModelVersion}
+                            onChange={(e) => {
+                              setOpenaiModelVersion(e.target.value);
+                              localStorage.setItem("novajournal_model_openai", e.target.value);
+                            }}
+                            className="w-full h-9 px-3 text-xs rounded-xl border border-default-200 dark:border-default-700 bg-default-50/50 dark:bg-default-800/60 text-foreground font-medium focus:outline-none focus:ring-1.5 focus:ring-emerald-500 cursor-pointer"
+                          >
+                            <option value="gpt-6-astra">GPT-6 Astra (Terbaru Sept 2026 · Frontier Computer Operator)</option>
+                            <option value="gpt-5.6-terra">GPT-5.6 Terra (Advanced Reasoning Flagship)</option>
+                            <option value="gpt-4o">GPT-4o (Omni Multimodal Flagship)</option>
+                            <option value="gpt-4o-mini">GPT-4o Mini (Cepat & Hemat Biaya)</option>
+                            <option value="o3-mini">o3-mini (Penalaran Cepat & Matematika)</option>
+                            <option value="o1">o1 (Deep Multi-Step Reasoning)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Standardized Test Suite Toolbar */}
+                      <div className="p-3 rounded-xl bg-default-50 dark:bg-default-800/40 border border-default-200/60 dark:border-default-700/60 flex flex-wrap items-center justify-between gap-2.5">
+                        <div className="flex items-center gap-2">
+                          <Terminal className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span className="text-xs font-bold text-foreground">Skenario Tes & Diagnostik:</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            isDisabled={testingKey.openai || !openaiKey.trim()}
+                            onPress={() => handleTestKey("openai", openaiKey)}
+                            className="h-7.5 px-3 text-xs font-semibold cursor-pointer bg-default-200/70 hover:bg-default-300 dark:bg-default-700 dark:hover:bg-default-600 text-foreground border border-default-300 dark:border-default-600"
+                          >
+                            {testingKey.openai ? "Memeriksa..." : "1. Uji Koneksi (Ping)"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            isDisabled={testingChat.openai || !openaiKey.trim()}
+                            onPress={() => handleTestChat("openai", openaiKey, openaiModelVersion)}
+                            className="h-7.5 px-3 text-xs font-semibold cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+                          >
+                            {testingChat.openai ? "Menjalankan..." : "2. Tes Prompt (Live Chat)"}
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Diagnostic Output */}
+                      {testResults.openai && (
+                        <div className={`p-3 rounded-xl border text-xs ${
+                          testResults.openai.ok
+                            ? "bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-500/30 text-emerald-800 dark:text-emerald-300"
+                            : "bg-rose-50/60 dark:bg-rose-950/20 border-rose-500/30 text-rose-800 dark:text-rose-300"
+                        }`}>
+                          <div className="flex items-center justify-between font-semibold">
+                            <span className="flex items-center gap-1.5">
+                              {testResults.openai.ok ? "✓ " : "⚠ "}
+                              {testResults.openai.msg}
+                            </span>
+                            {testResults.openai.latency !== undefined && (
+                              <span className="font-mono text-[11px] opacity-80">{testResults.openai.latency} ms</span>
+                            )}
+                          </div>
+                          {testResults.openai.reply && (
+                            <div className="mt-2 p-2.5 rounded-lg bg-white/80 dark:bg-gray-900/80 border border-default-200 dark:border-default-700 text-foreground font-mono text-[11px]">
+                              <span className="text-[10px] font-bold text-default-400 block mb-1 uppercase tracking-wide">
+                                Respon Live [{testResults.openai.usedModel || openaiModelVersion}]:
+                              </span>
+                              <p className="whitespace-pre-wrap leading-relaxed">{testResults.openai.reply}</p>
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        isDisabled={testingKey.groq || !groqKey.trim()}
-                        onPress={() => handleTestKey("groq", groqKey)}
-                        className="h-7.5 px-2 text-[11px] font-semibold shrink-0 cursor-pointer bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30"
-                      >
-                        {testingKey.groq ? "Cek..." : "Ping Key"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        isDisabled={testingChatGroq || !groqKey.trim()}
-                        onPress={handleTestChatGroq}
-                        className="h-7.5 px-2.5 text-[11px] font-bold shrink-0 cursor-pointer bg-amber-600 hover:bg-amber-700 text-white shadow-xs"
-                      >
-                        {testingChatGroq ? "Mengeksekusi..." : "⚡ Uji Chat Groq"}
-                      </Button>
-                    </div>
-                  </div>
+                  )}
                 </div>
 
-                {/* 3. DeepSeek */}
-                <div className="p-4 rounded-xl border border-default-200/80 dark:border-default-700/80 bg-default-50/50 dark:bg-default-900/30 space-y-3 flex flex-col justify-between shadow-2xs">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">🧠</span>
-                        <div>
-                          <span className="text-xs font-bold text-foreground block">DeepSeek AI</span>
-                          <span className="text-[10px] text-default-400">Reasoning & Financial Auditor</span>
-                        </div>
+                {/* 3. Anthropic Claude */}
+                <div className="w-full p-4 sm:p-5 rounded-2xl border border-default-200/80 dark:border-default-700/80 bg-white dark:bg-gray-900/60 shadow-xs hover:border-amber-600/40 transition-all space-y-3.5">
+                  <div className="flex items-center justify-between pb-3 border-b border-default-200/60 dark:border-default-700/60">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-amber-600/10 flex items-center justify-center shrink-0 border border-amber-600/20 p-1.5">
+                        <img src="/assets/ai/claude.svg" alt="Anthropic Claude" className="w-5 h-5" />
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[9.5px] px-2 py-0.5 rounded-full font-bold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
-                          Deep Reasoner
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-foreground truncate">3. Anthropic Claude</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-600/10 text-amber-700 dark:text-amber-400 font-semibold shrink-0">
+                            Hybrid Reasoning & Forensics
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-default-400 block truncate">
+                          Claude 3.7 Sonnet hybrid reasoning, analisis forensik audit kas, dan mitigasi risiko
                         </span>
-                        <span className={`w-2 h-2 rounded-full ${deepseekKey ? "bg-emerald-500" : "bg-default-300 dark:bg-default-700"}`} title={deepseekKey ? "Kunci Terisi" : "Belum Diisi"} />
                       </div>
                     </div>
-
-                    <div className="relative">
-                      <input
-                        type={showKeys.deepseek ? "text" : "password"}
-                        placeholder="sk-..."
-                        value={deepseekKey}
-                        onChange={(e) => setDeepseekKey(e.target.value)}
-                        className="w-full h-9 pl-3 pr-9 text-xs rounded-xl border border-default-200 dark:border-default-700 bg-white dark:bg-default-800 text-foreground font-mono focus:outline-none focus:ring-1.5 focus:ring-purple-500"
-                      />
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full font-medium ${
+                        claudeKey ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                      }`}>
+                        <span className={`w-2 h-2 rounded-full ${claudeKey ? "bg-emerald-500" : "bg-amber-500"}`} />
+                        {claudeKey ? "Terkonfigurasi" : "Belum Ada Key"}
+                      </span>
+                      {testResults.claude?.latency !== undefined && (
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-default-100 dark:bg-default-800 text-default-600">
+                          {testResults.claude.latency}ms
+                        </span>
+                      )}
                       <button
                         type="button"
-                        onClick={() => toggleKeyVisibility("deepseek")}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-default-400 hover:text-foreground cursor-pointer"
+                        onClick={() => toggleCardFold("claude")}
+                        className="p-1.5 rounded-lg text-default-400 hover:text-foreground hover:bg-default-100 dark:hover:bg-default-800 transition cursor-pointer"
+                        title={foldedCards.claude ? "Buka Kartu" : "Lipat Kartu"}
                       >
-                        {showKeys.deepseek ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {foldedCards.claude ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
                       </button>
                     </div>
-
-                    {/* Model Version Selection */}
-                    <div className="flex items-center gap-2 pt-0.5">
-                      <label className="text-[10px] font-semibold text-default-500 whitespace-nowrap">Model / Versi:</label>
-                      <select
-                        value={deepseekModelVersion}
-                        onChange={(e) => {
-                          setDeepseekModelVersion(e.target.value);
-                          localStorage.setItem("novajournal_model_deepseek", e.target.value);
-                        }}
-                        className="flex-1 h-7.5 px-2 text-[11px] rounded-lg border border-default-200 dark:border-default-700 bg-white dark:bg-default-800 text-foreground font-medium focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer"
-                      >
-                        <option value="deepseek-chat">DeepSeek V3 (General Finance & Chat)</option>
-                        <option value="deepseek-reasoner">DeepSeek R1 (Deep Reasoning Chain-of-Thought)</option>
-                      </select>
-                    </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="min-w-0 flex-1 pr-2">
-                      {testResults.deepseek ? (
-                        <div className={`text-[10px] flex items-center gap-1 font-semibold ${testResults.deepseek.ok ? "text-emerald-600 dark:text-emerald-400" : "text-rose-500"}`}>
-                          <span>{testResults.deepseek.ok ? "✓" : "⚠"}</span>
-                          <span className="truncate">{testResults.deepseek.msg}</span>
+                  {foldedCards.claude ? (
+                    <div className="text-xs text-default-500 flex items-center justify-between pt-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-default-400">Model Aktif:</span>
+                        <span className="font-mono text-[11px] font-semibold text-foreground bg-default-100 dark:bg-default-800 px-2 py-0.5 rounded">
+                          {claudeModelVersion}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-default-400">Klik ikon panah untuk membuka pengaturan & tes</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-3.5 pt-1">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="md:col-span-2 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-semibold text-foreground">Kunci API (API Key)</label>
+                            <a
+                              href="https://console.anthropic.com/"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10.5px] text-amber-700 dark:text-amber-400 hover:underline"
+                            >
+                              Dapatkan API Key di Anthropic Console →
+                            </a>
+                          </div>
+                          <div className="relative">
+                            <input
+                              type={showKeys.claude ? "text" : "password"}
+                              placeholder="sk-ant-..."
+                              value={claudeKey}
+                              onChange={(e) => setClaudeKey(e.target.value)}
+                              className="w-full h-9 pl-3 pr-10 text-xs rounded-xl border border-default-200 dark:border-default-700 bg-default-50/50 dark:bg-default-800/60 text-foreground font-mono focus:outline-none focus:ring-1.5 focus:ring-amber-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => toggleKeyVisibility("claude")}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-default-400 hover:text-foreground cursor-pointer"
+                            >
+                              {showKeys.claude ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
                         </div>
-                      ) : (
-                        <span className="text-[10px] text-default-400">Siap diuji</span>
+
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-foreground">Model Versi Aktif</label>
+                          <select
+                            value={claudeModelVersion}
+                            onChange={(e) => {
+                              setClaudeModelVersion(e.target.value);
+                              localStorage.setItem("novajournal_model_claude", e.target.value);
+                            }}
+                            className="w-full h-9 px-3 text-xs rounded-xl border border-default-200 dark:border-default-700 bg-default-50/50 dark:bg-default-800/60 text-foreground font-medium focus:outline-none focus:ring-1.5 focus:ring-amber-500 cursor-pointer"
+                          >
+                            <option value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet (Hybrid Reasoning · Flagship)</option>
+                            <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet (Auditor Forensik)</option>
+                            <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku (Respons Kilat)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Standardized Test Suite Toolbar */}
+                      <div className="p-3 rounded-xl bg-default-50 dark:bg-default-800/40 border border-default-200/60 dark:border-default-700/60 flex flex-wrap items-center justify-between gap-2.5">
+                        <div className="flex items-center gap-2">
+                          <Terminal className="w-4 h-4 text-amber-600 shrink-0" />
+                          <span className="text-xs font-bold text-foreground">Skenario Tes & Diagnostik:</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            isDisabled={testingKey.claude || !claudeKey.trim()}
+                            onPress={() => handleTestKey("claude", claudeKey)}
+                            className="h-7.5 px-3 text-xs font-semibold cursor-pointer bg-default-200/70 hover:bg-default-300 dark:bg-default-700 dark:hover:bg-default-600 text-foreground border border-default-300 dark:border-default-600"
+                          >
+                            {testingKey.claude ? "Memeriksa..." : "1. Uji Koneksi (Ping)"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            isDisabled={testingChat.claude || !claudeKey.trim()}
+                            onPress={() => handleTestChat("claude", claudeKey, claudeModelVersion)}
+                            className="h-7.5 px-3 text-xs font-semibold cursor-pointer bg-amber-600 hover:bg-amber-700 text-white shadow-xs"
+                          >
+                            {testingChat.claude ? "Menjalankan..." : "2. Tes Prompt (Live Chat)"}
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Diagnostic Output */}
+                      {testResults.claude && (
+                        <div className={`p-3 rounded-xl border text-xs ${
+                          testResults.claude.ok
+                            ? "bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-500/30 text-emerald-800 dark:text-emerald-300"
+                            : "bg-rose-50/60 dark:bg-rose-950/20 border-rose-500/30 text-rose-800 dark:text-rose-300"
+                        }`}>
+                          <div className="flex items-center justify-between font-semibold">
+                            <span className="flex items-center gap-1.5">
+                              {testResults.claude.ok ? "✓ " : "⚠ "}
+                              {testResults.claude.msg}
+                            </span>
+                            {testResults.claude.latency !== undefined && (
+                              <span className="font-mono text-[11px] opacity-80">{testResults.claude.latency} ms</span>
+                            )}
+                          </div>
+                          {testResults.claude.reply && (
+                            <div className="mt-2 p-2.5 rounded-lg bg-white/80 dark:bg-gray-900/80 border border-default-200 dark:border-default-700 text-foreground font-mono text-[11px]">
+                              <span className="text-[10px] font-bold text-default-400 block mb-1 uppercase tracking-wide">
+                                Respon Live [{testResults.claude.usedModel || claudeModelVersion}]:
+                              </span>
+                              <p className="whitespace-pre-wrap leading-relaxed">{testResults.claude.reply}</p>
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      isDisabled={testingKey.deepseek || !deepseekKey.trim()}
-                      onPress={() => handleTestKey("deepseek", deepseekKey)}
-                      className="h-8 px-3 text-xs font-semibold shrink-0 cursor-pointer bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30"
-                    >
-                      {testingKey.deepseek ? "Menguji..." : "Tes DeepSeek"}
-                    </Button>
-                  </div>
+                  )}
                 </div>
 
-                {/* 4. Anthropic Claude */}
-                <div className="p-4 rounded-xl border border-default-200/80 dark:border-default-700/80 bg-default-50/50 dark:bg-default-900/30 space-y-3 flex flex-col justify-between shadow-2xs">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">🎭</span>
-                        <div>
-                          <span className="text-xs font-bold text-foreground block">Anthropic Claude</span>
-                          <span className="text-[10px] text-default-400">Sonnet Strategic Advisor</span>
-                        </div>
+                {/* 4. DeepSeek AI */}
+                <div className="w-full p-4 sm:p-5 rounded-2xl border border-default-200/80 dark:border-default-700/80 bg-white dark:bg-gray-900/60 shadow-xs hover:border-cyan-500/40 transition-all space-y-3.5">
+                  <div className="flex items-center justify-between pb-3 border-b border-default-200/60 dark:border-default-700/60">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-cyan-500/10 flex items-center justify-center shrink-0 border border-cyan-500/20 p-1.5">
+                        <img src="/assets/ai/deepseek.svg" alt="DeepSeek AI" className="w-5 h-5" />
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[9.5px] px-2 py-0.5 rounded-full font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
-                          Advanced Advisor
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-foreground truncate">4. DeepSeek AI</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-semibold shrink-0">
+                            V3 & R1 Open-Weight SOTA
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-default-400 block truncate">
+                          Chain-of-Thought (CoT) deep reasoning, analisis kode akuntansi, dan efisiensi biaya tertinggi
                         </span>
-                        <span className={`w-2 h-2 rounded-full ${claudeKey ? "bg-emerald-500" : "bg-default-300 dark:bg-default-700"}`} title={claudeKey ? "Kunci Terisi" : "Belum Diisi"} />
                       </div>
                     </div>
-
-                    <div className="relative">
-                      <input
-                        type={showKeys.claude ? "text" : "password"}
-                        placeholder="sk-ant-..."
-                        value={claudeKey}
-                        onChange={(e) => setClaudeKey(e.target.value)}
-                        className="w-full h-9 pl-3 pr-9 text-xs rounded-xl border border-default-200 dark:border-default-700 bg-white dark:bg-default-800 text-foreground font-mono focus:outline-none focus:ring-1.5 focus:ring-purple-500"
-                      />
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full font-medium ${
+                        deepseekKey ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                      }`}>
+                        <span className={`w-2 h-2 rounded-full ${deepseekKey ? "bg-emerald-500" : "bg-amber-500"}`} />
+                        {deepseekKey ? "Terkonfigurasi" : "Belum Ada Key"}
+                      </span>
+                      {testResults.deepseek?.latency !== undefined && (
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-default-100 dark:bg-default-800 text-default-600">
+                          {testResults.deepseek.latency}ms
+                        </span>
+                      )}
                       <button
                         type="button"
-                        onClick={() => toggleKeyVisibility("claude")}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-default-400 hover:text-foreground cursor-pointer"
+                        onClick={() => toggleCardFold("deepseek")}
+                        className="p-1.5 rounded-lg text-default-400 hover:text-foreground hover:bg-default-100 dark:hover:bg-default-800 transition cursor-pointer"
+                        title={foldedCards.deepseek ? "Buka Kartu" : "Lipat Kartu"}
                       >
-                        {showKeys.claude ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {foldedCards.deepseek ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
                       </button>
                     </div>
-
-                    {/* Model Version Selection */}
-                    <div className="flex items-center gap-2 pt-0.5">
-                      <label className="text-[10px] font-semibold text-default-500 whitespace-nowrap">Model / Versi:</label>
-                      <select
-                        value={claudeModelVersion}
-                        onChange={(e) => {
-                          setClaudeModelVersion(e.target.value);
-                          localStorage.setItem("novajournal_model_claude", e.target.value);
-                        }}
-                        className="flex-1 h-7.5 px-2 text-[11px] rounded-lg border border-default-200 dark:border-default-700 bg-white dark:bg-default-800 text-foreground font-medium focus:outline-none focus:ring-1 focus:ring-rose-500 cursor-pointer"
-                      >
-                        <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet (Default)</option>
-                        <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku (Cepat & Responsif)</option>
-                        <option value="claude-3-opus-20240229">Claude 3 Opus (Flagship Reasoning)</option>
-                      </select>
-                    </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="min-w-0 flex-1 pr-2">
-                      {testResults.claude ? (
-                        <div className={`text-[10px] flex items-center gap-1 font-semibold ${testResults.claude.ok ? "text-emerald-600 dark:text-emerald-400" : "text-rose-500"}`}>
-                          <span>{testResults.claude.ok ? "✓" : "⚠"}</span>
-                          <span className="truncate">{testResults.claude.msg}</span>
+                  {foldedCards.deepseek ? (
+                    <div className="text-xs text-default-500 flex items-center justify-between pt-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-default-400">Model Aktif:</span>
+                        <span className="font-mono text-[11px] font-semibold text-foreground bg-default-100 dark:bg-default-800 px-2 py-0.5 rounded">
+                          {deepseekModelVersion}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-default-400">Klik ikon panah untuk membuka pengaturan & tes</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-3.5 pt-1">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="md:col-span-2 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-semibold text-foreground">Kunci API (API Key)</label>
+                            <a
+                              href="https://platform.deepseek.com/"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10.5px] text-cyan-600 dark:text-cyan-400 hover:underline"
+                            >
+                              Dapatkan API Key di DeepSeek Platform →
+                            </a>
+                          </div>
+                          <div className="relative">
+                            <input
+                              type={showKeys.deepseek ? "text" : "password"}
+                              placeholder="sk-..."
+                              value={deepseekKey}
+                              onChange={(e) => setDeepseekKey(e.target.value)}
+                              className="w-full h-9 pl-3 pr-10 text-xs rounded-xl border border-default-200 dark:border-default-700 bg-default-50/50 dark:bg-default-800/60 text-foreground font-mono focus:outline-none focus:ring-1.5 focus:ring-cyan-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => toggleKeyVisibility("deepseek")}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-default-400 hover:text-foreground cursor-pointer"
+                            >
+                              {showKeys.deepseek ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
                         </div>
-                      ) : (
-                        <span className="text-[10px] text-default-400">Siap diuji</span>
+
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-foreground">Model Versi Aktif</label>
+                          <select
+                            value={deepseekModelVersion}
+                            onChange={(e) => {
+                              setDeepseekModelVersion(e.target.value);
+                              localStorage.setItem("novajournal_model_deepseek", e.target.value);
+                            }}
+                            className="w-full h-9 px-3 text-xs rounded-xl border border-default-200 dark:border-default-700 bg-default-50/50 dark:bg-default-800/60 text-foreground font-medium focus:outline-none focus:ring-1.5 focus:ring-cyan-500 cursor-pointer"
+                          >
+                            <option value="deepseek-chat">DeepSeek-V3 (Chat General · Super Cepat & Hemat)</option>
+                            <option value="deepseek-reasoner">DeepSeek-R1 (CoT Deep Reasoning)</option>
+                            <option value="deepseek-coder">DeepSeek-Coder (Analisis SQL & Kode)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Standardized Test Suite Toolbar */}
+                      <div className="p-3 rounded-xl bg-default-50 dark:bg-default-800/40 border border-default-200/60 dark:border-default-700/60 flex flex-wrap items-center justify-between gap-2.5">
+                        <div className="flex items-center gap-2">
+                          <Terminal className="w-4 h-4 text-cyan-500 shrink-0" />
+                          <span className="text-xs font-bold text-foreground">Skenario Tes & Diagnostik:</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            isDisabled={testingKey.deepseek || !deepseekKey.trim()}
+                            onPress={() => handleTestKey("deepseek", deepseekKey)}
+                            className="h-7.5 px-3 text-xs font-semibold cursor-pointer bg-default-200/70 hover:bg-default-300 dark:bg-default-700 dark:hover:bg-default-600 text-foreground border border-default-300 dark:border-default-600"
+                          >
+                            {testingKey.deepseek ? "Memeriksa..." : "1. Uji Koneksi (Ping)"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            isDisabled={testingChat.deepseek || !deepseekKey.trim()}
+                            onPress={() => handleTestChat("deepseek", deepseekKey, deepseekModelVersion)}
+                            className="h-7.5 px-3 text-xs font-semibold cursor-pointer bg-cyan-600 hover:bg-cyan-700 text-white shadow-xs"
+                          >
+                            {testingChat.deepseek ? "Menjalankan..." : "2. Tes Prompt (Live Chat)"}
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Diagnostic Output */}
+                      {testResults.deepseek && (
+                        <div className={`p-3 rounded-xl border text-xs ${
+                          testResults.deepseek.ok
+                            ? "bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-500/30 text-emerald-800 dark:text-emerald-300"
+                            : "bg-rose-50/60 dark:bg-rose-950/20 border-rose-500/30 text-rose-800 dark:text-rose-300"
+                        }`}>
+                          <div className="flex items-center justify-between font-semibold">
+                            <span className="flex items-center gap-1.5">
+                              {testResults.deepseek.ok ? "✓ " : "⚠ "}
+                              {testResults.deepseek.msg}
+                            </span>
+                            {testResults.deepseek.latency !== undefined && (
+                              <span className="font-mono text-[11px] opacity-80">{testResults.deepseek.latency} ms</span>
+                            )}
+                          </div>
+                          {testResults.deepseek.reply && (
+                            <div className="mt-2 p-2.5 rounded-lg bg-white/80 dark:bg-gray-900/80 border border-default-200 dark:border-default-700 text-foreground font-mono text-[11px]">
+                              <span className="text-[10px] font-bold text-default-400 block mb-1 uppercase tracking-wide">
+                                Respon Live [{testResults.deepseek.usedModel || deepseekModelVersion}]:
+                              </span>
+                              <p className="whitespace-pre-wrap leading-relaxed">{testResults.deepseek.reply}</p>
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      isDisabled={testingKey.claude || !claudeKey.trim()}
-                      onPress={() => handleTestKey("claude", claudeKey)}
-                      className="h-8 px-3 text-xs font-semibold shrink-0 cursor-pointer bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30"
-                    >
-                      {testingKey.claude ? "Menguji..." : "Tes Claude"}
-                    </Button>
+                  )}
+                </div>
+
+                {/* 5. Groq Cloud */}
+                <div className="w-full p-4 sm:p-5 rounded-2xl border border-default-200/80 dark:border-default-700/80 bg-white dark:bg-gray-900/60 shadow-xs hover:border-orange-500/40 transition-all space-y-3.5">
+                  <div className="flex items-center justify-between pb-3 border-b border-default-200/60 dark:border-default-700/60">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-orange-500/10 flex items-center justify-center shrink-0 border border-orange-500/20 p-1.5">
+                        <img src="/assets/ai/groq.svg" alt="Groq Cloud" className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-foreground truncate">5. Groq Cloud LPU</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-400 font-semibold shrink-0">
+                            Ultra-Fast LPU Engine
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-default-400 block truncate">
+                          Inference hardware LPU sub-100ms untuk streaming chat kilat dan OCR nota seketika
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full font-medium ${
+                        groqKey ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                      }`}>
+                        <span className={`w-2 h-2 rounded-full ${groqKey ? "bg-emerald-500" : "bg-amber-500"}`} />
+                        {groqKey ? "Terkonfigurasi" : "Belum Ada Key"}
+                      </span>
+                      {testResults.groq?.latency !== undefined && (
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-default-100 dark:bg-default-800 text-default-600">
+                          {testResults.groq.latency}ms
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => toggleCardFold("groq")}
+                        className="p-1.5 rounded-lg text-default-400 hover:text-foreground hover:bg-default-100 dark:hover:bg-default-800 transition cursor-pointer"
+                        title={foldedCards.groq ? "Buka Kartu" : "Lipat Kartu"}
+                      >
+                        {foldedCards.groq ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
+
+                  {foldedCards.groq ? (
+                    <div className="text-xs text-default-500 flex items-center justify-between pt-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-default-400">Model Aktif:</span>
+                        <span className="font-mono text-[11px] font-semibold text-foreground bg-default-100 dark:bg-default-800 px-2 py-0.5 rounded">
+                          {groqModelVersion}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-default-400">Klik ikon panah untuk membuka pengaturan & tes</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-3.5 pt-1">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="md:col-span-2 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-semibold text-foreground">Kunci API (API Key)</label>
+                            <a
+                              href="https://console.groq.com/keys"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10.5px] text-orange-600 dark:text-orange-400 hover:underline"
+                            >
+                              Dapatkan API Key di Groq Console →
+                            </a>
+                          </div>
+                          <div className="relative">
+                            <input
+                              type={showKeys.groq ? "text" : "password"}
+                              placeholder="gsk_..."
+                              value={groqKey}
+                              onChange={(e) => setGroqKey(e.target.value)}
+                              className="w-full h-9 pl-3 pr-10 text-xs rounded-xl border border-default-200 dark:border-default-700 bg-default-50/50 dark:bg-default-800/60 text-foreground font-mono focus:outline-none focus:ring-1.5 focus:ring-orange-500"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => toggleKeyVisibility("groq")}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-default-400 hover:text-foreground cursor-pointer"
+                            >
+                              {showKeys.groq ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-foreground">Model Versi Aktif</label>
+                          <select
+                            value={groqModelVersion}
+                            onChange={(e) => {
+                              setGroqModelVersion(e.target.value);
+                              localStorage.setItem("novajournal_model_groq", e.target.value);
+                            }}
+                            className="w-full h-9 px-3 text-xs rounded-xl border border-default-200 dark:border-default-700 bg-default-50/50 dark:bg-default-800/60 text-foreground font-medium focus:outline-none focus:ring-1.5 focus:ring-orange-500 cursor-pointer"
+                          >
+                            <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile (Flagship Super Akurat)</option>
+                            <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant (Sub-100ms Inference)</option>
+                            <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 Distill 70B (Penalaran Cepat)</option>
+                            <option value="qwen-2.5-coder-32b">Qwen 2.5 Coder 32B (Spesialis Kode)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Standardized Test Suite Toolbar */}
+                      <div className="p-3 rounded-xl bg-default-50 dark:bg-default-800/40 border border-default-200/60 dark:border-default-700/60 flex flex-wrap items-center justify-between gap-2.5">
+                        <div className="flex items-center gap-2">
+                          <Terminal className="w-4 h-4 text-orange-500 shrink-0" />
+                          <span className="text-xs font-bold text-foreground">Skenario Tes & Diagnostik:</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            isDisabled={testingKey.groq || !groqKey.trim()}
+                            onPress={() => handleTestKey("groq", groqKey)}
+                            className="h-7.5 px-3 text-xs font-semibold cursor-pointer bg-default-200/70 hover:bg-default-300 dark:bg-default-700 dark:hover:bg-default-600 text-foreground border border-default-300 dark:border-default-600"
+                          >
+                            {testingKey.groq ? "Memeriksa..." : "1. Uji Koneksi (Ping)"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            isDisabled={testingChat.groq || !groqKey.trim()}
+                            onPress={() => handleTestChat("groq", groqKey, groqModelVersion)}
+                            className="h-7.5 px-3 text-xs font-semibold cursor-pointer bg-orange-600 hover:bg-orange-700 text-white shadow-xs"
+                          >
+                            {testingChat.groq ? "Menjalankan..." : "2. Tes Prompt (Live Chat)"}
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Diagnostic Output */}
+                      {testResults.groq && (
+                        <div className={`p-3 rounded-xl border text-xs ${
+                          testResults.groq.ok
+                            ? "bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-500/30 text-emerald-800 dark:text-emerald-300"
+                            : "bg-rose-50/60 dark:bg-rose-950/20 border-rose-500/30 text-rose-800 dark:text-rose-300"
+                        }`}>
+                          <div className="flex items-center justify-between font-semibold">
+                            <span className="flex items-center gap-1.5">
+                              {testResults.groq.ok ? "✓ " : "⚠ "}
+                              {testResults.groq.msg}
+                            </span>
+                            {testResults.groq.latency !== undefined && (
+                              <span className="font-mono text-[11px] opacity-80">{testResults.groq.latency} ms</span>
+                            )}
+                          </div>
+                          {testResults.groq.reply && (
+                            <div className="mt-2 p-2.5 rounded-lg bg-white/80 dark:bg-gray-900/80 border border-default-200 dark:border-default-700 text-foreground font-mono text-[11px]">
+                              <span className="text-[10px] font-bold text-default-400 block mb-1 uppercase tracking-wide">
+                                Respon Live [{testResults.groq.usedModel || groqModelVersion}]:
+                              </span>
+                              <p className="whitespace-pre-wrap leading-relaxed">{testResults.groq.reply}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1118,12 +1643,13 @@ export default function AiHubPage() {
                     Ketersediaan model otomatis aktif saat API Key dimasukkan di Seksi 1
                   </span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
                   {[
-                    { id: "gemini" as const, name: "Google Gemini", provider: "Google AI", key: geminiKey, version: geminiModelVersion, defaultActive: true },
-                    { id: "groq" as const, name: "Groq Cloud LPU", provider: "Groq Cloud", key: groqKey, version: groqModelVersion, defaultActive: false },
-                    { id: "deepseek" as const, name: "DeepSeek AI", provider: "DeepSeek", key: deepseekKey, version: deepseekModelVersion, defaultActive: false },
-                    { id: "claude" as const, name: "Anthropic Claude", provider: "Anthropic", key: claudeKey, version: claudeModelVersion, defaultActive: false },
+                    { id: "gemini" as const, name: "Google Gemini", provider: "Google DeepMind", key: geminiKey, version: geminiModelVersion, defaultActive: true, logo: "/assets/ai/gemini.svg" },
+                    { id: "openai" as const, name: "ChatGPT (OpenAI)", provider: "OpenAI Flagship", key: openaiKey, version: openaiModelVersion, defaultActive: false, logo: "/assets/ai/openai.svg" },
+                    { id: "claude" as const, name: "Anthropic Claude", provider: "Anthropic Hybrid", key: claudeKey, version: claudeModelVersion, defaultActive: false, logo: "/assets/ai/claude.svg" },
+                    { id: "deepseek" as const, name: "DeepSeek AI", provider: "DeepSeek V3/R1", key: deepseekKey, version: deepseekModelVersion, defaultActive: false, logo: "/assets/ai/deepseek.svg" },
+                    { id: "groq" as const, name: "Groq Cloud LPU", provider: "Groq Ultra LPU", key: groqKey, version: groqModelVersion, defaultActive: false, logo: "/assets/ai/groq.svg" },
                   ].map((m) => {
                     const hasKey = Boolean(m.key && m.key.trim().length > 0) || m.defaultActive;
                     const isSelected = copilotModel === m.id;
@@ -1142,22 +1668,25 @@ export default function AiHubPage() {
                             : "border-default-200 dark:border-default-700 bg-default-50/50 dark:bg-default-900/40 hover:bg-default-100"
                         }`}
                       >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-bold text-foreground">{m.name}</span>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="w-6 h-6 rounded-lg bg-default-100 dark:bg-default-800 p-1 flex items-center justify-center shrink-0 border border-default-200/60 dark:border-default-700/60">
+                            <img src={m.logo} alt={m.name} className="w-3.5 h-3.5" />
+                          </div>
                           {isSelected && <Check className="w-3.5 h-3.5 text-purple-600" />}
                         </div>
-                        <span className="text-[10px] text-default-500 block">{m.provider}</span>
-                        <div className="mt-2.5 pt-2 border-t border-default-100 dark:border-default-800 flex items-center justify-between gap-1">
-                          <span className="text-[9.5px] font-mono text-default-400 truncate max-w-[100px]" title={m.version}>
+                        <span className="text-xs font-bold text-foreground block truncate">{m.name}</span>
+                        <span className="text-[10px] text-default-500 block truncate">{m.provider}</span>
+                        <div className="mt-2 pt-2 border-t border-default-100 dark:border-default-800 flex items-center justify-between gap-1">
+                          <span className="text-[9px] font-mono text-default-400 truncate max-w-[85px]" title={m.version}>
                             {m.version}
                           </span>
                           {hasKey ? (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/25 shrink-0">
-                              ● Siap Digunakan
+                            <span className="text-[8.5px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/25 shrink-0">
+                              ● Siap
                             </span>
                           ) : (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-medium border border-amber-500/25 shrink-0">
-                              Belum Ada Key
+                            <span className="text-[8.5px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-medium border border-amber-500/25 shrink-0">
+                              No Key
                             </span>
                           )}
                         </div>
