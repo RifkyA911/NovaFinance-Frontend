@@ -1,4 +1,4 @@
-﻿# 💰 NovaFinance
+# 💰 NovaFinance
 
 <div align="center">
 
@@ -75,15 +75,17 @@ NovaFinance is a powerful financial management application that helps you track 
   - Full **Holdings Table** with search, asset class filters, mini 7-day sparklines, and modal CRUD with ticker presets
   - Integrated **AI Portfolio Strategist** for risk analysis and tactical recommendations
 
-- **📉 Advanced Analytics**
-  - Income statement reports
-  - Balance sheet and cash flow analysis
-  - Spending breakdown by category and tags
-  - Budget vs actual performance
-  - Investment performance tracking
-  - Goal progress reports
-  - Tax-deductible expense summaries
-  - Custom report generation
+- **📉 SaaS Financial Analytics & Intelligence (`/analytics`)**
+  - **SaaS KPI Matrix**: Real-time Total Revenue / Inflow, Operating Expenses (OPEX), Net Operating Cashflow (Free Cashflow Margin), and Liquid Cash Reserve Runway (Burn Rate Simulator)
+  - **Interactive Visualizations (Recharts v3)**: Inflow vs Outflow monthly comparative bar chart, cumulative capital accumulation trend area chart, and donut expense distribution
+  - **Ranked Category Intelligence**: Top OPEX categories with interactive percentage progress meters and nominal breakdown
+  - **Executive Report Generation**:
+    - **Multi-Sheet Excel (.xlsx)**: Executive KPI summary sheet + complete transaction audit ledger
+    - **Branded Executive PDF (.pdf)**: High-resolution printable financial statement with KPI cards, color-coded badges, and categorized breakdown
+  - **Nova AI Financial Advisor & Conclusion**:
+    - Automatic financial health score (0-100) and status diagnosis (Sehat, Cukup Baik, Perlu Perhatian, Kritis)
+    - Key observation insights (Positive, Warning, Info) and strategic CFO recommendations checklist
+    - Interactive **Tanya Nova AI** question prompt bar with pre-configured quick prompt chips (e.g. burn rate safety, cost cutting, 3-month projection)
 
 - **🏦 Multi-Account Support**
   - Manage multiple account types (bank, cash, credit cards, crypto, loans)
