@@ -6,6 +6,8 @@ interface AnalysisInput {
   monthlyExpense: number;
   savingsRate: number;
   spendingCategories: Array<{ name: string; value: number; percentage: string }>;
+  currency?: string;
+  runwayMonths?: number;
 }
 
 function generateFallbackAnalysis({
@@ -14,55 +16,64 @@ function generateFallbackAnalysis({
   monthlyExpense,
   savingsRate,
   spendingCategories,
+  currency = "IDR",
 }: AnalysisInput) {
   const isHealthy = savingsRate >= 20;
   const isDeficit = monthlyExpense > monthlyIncome && monthlyIncome > 0;
-  const topCategory = spendingCategories[0]?.name || "kebutuhan harian";
+  const topCategory = spendingCategories[0]?.name || "operasional umum";
+  const monthlyBurn = monthlyExpense > monthlyIncome ? monthlyExpense - monthlyIncome : monthlyExpense;
+  const calculatedRunway = monthlyBurn > 0 ? (totalBalance / monthlyBurn).toFixed(1) : "12+";
 
-  let healthScore = 70;
+  let healthScore = 75;
   let status: "Sehat" | "Cukup Baik" | "Perlu Perhatian" | "Kritis" = "Cukup Baik";
 
   if (isDeficit) {
     healthScore = 45;
     status = "Perlu Perhatian";
   } else if (savingsRate >= 30) {
-    healthScore = 90;
+    healthScore = 92;
     status = "Sehat";
   } else if (savingsRate >= 15) {
-    healthScore = 80;
+    healthScore = 82;
     status = "Sehat";
   }
 
   return {
     summary: isDeficit
-      ? `Arus kas bulan ini mengalami defisit karena pengeluaran melebihi pemasukan. Prioritaskan pengendalian pengeluaran pada pos ${topCategory}.`
+      ? `Arus kas periode ini mengalami defisit operasional karena pengeluaran melebihi pemasukan. Prioritaskan pengendalian pengeluaran pos '${topCategory}' untuk memperpanjang runway kas.`
       : isHealthy
-      ? `Kondisi arus kas Anda terkelola dengan baik dengan tingkat tabungan ${savingsRate}%. Pertahankan konsistensi ini untuk memperkuat fondasi keuangan.`
-      : `Arus kas stabil dengan tingkat tabungan ${savingsRate}%. Terdapat ruang optimasi terutama pada efisiensi pengeluaran ${topCategory}.`,
+      ? `Kondisi likuiditas sangat prima dengan tingkat laba bersih/tabungan ${savingsRate}%. Cadangan kas mencukupi estimasi runway ${calculatedRunway} bulan ke depan.`
+      : `Kondisi keuangan stabil dengan margin simpanan ${savingsRate}%. Terdapat ruang efisiensi pada pos '${topCategory}' untuk mempercepat pertumbuhan aset likuid.`,
     healthScore,
     status,
+    runwayMonths: calculatedRunway,
     insights: [
       {
-        title: isDeficit ? "Peringatan Arus Kas" : "Tingkat Tabungan",
+        title: isDeficit ? "Peringatan Defisit Arus Kas" : "Efisiensi Margin Bersih",
         description: isDeficit
-          ? `Pengeluaran bulan ini melampaui pemasukan sebesar Rp ${(monthlyExpense - monthlyIncome).toLocaleString("id-ID")}.`
-          : `Anda berhasil menyisihkan ${savingsRate}% dari pemasukan bulan ini ke pos tabungan/aset.`,
+          ? `Pengeluaran melebihi pemasukan sebesar ${currency} ${(monthlyExpense - monthlyIncome).toLocaleString("id-ID")}. Runway kas diperkirakan ${calculatedRunway} bulan jika pola ini berlanjut.`
+          : `Entitas berhasil mengamankan ${savingsRate}% dari total omzet/pemasukan sebagai free cashflow likuid.`,
         type: isDeficit ? "warning" : "positive",
       },
       {
-        title: "Fokus Pengeluaran Utama",
-        description: `Pos '${topCategory}' merupakan kontributor pengeluaran terbesar. Evaluasi pos ini untuk efisiensi lebih lanjut.`,
+        title: "Pos Pengeluaran Terbesar",
+        description: `Pos '${topCategory}' menyerap porsi pengeluaran paling dominan. Monitor pagu anggaran berkala agar tidak melampaui batas wajar.`,
+        type: "info",
+      },
+      {
+        title: "Kapasitas Runway Likuid",
+        description: `Dengan saldo kas ${currency} ${totalBalance.toLocaleString("id-ID")}, estimasi ketahanan operasional berada di kisaran ${calculatedRunway} bulan.`,
         type: "info",
       },
     ],
     recommendations: [
       isDeficit
-        ? "Tunda pengeluaran non-esensial hingga arus kas kembali surplus."
-        : "Sisihkan surplus bulanan ke rekening tabungan terpisah atau instrumen rendah risiko.",
-      `Tetapkan batas pagu maksimal untuk kategori ${topCategory} sebesar 85% dari alokasi saat ini.`,
-      `Pastikan total saldo likuid (Rp ${totalBalance.toLocaleString("id-ID")}) mencukupi kebutuhan operasional minimal 3-6 bulan.`,
+        ? "Segera bekukan pengeluaran non-primer hingga rasio arus kas kembali positif."
+        : "Alokasikan 20-30% dari laba bersih ke instrumen pasar uang atau cadangan ekspansi usaha.",
+      `Kendalikan realisasi pengeluaran pada pos '${topCategory}' dengan pagu maksimal 80% dari bulan sebelumnya.`,
+      "Pertahankan cadangan likuiditas minimum setara 3 sampai 6 bulan beban operasional tetap.",
     ],
-    savingsPotential: "Potensi penghematan 10-15% dengan pembatasan belanja impulsif",
+    savingsPotential: `Peluang penghematan 10-18% pada pos '${topCategory}' melalui negosiasi ulang atau pembatasan belanja berkala.`,
   };
 }
 
@@ -79,7 +90,11 @@ export async function POST(req: Request) {
       spendingCategories = [],
       accounts = [],
       transactionCount = 0,
+      userQuestion = "",
     } = body;
+
+    const monthlyBurn = monthlyExpense > monthlyIncome ? monthlyExpense - monthlyIncome : monthlyExpense;
+    const runwayMonths = monthlyBurn > 0 ? (totalBalance / monthlyBurn).toFixed(1) : "12+";
 
     const apiKey =
       process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
@@ -87,7 +102,23 @@ export async function POST(req: Request) {
       process.env.GOOGLE_GEMINI_API_KEY ||
       "";
 
+    // Fallback if no API key configured
     if (!apiKey) {
+      if (userQuestion) {
+        return NextResponse.json({
+          answer: `Berdasarkan data keuangan ${workspaceName}, total pemasukan saat ini adalah ${currency} ${monthlyIncome.toLocaleString("id-ID")}, total pengeluaran ${currency} ${monthlyExpense.toLocaleString("id-ID")}, dengan saldo likuid ${currency} ${totalBalance.toLocaleString("id-ID")}. Runway kas Anda berkisar ${runwayMonths} bulan. ${
+            monthlyExpense > monthlyIncome
+              ? "Disarankan untuk memangkas biaya non-esensial sesegera mungkin."
+              : "Arus kas Anda dalam posisi sehat, prioritaskan akumulasi aset cadangan."
+          }`,
+          keyMetricsSummary: `Kas: ${currency} ${totalBalance.toLocaleString("id-ID")} | Margin: ${savingsRate}% | Runway: ${runwayMonths} Bln`,
+          recommendations: [
+            "Optimalkan pos pengeluaran terbesar",
+            "Jaga rasio cadangan kas minimal 3 bulan operasional",
+          ],
+        });
+      }
+
       return NextResponse.json(
         generateFallbackAnalysis({
           totalBalance,
@@ -95,123 +126,170 @@ export async function POST(req: Request) {
           monthlyExpense,
           savingsRate,
           spendingCategories,
+          currency,
         })
       );
     }
 
-    const prompt = `Anda adalah NovaJournal AI Financial Advisor profesional. Analisis data finansial pengguna berikut secara analitis dan berikan kesimpulan tajam serta rekomendasi konkret:
-- Nama Workspace: ${workspaceName}
-- Mata Uang: ${currency}
-- Total Saldo Riil: ${totalBalance}
-- Pemasukan Bulan Ini: ${monthlyIncome}
-- Pengeluaran Bulan Ini: ${monthlyExpense}
-- Rasio Tabungan (Savings Rate): ${savingsRate}%
-- Total Transaksi Bulan Ini: ${transactionCount}
-- Kategori Pengeluaran Teratas: ${JSON.stringify(spendingCategories.slice(0, 5))}
-- Akun/Dompet Terhubung: ${JSON.stringify(accounts.slice(0, 5))}
+    // Interactive Question Mode vs Executive Conclusion Mode
+    let prompt = "";
+    if (userQuestion) {
+      prompt = `Anda adalah CFO & Financial Advisor AI untuk ${workspaceName}.
+Jawablah pertanyaan pengguna berikut secara spesifik, lugas, profesional, dan berbasis data keuangan real-time berikut:
+
+DATA ENTITAS:
+- Entitas: ${workspaceName} (${currency})
+- Saldo Kas Tersedia: ${currency} ${totalBalance.toLocaleString("id-ID")}
+- Pemasukan Periode Ini: ${currency} ${monthlyIncome.toLocaleString("id-ID")}
+- Pengeluaran Periode Ini: ${currency} ${monthlyExpense.toLocaleString("id-ID")}
+- Net Cashflow / Laba Bersih: ${currency} ${(monthlyIncome - monthlyExpense).toLocaleString("id-ID")}
+- Savings / Profit Margin: ${savingsRate}%
+- Estimasi Runway: ${runwayMonths} bulan
+- Kategori Pengeluaran: ${JSON.stringify(spendingCategories.slice(0, 6))}
+- Rekening / Vaults: ${JSON.stringify(accounts.slice(0, 5))}
+
+PERTANYAAN PENGGUNA:
+"${userQuestion}"
+
+FORMAT RESPONSE (Wajib JSON murni tanpa markdown triple-backticks):
+{
+  "answer": "Jawaban komprehensif, berbasis angka, taktis, dan mudah dipahami dalam 2-4 paragraf.",
+  "keyMetricsSummary": "Ringkasan metrik relevan (contoh: Kas: Rp X | Burn Rate: Rp Y | Runway: Z bln)",
+  "recommendations": [
+    "Saran taktis konkret 1",
+    "Saran taktis konkret 2",
+    "Saran taktis konkret 3"
+  ]
+}`;
+    } else {
+      prompt = `Anda adalah CFO Eksekutif & AI Financial Analyst untuk entitas ${workspaceName}.
+Analisis metrik keuangan berikut secara mendalam, objektif, dan berikan diagnosis eksekutif:
+
+DATA KEUANGAN:
+- Entitas: ${workspaceName} (${currency})
+- Saldo Kas Likuid: ${currency} ${totalBalance.toLocaleString("id-ID")}
+- Total Inflow (Pemasukan): ${currency} ${monthlyIncome.toLocaleString("id-ID")}
+- Total Outflow (Pengeluaran): ${currency} ${monthlyExpense.toLocaleString("id-ID")}
+- Laba Bersih Operasional: ${currency} ${(monthlyIncome - monthlyExpense).toLocaleString("id-ID")}
+- Margin Tabungan/Laba (Savings Rate): ${savingsRate}%
+- Total Transaksi: ${transactionCount}
+- Kategori Pengeluaran Teratas: ${JSON.stringify(spendingCategories.slice(0, 6))}
+- Dompet / Akun Terhubung: ${JSON.stringify(accounts.slice(0, 5))}
 
 Berikan analisis dalam format JSON murni:
 {
-  "summary": "Kesimpulan diagnosis keuangan ringkas dan berbobot (maksimal 2-3 kalimat)",
-  "healthScore": 85,
+  "summary": "Kesimpulan diagnosis keuangan tajam dan berbobot (maksimal 2-3 kalimat)",
+  "healthScore": 88,
   "status": "Sehat" | "Cukup Baik" | "Perlu Perhatian" | "Kritis",
+  "runwayMonths": "${runwayMonths}",
   "insights": [
     {
-      "title": "Judul Insight 1",
-      "description": "Penjelasan mendalam mengenai data pengeluaran/pemasukan",
+      "title": "Judul Analisis 1",
+      "description": "Penjelasan mendalam mengenai rasio arus kas atau efisiensi pengeluaran",
       "type": "positive" | "warning" | "info"
     },
     {
-      "title": "Judul Insight 2",
-      "description": "Penjelasan mendalam mengenai data",
+      "title": "Judul Analisis 2",
+      "description": "Evaluasi pos pengeluaran terbesar dan dampaknya pada modal kerja",
       "type": "positive" | "warning" | "info"
+    },
+    {
+      "title": "Ketahanan Runway Kas",
+      "description": "Uraian ketahanan kas operasional dan proyeksi likuiditas",
+      "type": "info"
     }
   ],
   "recommendations": [
-    "Saran aksi terukur 1",
-    "Saran aksi terukur 2",
-    "Saran aksi terukur 3"
+    "Rekomendasi strategis aksi terukur 1",
+    "Rekomendasi strategis aksi terukur 2",
+    "Rekomendasi strategis aksi terukur 3"
   ],
-  "savingsPotential": "Estimasi peluang efisiensi biaya atau akumulasi aset"
+  "savingsPotential": "Peluang penghematan terukur pada pos terbesar"
 }
 HANYA kembalikan JSON valid tanpa tag format markdown.`;
+    }
 
-    // Attempt call with gemini-3.6-flash
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            temperature: 0.2,
-          },
-        }),
+    // Call Google Gemini API with fallback models & timeout
+    const candidateModels = ["gemini-2.5-flash", "gemini-1.5-flash"];
+    let parsedData: any = null;
+
+    for (const model of candidateModels) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: AbortSignal.timeout(9500),
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                responseMimeType: "application/json",
+                temperature: 0.25,
+              },
+            }),
+          }
+        );
+
+        if (response.ok) {
+          const result = await response.json();
+          const rawText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (rawText) {
+            const cleaned = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+            parsedData = JSON.parse(cleaned);
+            break;
+          }
+        }
+      } catch (err) {
+        console.warn(`[AI Analytics] Model ${model} call error:`, err);
       }
+    }
+
+    if (parsedData) {
+      return NextResponse.json(parsedData);
+    }
+
+    // Graceful fallback if all models fail
+    if (userQuestion) {
+      return NextResponse.json({
+        answer: `Berdasarkan data keuangan ${workspaceName}, posisi saldo kas saat ini adalah ${currency} ${totalBalance.toLocaleString("id-ID")} dengan margin laba ${savingsRate}%. Estimasi ketahanan kas (runway) adalah ${runwayMonths} bulan. Tetap monitor pengeluaran rutin untuk menjaga kestabilan likuiditas.`,
+        keyMetricsSummary: `Kas: ${currency} ${totalBalance.toLocaleString("id-ID")} | Margin: ${savingsRate}% | Runway: ${runwayMonths} Bln`,
+        recommendations: [
+          "Pantau realisasi anggaran setiap minggu",
+          "Kendalikan pengeluaran operasional non-esensial",
+        ],
+      });
+    }
+
+    return NextResponse.json(
+      generateFallbackAnalysis({
+        totalBalance,
+        monthlyIncome,
+        monthlyExpense,
+        savingsRate,
+        spendingCategories,
+        currency,
+      })
     );
-
-    if (!response.ok) {
-      console.warn("Gemini API call returned status:", response.status);
-      return NextResponse.json(
-        generateFallbackAnalysis({
-          totalBalance,
-          monthlyIncome,
-          monthlyExpense,
-          savingsRate,
-          spendingCategories,
-        })
-      );
-    }
-
-    const result = await response.json();
-    const rawText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!rawText) {
-      return NextResponse.json(
-        generateFallbackAnalysis({
-          totalBalance,
-          monthlyIncome,
-          monthlyExpense,
-          savingsRate,
-          spendingCategories,
-        })
-      );
-    }
-
-    try {
-      const cleaned = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
-      const parsed = JSON.parse(cleaned);
-      return NextResponse.json(parsed);
-    } catch {
-      return NextResponse.json(
-        generateFallbackAnalysis({
-          totalBalance,
-          monthlyIncome,
-          monthlyExpense,
-          savingsRate,
-          spendingCategories,
-        })
-      );
-    }
   } catch (error) {
-    console.error("AI Suggestion Route Error:", error);
+    console.error("AI Analytics Suggestion Route Error:", error);
     return NextResponse.json({
       summary: "Arus kas Anda saat ini stabil. Lanjutkan pencatatan teratur untuk mempertahankan stabilitas anggaran.",
-      healthScore: 75,
+      healthScore: 80,
       status: "Cukup Baik",
+      runwayMonths: "6+",
       insights: [
         {
           title: "Konsistensi Pencatatan",
-          description: "Pencatatan yang konsisten membantu menjaga visibilitas pengeluaran bulanan.",
+          description: "Pencatatan yang konsisten menjaga transparansi arus kas operasional.",
           type: "info",
         },
       ],
       recommendations: [
         "Evaluasi pengeluaran setiap akhir pekan untuk mencegah pembengkakan saldo.",
-        "Sisihkan minimal 15% dari pemasukan ke rekening dana darurat.",
+        "Sisihkan minimal 15% dari pemasukan ke rekening dana cadangan.",
       ],
-      savingsPotential: "Potensi penghematan 10% dengan monitoring mingguan",
+      savingsPotential: "Potensi penghematan 10-15% dengan evaluasi pengeluaran berkala.",
     });
   }
 }
