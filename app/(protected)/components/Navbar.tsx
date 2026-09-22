@@ -370,10 +370,10 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
       const cachedLogo = localStorage.getItem("novajournal_custom_brand_logo");
       const cachedMode = localStorage.getItem("novajournal_brand_logo_mode") as any;
       const cachedName = localStorage.getItem("novajournal_custom_brand_name");
-      setNavBrandLogo(cachedLogo || ws?.customBrandLogo || null);
-      if (cachedMode === "square" || cachedMode === "wide") setNavBrandMode(cachedMode);
-      else if (ws?.customBrandMode === "square" || ws?.customBrandMode === "wide") setNavBrandMode(ws.customBrandMode);
-      setNavBrandName(cachedName || ws?.customBrandName || null);
+      setNavBrandLogo(ws?.customBrandLogo || cachedLogo || null);
+      if (ws?.customBrandMode === "square" || ws?.customBrandMode === "wide") setNavBrandMode(ws.customBrandMode);
+      else if (cachedMode === "square" || cachedMode === "wide") setNavBrandMode(cachedMode);
+      setNavBrandName(ws?.customBrandName || ws?.name || cachedName || null);
     };
     updateBrand();
     window.addEventListener("novajournal_brand_config_changed", updateBrand);
@@ -629,19 +629,19 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           {workspaces.length > 0 ? (
             <Dropdown>
               <Dropdown.Trigger
-                className="h-9 px-2.5 sm:px-3 rounded-xl border border-default-200/60 dark:border-default-700/60 bg-default-100/60 dark:bg-default-800/40 hover:bg-default-100 dark:hover:bg-default-800/80 shadow-2xs backdrop-blur-sm transition-all flex items-center gap-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer text-left max-w-72 select-none"
+                className="h-9 px-2.5 sm:px-3 rounded-xl border border-default-200/80 dark:border-default-700/80 bg-white dark:bg-default-900 hover:bg-default-50 dark:hover:bg-default-800 shadow-2xs backdrop-blur-sm transition-all flex items-center gap-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer text-left min-w-[170px] max-w-72 select-none group"
                 aria-label="Pilih Workspace"
               >
-                {/* Brand / Entity Icon (Strict Square Profile) */}
-                {navBrandLogo ? (
+                {/* Brand / Entity Icon (Square Ratio 1:1) */}
+                {navBrandLogo || (selectedWorkspace as any)?.customBrandLogo ? (
                   <img
-                    src={navBrandLogo}
+                    src={navBrandLogo || (selectedWorkspace as any)?.customBrandLogo}
                     alt="Logo"
-                    className="w-5.5 h-5.5 aspect-square rounded-md object-cover shrink-0 border border-default-200/80 dark:border-default-700/80 bg-default-100/80 dark:bg-default-800/80 shadow-2xs"
+                    className="w-6 h-6 aspect-square rounded-lg object-cover shrink-0 border border-default-200/80 dark:border-default-700/80 bg-default-100/80 dark:bg-default-800/80 shadow-2xs"
                   />
                 ) : (
                   <div
-                    className={`w-5.5 h-5.5 aspect-square rounded-md flex items-center justify-center shrink-0 border shadow-2xs ${
+                    className={`w-6 h-6 aspect-square rounded-lg flex items-center justify-center shrink-0 border shadow-2xs text-[11px] font-bold ${
                       selectedWorkspace?.type === "pt" || selectedWorkspace?.type === "BUSINESS"
                         ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/20"
                         : selectedWorkspace?.type === "umkm"
@@ -649,21 +649,21 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                         : "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/20"
                     }`}
                   >
-                    <Building2 className="w-3 h-3" />
+                    {selectedWorkspace?.name ? selectedWorkspace.name.slice(0, 1).toUpperCase() : <Building2 className="w-3.5 h-3.5" />}
                   </div>
                 )}
 
-                {/* Workspace / Brand Name */}
-                <span className="truncate text-xs font-semibold text-foreground max-w-[120px] sm:max-w-[160px] tracking-tight">
-                  {navBrandName || selectedWorkspace?.name || "Pilih Workspace"}
-                </span>
+                {/* Workspace Name & Inline Currency */}
+                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                  <span className="truncate text-xs font-bold text-foreground tracking-tight max-w-[130px] sm:max-w-[160px]">
+                    {navBrandName || selectedWorkspace?.name || "Pilih Workspace"}
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-blue-600 dark:text-blue-400 shrink-0">
+                    {selectedWorkspace?.currency || "IDR"}
+                  </span>
+                </div>
 
-                {/* Clean Currency Badge */}
-                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 shrink-0 uppercase tracking-wider">
-                  {selectedWorkspace?.currency || "IDR"}
-                </span>
-
-                <ChevronDown className="w-3.5 h-3.5 text-default-400 shrink-0 ml-auto transition-transform" />
+                <ChevronDown className="w-3.5 h-3.5 text-default-400 shrink-0 ml-auto transition-transform group-aria-expanded:rotate-180" />
               </Dropdown.Trigger>
 
               <Dropdown.Popover className="min-w-72 z-50 p-2 shadow-2xl bg-white dark:bg-gray-900 rounded-2xl border border-default-200/90 dark:border-default-800">
@@ -704,7 +704,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                             <img
                               src={(ws as any).customBrandLogo}
                               alt={(ws as any)?.customBrandName || ws.name}
-                              className={`w-7 h-7 rounded-lg object-cover shrink-0 border shadow-2xs ${
+                              className={`w-7 h-7 aspect-square rounded-lg object-cover shrink-0 border shadow-2xs ${
                                 isSelected
                                   ? "border-blue-500/40"
                                   : "border-default-200/80 dark:border-default-700/80"
@@ -712,13 +712,13 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                             />
                           ) : (
                             <div
-                              className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                              className={`w-7 h-7 aspect-square rounded-lg flex items-center justify-center shrink-0 text-xs font-bold ${
                                 isSelected
                                   ? "bg-blue-500 text-white shadow-2xs"
                                   : "bg-default-100 dark:bg-default-800 text-default-600 dark:text-default-300"
                               }`}
                             >
-                              <Building2 className="w-3.5 h-3.5" />
+                              {ws.name ? ws.name.slice(0, 1).toUpperCase() : <Building2 className="w-3.5 h-3.5" />}
                             </div>
                           )}
                           <div className="min-w-0 flex-1">
@@ -744,18 +744,18 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                   })}
                 </div>
 
-                {/* Bottom Action: Clean Single-Plus Add Workspace */}
-                <div className="mt-2 pt-2 border-t border-default-100 dark:border-default-800 flex items-center gap-1.5">
+                {/* Bottom Action: Kelola & Tambah Workspace */}
+                <div className="mt-2 pt-2 border-t border-default-100 dark:border-default-800">
                   <button
                     type="button"
                     onClick={() => {
                       playSoftChime();
                       router.push("/workspaces");
                     }}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all shadow-xs cursor-pointer active:scale-98"
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-white bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-95 shadow-md shadow-blue-500/20 transition-all cursor-pointer active:scale-[0.98]"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Tambah Workspace Baru</span>
+                    <Plus className="w-4 h-4 shrink-0" />
+                    <span>Kelola & Tambah Workspace</span>
                   </button>
                 </div>
               </Dropdown.Popover>
