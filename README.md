@@ -87,6 +87,15 @@ NovaFinance is a powerful financial management application that helps you track 
     - Key observation insights (Positive, Warning, Info) and strategic CFO recommendations checklist
     - Interactive **Tanya Nova AI** question prompt bar with pre-configured quick prompt chips (e.g. burn rate safety, cost cutting, 3-month projection)
 
+- **🏢 Multi-Workspace & Entity Hub (`/workspaces`)**
+  - **Dual View Modes**: Switch seamlessly between interactive Drag-and-Drop priority cards and high-density **TanStack Table Engine** with column sorting and pagination
+  - **High-Contrast Surface Styling**: Distinct white/gray-900 surface contrast with borders and elevation, eliminating background blending
+  - **Square-Crop (1:1) Brand Logo Editor**: Upload and edit workspace avatars with square ratio preview and direct storage sync
+  - **Base Currency Mutation Security Guard**: Backend audit blocking base currency mutation if transactions already exist, preventing historical ledger distortion
+  - **AI Workspace Structure Advisor & Generator**: AI recommendations for enterprise entities, holding structures, jargon, chart of accounts, and tax isolation
+  - **Workspace RBAC Access Control Guide Modal**: In-app governance modal explaining how workspace membership links with `/users` and role permissions
+  - **Refined Select Dropdown Styling**: Form select fields with custom centered chevrons and proper padding
+
 - **🏦 Multi-Account Support**
   - Manage multiple account types (bank, cash, credit cards, crypto, loans)
   - Multi-currency support with auto-conversion
