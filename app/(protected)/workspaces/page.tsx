@@ -4,6 +4,7 @@
 import React, { useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import OptimizedImage from "@/app/components/OptimizedImage";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { api, type Workspace } from "@/app/lib/api";
 import {
@@ -432,10 +433,12 @@ export default function WorkspacesPage() {
           return (
             <div className="flex items-center gap-3 py-1">
               {ws.customBrandLogo ? (
-                <img
+                <OptimizedImage
                   src={ws.customBrandLogo}
                   alt={ws.name}
-                  className="w-9 h-9 rounded-xl object-cover border border-default-200/80 dark:border-default-700/80 shadow-2xs shrink-0"
+                  width={36}
+                  height={36}
+                  className="w-9 h-9 rounded-xl border border-default-200/80 dark:border-default-700/80 shadow-2xs shrink-0"
                 />
               ) : (
                 <div
@@ -637,8 +640,9 @@ export default function WorkspacesPage() {
 
   return (
     <div className="min-h-screen bg-default-50/70 dark:bg-gray-950 p-4 md:p-6 lg:p-8 space-y-6 text-foreground">
-      {/* ── 1. Header Bar with Clean Aligned Actions ───────────────────── */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-default-200/80 dark:border-default-800/80 pb-5">
+      {/* ── 1. Header Bar: 1 Row Title, 1 Row Buttons ─────────────────── */}
+      <div className="space-y-4 border-b border-default-200/80 dark:border-default-800/80 pb-5">
+        {/* Row 1: H1 & Subtitle */}
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-2xl bg-linear-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20 shrink-0">
             <Building2 className="w-6 h-6" />
@@ -658,7 +662,7 @@ export default function WorkspacesPage() {
           </div>
         </div>
 
-        {/* Unified Header Actions Group */}
+        {/* Row 2: Buttons dan gitu aja */}
         <div className="flex flex-wrap items-center gap-2">
           {/* View Mode Toggle: DnD vs TanStack Table */}
           <div className="flex items-center p-1 rounded-xl bg-white dark:bg-gray-900 border border-default-200 dark:border-default-700 shadow-2xs">
@@ -729,10 +733,10 @@ export default function WorkspacesPage() {
               setError("");
               setShowCreateModal(true);
             }}
-            className="h-9 px-4 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-xs cursor-pointer"
+            className="h-9 px-4 text-xs font-semibold bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 text-white cursor-pointer shadow-xs hover:opacity-95 transition-all"
           >
-            <Plus className="w-3.5 h-3.5 mr-1" />
-            <span>Buat Workspace</span>
+            <Plus className="w-3.5 h-3.5 mr-1.5" />
+            <span>Tambah Workspace</span>
           </Button>
         </div>
       </div>
@@ -781,10 +785,12 @@ export default function WorkspacesPage() {
           </div>
           <div className="mt-2 flex items-center gap-2">
             {selectedWorkspace?.customBrandLogo && (
-              <img
+              <OptimizedImage
                 src={selectedWorkspace.customBrandLogo}
                 alt="Logo"
-                className="w-7 h-7 rounded-lg object-cover border border-default-200 shrink-0"
+                width={28}
+                height={28}
+                className="w-7 h-7 rounded-lg border border-default-200 shrink-0"
               />
             )}
             <div className="min-w-0 flex-1">
@@ -950,10 +956,12 @@ export default function WorkspacesPage() {
 
                     {/* Brand Logo / Type Icon with Square Aspect Ratio */}
                     {workspace.customBrandLogo ? (
-                      <img
+                      <OptimizedImage
                         src={workspace.customBrandLogo}
                         alt={workspace.name}
-                        className="w-10 h-10 rounded-xl object-cover border border-default-200/80 dark:border-default-700/80 shadow-2xs shrink-0"
+                        width={40}
+                        height={40}
+                        className="w-10 h-10 rounded-xl border border-default-200/80 dark:border-default-700/80 shadow-2xs shrink-0"
                       />
                     ) : (
                       <div
@@ -1287,10 +1295,12 @@ export default function WorkspacesPage() {
                 </label>
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-default-50 dark:bg-default-800/60 border border-default-200 dark:border-default-700">
                   {editLogoUrl ? (
-                    <img
+                    <OptimizedImage
                       src={editLogoUrl}
                       alt="Brand Logo"
-                      className="w-14 h-14 rounded-xl object-cover border border-default-200/80 dark:border-default-700/80 shadow-2xs shrink-0"
+                      width={56}
+                      height={56}
+                      className="w-14 h-14 rounded-xl border border-default-200/80 dark:border-default-700/80 shadow-2xs shrink-0"
                     />
                   ) : (
                     <div className="w-14 h-14 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0 border border-blue-200 dark:border-blue-800">
