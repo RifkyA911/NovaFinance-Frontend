@@ -28,6 +28,10 @@ const nextConfig: NextConfig = {
         source: "/documents/:path*",
         destination: `${BACKEND_URL}/documents/:path*`,
       },
+      {
+        source: "/api/workspaces/:path*",
+        destination: `${BACKEND_URL}/api/workspaces/:path*`,
+      },
     ];
   },
 };
