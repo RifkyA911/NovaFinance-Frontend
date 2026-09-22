@@ -62,10 +62,17 @@ export default function OptimizedImage({
     return null;
   }
 
-  const isDataUri = src.startsWith("data:") || src.startsWith("blob:");
-  const isSvg = src.endsWith(".svg") || src.includes("data:image/svg+xml");
-  const isLocalOrPrivate = src.includes("localhost") || src.includes("127.0.0.1");
-  const shouldSkipOptimization = unoptimized ?? (isDataUri || isSvg || isLocalOrPrivate);
+  // Normalize backend URLs to relative paths so Next.js Sharp can optimize them server-side
+  let processedSrc = src;
+  if (src.startsWith("http://localhost:8080/api/")) {
+    processedSrc = src.replace("http://localhost:8080/api/", "/api/");
+  } else if (src.startsWith("http://127.0.0.1:8080/api/")) {
+    processedSrc = src.replace("http://127.0.0.1:8080/api/", "/api/");
+  }
+
+  const isDataUri = processedSrc.startsWith("data:") || processedSrc.startsWith("blob:");
+  const isSvg = processedSrc.endsWith(".svg") || processedSrc.includes("data:image/svg+xml");
+  const shouldSkipOptimization = unoptimized ?? (isDataUri || isSvg);
 
   return (
     <div
@@ -77,7 +84,7 @@ export default function OptimizedImage({
       }}
     >
       <Image
-        src={src}
+        src={processedSrc}
         alt={alt}
         width={fill ? undefined : width}
         height={fill ? undefined : height}
@@ -87,10 +94,10 @@ export default function OptimizedImage({
         onError={() => setHasError(true)}
         className="w-full h-full object-cover select-none pointer-events-none transition-opacity duration-200"
         style={{
-          imageRendering: "smooth",
+          imageRendering: "auto",
           WebkitBackfaceVisibility: "hidden",
           backfaceVisibility: "hidden",
-          transform: "translateZ(0)",
+          transform: "translate3d(0, 0, 0)",
         }}
       />
     </div>
