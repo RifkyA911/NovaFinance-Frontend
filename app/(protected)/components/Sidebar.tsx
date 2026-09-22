@@ -34,6 +34,7 @@ import {
   Calculator,
   FileCheck2,
   LayoutList,
+  FlaskConical,
 } from "lucide-react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { queryKeys, queryFunctions } from "@/app/lib/queries";
@@ -217,6 +218,11 @@ const DEFAULT_MENU_GROUPS: MenuGroup[] = [
         icon: ShieldCheck,
         label: "Security & Vault",
         path: "/security",
+      },
+      {
+        icon: FlaskConical,
+        label: "Logo Experiment",
+        path: "/experiment",
       },
     ],
   },
