@@ -973,9 +973,9 @@ export default function AnalyticsPage() {
                 </div>
 
                 <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
-                  {accounts.map((acc: any) => (
+                  {accounts.map((acc: any, index: number) => (
                     <div
-                      key={acc.id}
+                      key={acc.id ? `${acc.id}-${index}` : `account-${index}`}
                       className="flex items-center justify-between p-2.5 rounded-xl border border-default-200/60 dark:border-default-800 bg-default-50/50 dark:bg-default-900/30"
                     >
                       <div>
@@ -1023,13 +1023,13 @@ export default function AnalyticsPage() {
                 </tr>
               </thead>
               <tbody>
-                {transactions.slice(0, 7).map((tx: any) => {
+                {transactions.slice(0, 7).map((tx: any, tIndex: number) => {
                   const amt = typeof tx.amount === "string" ? parseFloat(tx.amount) : Number(tx.amount || 0);
                   const isIncome = tx.type === "income";
                   const catName = typeof tx.category === "object" ? tx.category?.name : tx.category || "General";
                   return (
                     <tr
-                      key={tx.id}
+                      key={tx.id ? `${tx.id}-${tIndex}` : `tx-${tIndex}`}
                       className="border-b border-default-100 dark:border-default-800/60 hover:bg-default-50/50 dark:hover:bg-default-900/40 transition-colors"
                     >
                       <td className="py-2.5 px-4 font-medium text-foreground">
