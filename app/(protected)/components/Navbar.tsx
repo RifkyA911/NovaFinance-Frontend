@@ -156,7 +156,7 @@ const searchMenuItems: SearchMenuItem[] = [
   },
   {
     id: "wallets",
-    label: "Kas & Rekening Bank",
+    label: "Wallets & Rekening",
     path: "/wallets",
     group: "Overview",
     icon: Landmark,
@@ -629,32 +629,19 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           {workspaces.length > 0 ? (
             <Dropdown>
               <Dropdown.Trigger
-                className="h-10 px-3 rounded-xl border border-default-200/80 dark:border-default-700/80 bg-white dark:bg-default-900 hover:bg-default-50 dark:hover:bg-default-800 shadow-2xs backdrop-blur-sm transition-all flex items-center gap-2.5 focus:outline-none focus:ring-2 focus:ring-theme-primary/30 cursor-pointer text-left min-w-[175px] max-w-72 select-none group"
+                className="h-9 px-3 rounded-xl border border-default-200/80 dark:border-default-700/80 bg-white dark:bg-default-900 hover:bg-default-50 dark:hover:bg-default-800 shadow-2xs backdrop-blur-sm transition-all flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-theme-primary/30 cursor-pointer text-left min-w-[140px] max-w-64 select-none group"
                 aria-label="Pilih Workspace"
               >
-                {/* Workspace Name & Workspace Type (No logo as requested) */}
-                <div className="flex flex-col text-left min-w-0 flex-1 leading-tight py-0.5">
-                  <span className="truncate text-xs font-bold text-foreground tracking-tight max-w-[140px] sm:max-w-[170px]">
+                <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                  <span className="truncate text-xs font-bold text-foreground tracking-tight max-w-[130px] sm:max-w-[160px]">
                     {navBrandName || selectedWorkspace?.name || "Pilih Workspace"}
                   </span>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-default-500 truncate">
-                      {selectedWorkspace?.type === "pt" || (selectedWorkspace?.type as any) === "BUSINESS"
-                        ? "PT / Korporat"
-                        : selectedWorkspace?.type === "umkm"
-                        ? "UMKM"
-                        : (selectedWorkspace?.type as any) === "holding"
-                        ? "Holding"
-                        : "Personal"}
-                    </span>
-                    <span className="text-[10px] text-default-300 dark:text-default-700">•</span>
-                    <span
-                      className="text-[10px] font-mono font-bold shrink-0"
-                      style={{ color: "var(--primary-color)" }}
-                    >
-                      {selectedWorkspace?.currency || "IDR"}
-                    </span>
-                  </div>
+                  <span
+                    className="text-[10px] font-mono font-bold shrink-0"
+                    style={{ color: "var(--primary-color)" }}
+                  >
+                    {selectedWorkspace?.currency || "IDR"}
+                  </span>
                 </div>
 
                 <ChevronDown className="w-3.5 h-3.5 text-default-400 shrink-0 ml-auto transition-transform group-aria-expanded:rotate-180" />

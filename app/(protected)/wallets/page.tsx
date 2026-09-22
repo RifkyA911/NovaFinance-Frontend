@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Wallet,
   Building2,
   CreditCard,
+  Smartphone,
   Plus,
   Edit2,
   Trash2,
@@ -85,10 +86,68 @@ const BANK_PRESETS = [
   "Crypto Wallet",
 ];
 
+const PALETTE_CONFIG: Record<string, { primary: string; subtle: string; ring: string }> = {
+  blue: { primary: "#2563eb", subtle: "rgba(37, 99, 235, 0.1)", ring: "rgba(37, 99, 235, 0.35)" },
+  violet: { primary: "#7c3aed", subtle: "rgba(124, 58, 237, 0.1)", ring: "rgba(124, 58, 237, 0.35)" },
+  emerald: { primary: "#059669", subtle: "rgba(5, 150, 105, 0.1)", ring: "rgba(5, 150, 105, 0.35)" },
+  amber: { primary: "#d97706", subtle: "rgba(217, 119, 6, 0.1)", ring: "rgba(217, 119, 6, 0.35)" },
+  rose: { primary: "#e11d48", subtle: "rgba(225, 29, 72, 0.1)", ring: "rgba(225, 29, 72, 0.35)" },
+  slate: { primary: "#475569", subtle: "rgba(71, 85, 105, 0.1)", ring: "rgba(71, 85, 105, 0.35)" },
+};
+
+const ACCOUNT_TYPES = [
+  {
+    id: "bank" as const,
+    label: "Rekening Bank",
+    subtitle: "Giro, Tabungan, RDN",
+    icon: Landmark,
+  },
+  {
+    id: "ewallet" as const,
+    label: "E-Wallet Digital",
+    subtitle: "GoPay, OVO, Dana, QRIS",
+    icon: Smartphone,
+  },
+  {
+    id: "cash" as const,
+    label: "Kas Tunai Fisik",
+    subtitle: "Brankas kas & operasional",
+    icon: Coins,
+  },
+  {
+    id: "credit" as const,
+    label: "Kartu Kredit",
+    subtitle: "Plafon & cicilan bisnis",
+    icon: CreditCard,
+  },
+];
+
 export default function WalletsMasterPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { selectedWorkspace } = useWorkspace();
+
+  // Dynamic Theme Palette Listener
+  const [activePalette, setActivePalette] = useState<string>("blue");
+
+  useEffect(() => {
+    try {
+      const pal = localStorage.getItem("novajournal_theme_palette") || "blue";
+      setActivePalette(pal);
+
+      const onPaletteChange = (e: any) => {
+        const nextPal = e.detail || localStorage.getItem("novajournal_theme_palette") || "blue";
+        setActivePalette(nextPal);
+      };
+
+      window.addEventListener("novajournal_palette_changed", onPaletteChange);
+      return () => window.removeEventListener("novajournal_palette_changed", onPaletteChange);
+    } catch {}
+  }, []);
+
+  const activeColor = PALETTE_CONFIG[activePalette]?.primary || "var(--primary-color, #2563eb)";
+  const activeSubtle = PALETTE_CONFIG[activePalette]?.subtle || "var(--primary-subtle, rgba(37, 99, 235, 0.1))";
+  const activeRing = PALETTE_CONFIG[activePalette]?.ring || "var(--primary-ring, rgba(37, 99, 235, 0.35))";
 
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState("");
@@ -672,17 +731,17 @@ export default function WalletsMasterPage() {
       <div className="space-y-4 border-b border-default-200/80 dark:border-default-800/80 pb-5">
         {/* Row 1: H1 & Subtitle */}
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-theme-gradient text-white shadow-md shadow-theme-primary shrink-0">
+          <div
+            className="p-2.5 rounded-2xl text-white shadow-md shrink-0"
+            style={{ background: `linear-gradient(135deg, ${activeColor} 0%, #4f46e5 100%)` }}
+          >
             <Wallet className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                Kas & Rekening Bank
+                Wallets & Rekening Bank
               </h1>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-theme-primary/10 text-theme-primary font-semibold border border-theme-primary/20">
-                Drag & Drop Ready
-              </span>
               {selectedWorkspace && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-default-100 dark:bg-default-800 text-default-600 dark:text-default-300 font-medium border border-default-200/60 dark:border-default-700/60">
                   {selectedWorkspace.name}
@@ -690,7 +749,7 @@ export default function WalletsMasterPage() {
               )}
             </div>
             <p className="text-xs sm:text-sm text-default-500 mt-0.5">
-              Manajemen brankas kas fisik, rekening giro bank, dan dompet digital dengan transfer instan antar akun via drag & drop.
+              Manajemen brankas kas fisik, rekening giro bank, dan dompet digital dengan alokasi likuiditas terintegrasi.
             </p>
           </div>
         </div>
@@ -711,7 +770,7 @@ export default function WalletsMasterPage() {
                 }`}
                 style={
                   viewMode === "dnd"
-                    ? { backgroundColor: "var(--primary-color)", color: "#ffffff" }
+                    ? { backgroundColor: activeColor, color: "#ffffff" }
                     : undefined
                 }
                 title="Tampilan Grid Kartu (Drag-and-Drop)"
@@ -729,7 +788,7 @@ export default function WalletsMasterPage() {
                 }`}
                 style={
                   viewMode === "table"
-                    ? { backgroundColor: "var(--primary-color)", color: "#ffffff" }
+                    ? { backgroundColor: activeColor, color: "#ffffff" }
                     : undefined
                 }
                 title="Tampilan Daftar Tabel"
@@ -751,23 +810,23 @@ export default function WalletsMasterPage() {
 
           {/* Far Right: AI Treasury Advisor & Buka Rekening Baru */}
           <div className="flex items-center gap-2 ml-auto">
-            {/* AI Treasury Advisor Button with Premium Gradient */}
+            {/* AI Treasury Advisor Button with NovaFinance Gradient */}
             <Button
               size="sm"
               onPress={() => setIsAiTreasuryOpen(true)}
-              className="h-9 px-3.5 text-xs font-bold bg-linear-to-r from-violet-600 via-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/25 hover:opacity-95 active:scale-95 transition-all border border-purple-400/30 cursor-pointer"
+              className="h-9 px-3.5 text-xs font-semibold text-white shadow-xs hover:opacity-95 active:scale-95 transition-all cursor-pointer border-0"
+              style={{ background: `linear-gradient(135deg, ${activeColor} 0%, #4f46e5 100%)` }}
             >
-              <Sparkles className="w-3.5 h-3.5 mr-1.5 text-amber-300 animate-pulse" />
+              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
               <span>AI Treasury Advisor</span>
             </Button>
 
             {/* Buka Rekening Baru Button */}
             <Button
               size="sm"
-              variant="primary"
               onPress={handleOpenCreate}
-              className="h-9 px-4 text-xs font-semibold text-white cursor-pointer shadow-xs hover:opacity-95 active:scale-95 transition-all"
-              style={{ backgroundColor: "var(--primary-color)" }}
+              className="h-9 px-4 text-xs font-semibold text-white cursor-pointer shadow-xs hover:opacity-95 active:scale-95 transition-all border-0"
+              style={{ backgroundColor: activeColor }}
             >
               <Plus className="w-3.5 h-3.5 mr-1.5" />
               <span>Buka Rekening Baru</span>
@@ -946,8 +1005,8 @@ export default function WalletsMasterPage() {
                   style={
                     isSelected
                       ? {
-                          backgroundColor: "var(--primary-color)",
-                          borderColor: "var(--primary-color)",
+                          backgroundColor: activeColor,
+                          borderColor: activeColor,
                           color: "#ffffff",
                         }
                       : undefined
@@ -1506,28 +1565,58 @@ export default function WalletsMasterPage() {
                 {/* ── Left Column: Account Details ── */}
                 <div className="space-y-3.5">
                   {/* Tipe Rekening */}
-                  <div className="space-y-1">
-                    <label className="font-semibold text-foreground">Tipe Akun Kas *</label>
-                    <div className="grid grid-cols-4 gap-1.5">
-                      {(["bank", "ewallet", "cash", "credit"] as const).map((t) => {
-                        const isSel = formType === t;
+                  <div className="space-y-1.5">
+                    <label className="font-semibold text-foreground text-xs">Tipe Akun Kas *</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {ACCOUNT_TYPES.map((typeObj) => {
+                        const isSel = formType === typeObj.id;
+                        const Icon = typeObj.icon;
                         return (
                           <button
-                            key={t}
+                            key={typeObj.id}
                             type="button"
-                            onClick={() => setFormType(t)}
-                            className={`h-8.5 rounded-xl font-semibold text-xs transition uppercase cursor-pointer ${
+                            onClick={() => setFormType(typeObj.id)}
+                            className={`p-2.5 rounded-xl border text-left transition-all duration-150 cursor-pointer flex items-center gap-2.5 relative ${
                               isSel
-                                ? "text-white shadow-xs font-bold"
-                                : "bg-default-50 dark:bg-default-800 text-default-600 dark:text-default-400 hover:text-foreground border border-default-200 dark:border-default-700"
+                                ? "shadow-2xs font-bold ring-1.5"
+                                : "bg-default-50/80 dark:bg-default-800/60 border-default-200 dark:border-default-700 hover:bg-default-100 dark:hover:bg-default-800"
                             }`}
                             style={
                               isSel
-                                ? { backgroundColor: "var(--primary-color)", color: "#ffffff" }
+                                ? {
+                                    backgroundColor: activeSubtle,
+                                    borderColor: activeColor,
+                                    boxShadow: `0 0 0 1px ${activeColor}`,
+                                  }
                                 : undefined
                             }
                           >
-                            {t}
+                            <div
+                              className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                                isSel
+                                  ? "text-white shadow-2xs"
+                                  : "bg-default-200/60 dark:bg-default-700 text-default-600 dark:text-default-300"
+                              }`}
+                              style={isSel ? { backgroundColor: activeColor } : undefined}
+                            >
+                              <Icon className="w-3.5 h-3.5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <span className="text-xs font-bold text-foreground block leading-tight truncate">
+                                {typeObj.label}
+                              </span>
+                              <span className="text-[10px] text-default-400 block truncate mt-0.5">
+                                {typeObj.subtitle}
+                              </span>
+                            </div>
+                            {isSel && (
+                              <div
+                                className="w-4 h-4 rounded-full flex items-center justify-center text-white shrink-0 ml-auto"
+                                style={{ backgroundColor: activeColor }}
+                              >
+                                <Check className="w-2.5 h-2.5" />
+                              </div>
+                            )}
                           </button>
                         );
                       })}
@@ -1648,11 +1737,11 @@ export default function WalletsMasterPage() {
                     </select>
                   </div>
 
-                  {/* Saldo Awal Likuid with Live Intl Preview */}
+                  {/* Saldo Awal Likuid with Live Preview */}
                   <div className="space-y-1.5 p-3 rounded-xl bg-default-50/80 dark:bg-default-800/50 border border-default-200/60 dark:border-default-700/60">
                     <div className="flex items-center justify-between">
                       <label className="font-semibold text-foreground text-xs">Saldo Awal ({formCurrency}) *</label>
-                      <span className="text-[10px] text-default-400 font-mono">Format Intl Aktif</span>
+                      <span className="text-[10px] text-default-400 font-mono font-bold">{formCurrency}</span>
                     </div>
                     <input
                       type="number"
@@ -1664,10 +1753,10 @@ export default function WalletsMasterPage() {
                       required
                     />
 
-                    {/* Live Intl Currency Box */}
-                    <div className="p-2 rounded-lg bg-default-100/80 dark:bg-default-800/80 border border-default-200/60 dark:border-default-700/60 flex items-center justify-between">
-                      <span className="text-[10px] text-default-400 uppercase font-mono tracking-wider">Format Resmi Intl:</span>
-                      <span className="font-mono font-extrabold text-xs" style={{ color: "var(--primary-color)" }}>
+                    {/* Live Currency Preview */}
+                    <div className="px-3 py-2 rounded-xl bg-default-100/70 dark:bg-default-800/70 border border-default-200/60 dark:border-default-700/60 flex items-center justify-between">
+                      <span className="text-xs text-default-500 font-medium">Estimasi Saldo:</span>
+                      <span className="font-mono font-bold text-xs" style={{ color: activeColor }}>
                         {formatIntlPreview(formBalance, formCurrency)}
                       </span>
                     </div>
@@ -1720,8 +1809,8 @@ export default function WalletsMasterPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 rounded-xl text-white font-semibold text-xs shadow-xs hover:opacity-95 disabled:opacity-50 transition cursor-pointer"
-                  style={{ backgroundColor: "var(--primary-color)" }}
+                  className="px-5 py-2 rounded-xl text-white font-semibold text-xs shadow-xs hover:opacity-95 disabled:opacity-50 transition cursor-pointer border-0"
+                  style={{ backgroundColor: activeColor }}
                 >
                   {isSubmitting ? "Mendaftarkan Rekening..." : "Buka Rekening Kas"}
                 </button>
@@ -1781,28 +1870,58 @@ export default function WalletsMasterPage() {
                 {/* ── Left Column: Account Details ── */}
                 <div className="space-y-3.5">
                   {/* Tipe Rekening */}
-                  <div className="space-y-1">
-                    <label className="font-semibold text-foreground">Tipe Akun Kas</label>
-                    <div className="grid grid-cols-4 gap-1.5">
-                      {(["bank", "ewallet", "cash", "credit"] as const).map((t) => {
-                        const isSel = formType === t;
+                  <div className="space-y-1.5">
+                    <label className="font-semibold text-foreground text-xs">Tipe Akun Kas</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {ACCOUNT_TYPES.map((typeObj) => {
+                        const isSel = formType === typeObj.id;
+                        const Icon = typeObj.icon;
                         return (
                           <button
-                            key={t}
+                            key={typeObj.id}
                             type="button"
-                            onClick={() => setFormType(t)}
-                            className={`h-8.5 rounded-xl font-semibold text-xs transition uppercase cursor-pointer ${
+                            onClick={() => setFormType(typeObj.id)}
+                            className={`p-2.5 rounded-xl border text-left transition-all duration-150 cursor-pointer flex items-center gap-2.5 relative ${
                               isSel
-                                ? "text-white shadow-xs font-bold"
-                                : "bg-default-50 dark:bg-default-800 text-default-600 dark:text-default-400 hover:text-foreground border border-default-200 dark:border-default-700"
+                                ? "shadow-2xs font-bold ring-1.5"
+                                : "bg-default-50/80 dark:bg-default-800/60 border-default-200 dark:border-default-700 hover:bg-default-100 dark:hover:bg-default-800"
                             }`}
                             style={
                               isSel
-                                ? { backgroundColor: "var(--primary-color)", color: "#ffffff" }
+                                ? {
+                                    backgroundColor: activeSubtle,
+                                    borderColor: activeColor,
+                                    boxShadow: `0 0 0 1px ${activeColor}`,
+                                  }
                                 : undefined
                             }
                           >
-                            {t}
+                            <div
+                              className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                                isSel
+                                  ? "text-white shadow-2xs"
+                                  : "bg-default-200/60 dark:bg-default-700 text-default-600 dark:text-default-300"
+                              }`}
+                              style={isSel ? { backgroundColor: activeColor } : undefined}
+                            >
+                              <Icon className="w-3.5 h-3.5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <span className="text-xs font-bold text-foreground block leading-tight truncate">
+                                {typeObj.label}
+                              </span>
+                              <span className="text-[10px] text-default-400 block truncate mt-0.5">
+                                {typeObj.subtitle}
+                              </span>
+                            </div>
+                            {isSel && (
+                              <div
+                                className="w-4 h-4 rounded-full flex items-center justify-center text-white shrink-0 ml-auto"
+                                style={{ backgroundColor: activeColor }}
+                              >
+                                <Check className="w-2.5 h-2.5" />
+                              </div>
+                            )}
                           </button>
                         );
                       })}
@@ -1921,11 +2040,11 @@ export default function WalletsMasterPage() {
                     </select>
                   </div>
 
-                  {/* Penyesuaian Saldo Kas with Live Intl Preview */}
+                  {/* Penyesuaian Saldo Kas with Live Preview */}
                   <div className="space-y-1.5 p-3 rounded-xl bg-default-50/80 dark:bg-default-800/50 border border-default-200/60 dark:border-default-700/60">
                     <div className="flex items-center justify-between">
                       <label className="font-semibold text-foreground text-xs">Penyesuaian Saldo Kas ({formCurrency})</label>
-                      <span className="text-[10px] text-default-400 font-mono">Rekonsiliasi Kas</span>
+                      <span className="text-[10px] text-default-400 font-mono font-bold">{formCurrency}</span>
                     </div>
                     <input
                       type="number"
@@ -1935,10 +2054,10 @@ export default function WalletsMasterPage() {
                       className="w-full px-3 py-2 rounded-xl border border-default-200 dark:border-default-700 bg-white dark:bg-default-900 text-foreground text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-theme-primary/40"
                     />
 
-                    {/* Live Intl Currency Box */}
-                    <div className="p-2 rounded-lg bg-default-100/80 dark:bg-default-800/80 border border-default-200/60 dark:border-default-700/60 flex items-center justify-between">
-                      <span className="text-[10px] text-default-400 uppercase font-mono tracking-wider">Format Resmi Intl:</span>
-                      <span className="font-mono font-extrabold text-xs" style={{ color: "var(--primary-color)" }}>
+                    {/* Live Currency Preview */}
+                    <div className="px-3 py-2 rounded-xl bg-default-100/70 dark:bg-default-800/70 border border-default-200/60 dark:border-default-700/60 flex items-center justify-between">
+                      <span className="text-xs text-default-500 font-medium">Estimasi Saldo:</span>
+                      <span className="font-mono font-bold text-xs" style={{ color: activeColor }}>
                         {formatIntlPreview(formBalance, formCurrency)}
                       </span>
                     </div>
@@ -1983,8 +2102,8 @@ export default function WalletsMasterPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 rounded-xl text-white font-semibold text-xs shadow-xs hover:opacity-95 disabled:opacity-50 transition cursor-pointer"
-                  style={{ backgroundColor: "var(--primary-color)" }}
+                  className="px-5 py-2 rounded-xl text-white font-semibold text-xs shadow-xs hover:opacity-95 disabled:opacity-50 transition cursor-pointer border-0"
+                  style={{ backgroundColor: activeColor }}
                 >
                   {isSubmitting ? "Menyimpan Perubahan..." : "Perbarui Rekening"}
                 </button>

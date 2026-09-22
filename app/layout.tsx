@@ -82,7 +82,7 @@ export default function RootLayout({
                   var palette = localStorage.getItem('novajournal_theme_palette') || 'blue';
                   document.documentElement.setAttribute('data-palette', palette);
                   var customHex = localStorage.getItem('novajournal_custom_hex');
-                  if (customHex) {
+                  if (customHex && palette === 'custom') {
                     document.documentElement.style.setProperty('--primary-color', customHex);
                     document.documentElement.style.setProperty('--primary-hover', customHex);
                   }

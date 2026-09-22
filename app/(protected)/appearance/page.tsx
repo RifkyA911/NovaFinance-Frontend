@@ -369,7 +369,14 @@ export default function AppearancePage() {
     setThemePalette(pal);
     try {
       localStorage.setItem("novajournal_theme_palette", pal);
+      localStorage.removeItem("novajournal_custom_hex");
       document.documentElement.setAttribute("data-palette", pal);
+      document.documentElement.style.removeProperty("--primary-color");
+      document.documentElement.style.removeProperty("--primary-hover");
+      document.documentElement.style.removeProperty("--primary-gradient");
+      document.documentElement.style.removeProperty("--primary-ring");
+      document.documentElement.style.removeProperty("--primary-subtle");
+      document.documentElement.style.removeProperty("--primary-glow");
       window.dispatchEvent(new CustomEvent("novajournal_palette_changed", { detail: pal }));
       showNotice(isId ? `Palet warna diubah ke ${pal.toUpperCase()}!` : `Color palette changed to ${pal.toUpperCase()}!`);
     } catch {}
@@ -378,9 +385,12 @@ export default function AppearancePage() {
   const handleCustomHexApply = () => {
     playSoftChime();
     try {
+      localStorage.setItem("novajournal_theme_palette", "custom");
       localStorage.setItem("novajournal_custom_hex", customHexColor);
+      document.documentElement.setAttribute("data-palette", "custom");
       document.documentElement.style.setProperty("--primary-color", customHexColor);
       document.documentElement.style.setProperty("--primary-hover", customHexColor);
+      window.dispatchEvent(new CustomEvent("novajournal_palette_changed", { detail: "custom" }));
       showNotice(isId ? `Warna custom ${customHexColor} berhasil diterapkan!` : `Custom color ${customHexColor} applied!`);
     } catch {}
   };

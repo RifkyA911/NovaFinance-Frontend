@@ -17,6 +17,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
       const handlePaletteChange = (e: any) => {
         const pal = e.detail || localStorage.getItem("novafinance_theme_palette") || localStorage.getItem("novajournal_theme_palette") || "blue";
         document.documentElement.setAttribute("data-palette", pal);
+        if (pal !== "custom") {
+          document.documentElement.style.removeProperty("--primary-color");
+          document.documentElement.style.removeProperty("--primary-hover");
+          document.documentElement.style.removeProperty("--primary-gradient");
+          document.documentElement.style.removeProperty("--primary-ring");
+          document.documentElement.style.removeProperty("--primary-subtle");
+          document.documentElement.style.removeProperty("--primary-glow");
+        }
       };
 
       window.addEventListener("novafinance_palette_changed", handlePaletteChange);

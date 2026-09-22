@@ -131,6 +131,15 @@ const TYPE_CONFIG: Record<
   },
 };
 
+const PALETTE_CONFIG: Record<string, { primary: string; subtle: string; ring: string }> = {
+  blue: { primary: "#2563eb", subtle: "rgba(37, 99, 235, 0.1)", ring: "rgba(37, 99, 235, 0.35)" },
+  violet: { primary: "#7c3aed", subtle: "rgba(124, 58, 237, 0.1)", ring: "rgba(124, 58, 237, 0.35)" },
+  emerald: { primary: "#059669", subtle: "rgba(5, 150, 105, 0.1)", ring: "rgba(5, 150, 105, 0.35)" },
+  amber: { primary: "#d97706", subtle: "rgba(217, 119, 6, 0.1)", ring: "rgba(217, 119, 6, 0.35)" },
+  rose: { primary: "#e11d48", subtle: "rgba(225, 29, 72, 0.1)", ring: "rgba(225, 29, 72, 0.35)" },
+  slate: { primary: "#475569", subtle: "rgba(71, 85, 105, 0.1)", ring: "rgba(71, 85, 105, 0.35)" },
+};
+
 export default function WorkspacesPage() {
   const router = useRouter();
   const {
@@ -140,6 +149,28 @@ export default function WorkspacesPage() {
     loading,
     refreshWorkspaces,
   } = useWorkspace();
+
+  // Dynamic Theme Palette Listener
+  const [activePalette, setActivePalette] = useState<string>("blue");
+
+  React.useEffect(() => {
+    try {
+      const pal = localStorage.getItem("novajournal_theme_palette") || "blue";
+      setActivePalette(pal);
+
+      const onPaletteChange = (e: any) => {
+        const nextPal = e.detail || localStorage.getItem("novajournal_theme_palette") || "blue";
+        setActivePalette(nextPal);
+      };
+
+      window.addEventListener("novajournal_palette_changed", onPaletteChange);
+      return () => window.removeEventListener("novajournal_palette_changed", onPaletteChange);
+    } catch {}
+  }, []);
+
+  const activeColor = PALETTE_CONFIG[activePalette]?.primary || "var(--primary-color, #2563eb)";
+  const activeSubtle = PALETTE_CONFIG[activePalette]?.subtle || "var(--primary-subtle, rgba(37, 99, 235, 0.1))";
+  const activeRing = PALETTE_CONFIG[activePalette]?.ring || "var(--primary-ring, rgba(37, 99, 235, 0.35))";
 
   // View Mode: DnD Grid Cards vs TanStack Table
   const [viewMode, setViewMode] = useState<"dnd" | "table">("dnd");
@@ -678,7 +709,7 @@ export default function WorkspacesPage() {
                 }`}
                 style={
                   viewMode === "dnd"
-                    ? { backgroundColor: "var(--primary-color)", color: "#ffffff" }
+                    ? { backgroundColor: activeColor, color: "#ffffff" }
                     : undefined
                 }
                 title="Tampilan Grid Kartu (Drag-and-Drop)"
@@ -696,7 +727,7 @@ export default function WorkspacesPage() {
                 }`}
                 style={
                   viewMode === "table"
-                    ? { backgroundColor: "var(--primary-color)", color: "#ffffff" }
+                    ? { backgroundColor: activeColor, color: "#ffffff" }
                     : undefined
                 }
                 title="Tampilan Daftar Tabel"
@@ -717,38 +748,38 @@ export default function WorkspacesPage() {
               <span>Kelola RBAC</span>
             </Button>
 
-            {/* Kas & Rekening Bank Shortcut */}
+            {/* Wallets & Rekening Shortcut */}
             <Link
               href="/wallets"
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-gray-900 hover:bg-default-50 text-default-800 dark:text-default-200 font-semibold text-xs h-9 border border-default-200 dark:border-default-700 shadow-2xs transition cursor-pointer"
             >
-              <Wallet className="w-3.5 h-3.5" style={{ color: "var(--primary-color)" }} />
-              <span>Kas & Rekening</span>
+              <Wallet className="w-3.5 h-3.5" style={{ color: activeColor }} />
+              <span>Wallets & Rekening</span>
             </Link>
           </div>
 
           {/* Far Right: AI Advisor & Tambah Workspace */}
           <div className="flex items-center gap-2 ml-auto">
-            {/* AI Entity Advisor Button with Premium Gradient */}
+            {/* AI Entity Advisor Button with NovaFinance Gradient */}
             <Button
               size="sm"
               onPress={() => setShowAiAdvisorModal(true)}
-              className="h-9 px-3.5 text-xs font-bold bg-linear-to-r from-violet-600 via-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/25 hover:opacity-95 active:scale-95 transition-all border border-purple-400/30 cursor-pointer"
+              className="h-9 px-3.5 text-xs font-semibold text-white shadow-xs hover:opacity-95 active:scale-95 transition-all cursor-pointer border-0"
+              style={{ background: `linear-gradient(135deg, ${activeColor} 0%, #4f46e5 100%)` }}
             >
-              <Sparkles className="w-3.5 h-3.5 mr-1.5 text-amber-300 animate-pulse" />
+              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
               <span>AI Entity Advisor</span>
             </Button>
 
             {/* Create Workspace Button */}
             <Button
               size="sm"
-              variant="primary"
               onPress={() => {
                 setError("");
                 setShowCreateModal(true);
               }}
-              className="h-9 px-4 text-xs font-semibold text-white cursor-pointer shadow-xs hover:opacity-95 active:scale-95 transition-all"
-              style={{ backgroundColor: "var(--primary-color)" }}
+              className="h-9 px-4 text-xs font-semibold text-white cursor-pointer shadow-xs hover:opacity-95 active:scale-95 transition-all border-0"
+              style={{ backgroundColor: activeColor }}
             >
               <Plus className="w-3.5 h-3.5 mr-1.5" />
               <span>Tambah Workspace</span>
@@ -896,8 +927,8 @@ export default function WorkspacesPage() {
                   style={
                     isSelected
                       ? {
-                          backgroundColor: "var(--primary-color)",
-                          borderColor: "var(--primary-color)",
+                          backgroundColor: activeColor,
+                          borderColor: activeColor,
                           color: "#ffffff",
                         }
                       : undefined

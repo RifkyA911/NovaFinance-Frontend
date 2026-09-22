@@ -97,7 +97,7 @@ const DEFAULT_MENU_GROUPS: MenuGroup[] = [
       { icon: Wallet, label: "Transactions", path: "/transactions" },
       {
         icon: Landmark,
-        label: "Kas & Rekening Bank",
+        label: "Wallets & Rekening",
         path: "/wallets",
         allowedRoles: ["owner", "admin", "staff"],
         requiredRoleName: "Staff+",

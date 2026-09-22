@@ -128,7 +128,7 @@ export const DICTIONARY = {
 
     menuDashboard: { id: "Dasbor", en: "Dashboard" },
     menuTransactions: { id: "Transaksi", en: "Transactions" },
-    menuWallets: { id: "Kas & Rekening Bank", en: "Cash & Bank Accounts" },
+    menuWallets: { id: "Wallets & Rekening", en: "Wallets & Accounts" },
     menuAnalytics: { id: "Analitik Keuangan", en: "Analytics" },
 
     menuGoals: { id: "Target & Impian", en: "Goals & Wishlist" },
