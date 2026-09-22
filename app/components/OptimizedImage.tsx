@@ -69,10 +69,11 @@ export default function OptimizedImage({
 
   return (
     <div
-      className={`relative overflow-hidden shrink-0 ${className}`}
+      className={`relative overflow-hidden shrink-0 transform-gpu antialiased select-none ${className}`}
       style={{
         width: fill ? "100%" : width,
         height: fill ? "100%" : height,
+        WebkitFontSmoothing: "antialiased",
       }}
     >
       <Image
@@ -86,7 +87,10 @@ export default function OptimizedImage({
         onError={() => setHasError(true)}
         className="w-full h-full object-cover select-none pointer-events-none transition-opacity duration-200"
         style={{
-          imageRendering: "auto",
+          imageRendering: "smooth",
+          WebkitBackfaceVisibility: "hidden",
+          backfaceVisibility: "hidden",
+          transform: "translateZ(0)",
         }}
       />
     </div>
