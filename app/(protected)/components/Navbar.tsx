@@ -630,62 +630,55 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
           {workspaces.length > 0 ? (
             <Dropdown>
               <Dropdown.Trigger
-                className="h-9 px-2.5 sm:px-3 rounded-xl border border-default-200/80 dark:border-default-700/80 bg-white dark:bg-default-900 hover:bg-default-50 dark:hover:bg-default-800 shadow-2xs backdrop-blur-sm transition-all flex items-center gap-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer text-left min-w-[170px] max-w-72 select-none group"
+                className="h-7.5 px-2.5 rounded-lg border border-default-200/80 dark:border-default-700/80 bg-default-100/70 hover:bg-default-200/60 dark:bg-default-800/60 dark:hover:bg-default-700/60 transition-colors flex items-center gap-1.5 focus:outline-none focus:ring-1.5 focus:ring-blue-500 cursor-pointer text-left max-w-56"
                 aria-label="Pilih Workspace"
               >
-                {/* Brand / Entity Icon (Square Ratio 1:1) */}
                 {navBrandLogo || (selectedWorkspace as any)?.customBrandLogo ? (
                   <OptimizedImage
                     src={navBrandLogo || (selectedWorkspace as any)?.customBrandLogo}
                     alt="Logo"
-                    width={48}
-                    height={48}
-                    className="w-6 h-6 rounded-lg border border-default-200/80 dark:border-default-700/80 shadow-2xs"
+                    width={36}
+                    height={36}
+                    className="w-4 h-4 rounded-xs object-cover shrink-0"
                   />
                 ) : (
                   <div
-                    className={`w-6 h-6 aspect-square rounded-lg flex items-center justify-center shrink-0 border shadow-2xs text-[11px] font-bold ${
-                      selectedWorkspace?.type === "pt" || selectedWorkspace?.type === "BUSINESS"
-                        ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/20"
+                    className={`w-2 h-2 rounded-full shrink-0 ${
+                      selectedWorkspace?.type === "personal"
+                        ? "bg-blue-500"
                         : selectedWorkspace?.type === "umkm"
-                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                        : "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                        ? "bg-emerald-500"
+                        : "bg-purple-500"
                     }`}
-                  >
-                    {selectedWorkspace?.name ? selectedWorkspace.name.slice(0, 1).toUpperCase() : <Building2 className="w-3.5 h-3.5" />}
-                  </div>
+                  />
                 )}
-
-                {/* Workspace Name & Inline Currency */}
-                <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                  <span className="truncate text-xs font-bold text-foreground tracking-tight max-w-[130px] sm:max-w-[160px]">
-                    {navBrandName || selectedWorkspace?.name || "Pilih Workspace"}
-                  </span>
-                  <span className="text-[10px] font-mono font-bold text-blue-600 dark:text-blue-400 shrink-0">
-                    {selectedWorkspace?.currency || "IDR"}
-                  </span>
-                </div>
-
-                <ChevronDown className="w-3.5 h-3.5 text-default-400 shrink-0 ml-auto transition-transform group-aria-expanded:rotate-180" />
+                <span className="truncate text-xs font-semibold text-foreground max-w-[100px] sm:max-w-[120px]">
+                  {navBrandName || selectedWorkspace?.name || "Pilih Workspace"}
+                </span>
+                {/* Fiat Badge */}
+                {showFiatPill &&
+                  (() => {
+                    const fiat = getCurrencyFiat(selectedWorkspace?.currency);
+                    return (
+                      <span className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-mono font-medium bg-default-200/60 dark:bg-default-700/60 text-default-600 dark:text-default-300 shrink-0">
+                        <span>{fiat.flag}</span>
+                        <span>{selectedWorkspace?.currency || "IDR"}</span>
+                      </span>
+                    );
+                  })()}
+                <ChevronDown className="w-3 h-3 text-default-400 shrink-0 ml-0.5" />
               </Dropdown.Trigger>
 
-              <Dropdown.Popover className="min-w-72 z-50 p-2 shadow-2xl bg-white dark:bg-gray-900 rounded-2xl border border-default-200/90 dark:border-default-800">
-                {/* Header */}
-                <div className="px-2.5 py-2 mb-1 border-b border-default-100 dark:border-default-800 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <Building2 className="w-3.5 h-3.5 text-blue-500" />
-                    <span className="text-xs font-bold text-foreground">Workspace & Entitas</span>
-                  </div>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-default-100 dark:bg-default-800 text-default-600 dark:text-default-400">
-                    {workspaces.length} Entitas
-                  </span>
+              <Dropdown.Popover className="min-w-64 z-50 p-1.5 shadow-xl bg-white dark:bg-gray-900 rounded-xl border border-default-200/80 dark:border-default-800">
+                <div className="px-2.5 py-1.5 mb-1 text-[10px] font-bold text-default-400 uppercase tracking-wider border-b border-default-100 dark:border-default-800 flex items-center justify-between">
+                  <span>Pilih Entitas Workspace</span>
+                  <span className="text-[9px] font-normal normal-case font-mono">{workspaces.length} entitas</span>
                 </div>
 
-                {/* Workspaces List */}
-                <div className="space-y-1 max-h-64 overflow-y-auto pr-0.5">
+                <div className="space-y-0.5 max-h-60 overflow-y-auto">
                   {workspaces.map((ws) => {
                     const isSelected = selectedWorkspace?.id === ws.id;
-                    const wsType = (ws.type || "personal").toUpperCase();
+                    const fiat = getCurrencyFiat(ws.currency);
                     return (
                       <button
                         key={ws.id}
@@ -696,71 +689,63 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                             setSelectedWorkspace(ws);
                           }
                         }}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs cursor-pointer transition-all text-left border ${
+                        className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs cursor-pointer transition-colors text-left ${
                           isSelected
-                            ? "bg-blue-50/70 dark:bg-blue-950/30 border-blue-500/40 text-blue-600 dark:text-blue-400 shadow-2xs font-semibold"
-                            : "border-transparent hover:bg-default-100/70 dark:hover:bg-default-800/70 text-foreground"
+                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold"
+                            : "hover:bg-default-100 dark:hover:bg-default-800 text-foreground"
                         }`}
                       >
-                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
                           {(ws as any)?.customBrandLogo ? (
                             <OptimizedImage
                               src={(ws as any).customBrandLogo}
-                              alt={(ws as any)?.customBrandName || ws.name}
-                              width={56}
-                              height={56}
-                              className={`w-7 h-7 rounded-lg border shadow-2xs ${
-                                isSelected
-                                  ? "border-blue-500/40"
-                                  : "border-default-200/80 dark:border-default-700/80"
-                              }`}
+                              alt={ws.name}
+                              width={36}
+                              height={36}
+                              className="w-4 h-4 rounded-xs object-cover shrink-0"
                             />
                           ) : (
                             <div
-                              className={`w-7 h-7 aspect-square rounded-lg flex items-center justify-center shrink-0 text-xs font-bold ${
-                                isSelected
-                                  ? "bg-blue-500 text-white shadow-2xs"
-                                  : "bg-default-100 dark:bg-default-800 text-default-600 dark:text-default-300"
+                              className={`w-2 h-2 rounded-full shrink-0 ${
+                                ws.type === "personal"
+                                  ? "bg-blue-500"
+                                  : ws.type === "umkm"
+                                  ? "bg-emerald-500"
+                                  : "bg-purple-500"
                               }`}
-                            >
-                              {ws.name ? ws.name.slice(0, 1).toUpperCase() : <Building2 className="w-3.5 h-3.5" />}
-                            </div>
+                            />
                           )}
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-xs font-bold text-foreground leading-tight">
-                              {(ws as any)?.customBrandName || ws.name}
-                            </p>
-                            <div className="flex items-center gap-1.5 text-[10px] text-default-400 mt-0.5">
-                              <span className="font-semibold text-default-500">{wsType}</span>
+                            <p className="truncate text-xs font-medium">{ws.name}</p>
+                            <div className="flex items-center gap-1.5 text-[10px] text-default-400">
+                              <span className="capitalize">{ws.type}</span>
                               <span>•</span>
-                              <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
-                                {ws.currency || "IDR"}
+                              <span className="font-mono text-default-500">
+                                {fiat.flag} {ws.currency} ({fiat.symbol})
                               </span>
                             </div>
                           </div>
                         </div>
                         {isSelected && (
-                          <div className="w-5 h-5 rounded-full bg-blue-500/15 flex items-center justify-center shrink-0 ml-2">
-                            <Check className="w-3 h-3 text-blue-600 dark:text-blue-400" />
-                          </div>
+                          <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0 ml-1.5" />
                         )}
                       </button>
                     );
                   })}
                 </div>
 
-                {/* Bottom Action: Kelola & Tambah Workspace */}
-                <div className="mt-2 pt-2 border-t border-default-100 dark:border-default-800">
+                {/* Bottom action: Add New Workspace */}
+                <div className="mt-1.5 pt-1.5 border-t border-default-100 dark:border-default-800">
                   <button
                     type="button"
                     onClick={() => {
                       playSoftChime();
                       router.push("/workspaces");
                     }}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-white bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-95 shadow-md shadow-blue-500/20 transition-all cursor-pointer active:scale-[0.98]"
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 transition-colors cursor-pointer"
                   >
-                    <Plus className="w-4 h-4 shrink-0" />
-                    <span>Kelola & Tambah Workspace</span>
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>+ Add New Workspace</span>
                   </button>
                 </div>
               </Dropdown.Popover>
@@ -1087,8 +1072,13 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                 className="rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-[11px] font-bold shadow-2xs overflow-hidden shrink-0 transition-all"
               >
                 {customAvatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={customAvatar} alt="Profile" className="w-full h-full object-cover" />
+                  <OptimizedImage
+                    src={customAvatar}
+                    alt={user?.name || "Profile"}
+                    width={navbarAvatarSize * 2}
+                    height={navbarAvatarSize * 2}
+                    className="w-full h-full rounded-full object-cover"
+                  />
                 ) : (
                   user?.name?.charAt(0)?.toUpperCase() || "U"
                 )}
@@ -1130,8 +1120,13 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                       <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-blue-500 to-purple-600 p-0.5 shadow-md shadow-blue-500/20">
                         <div className="w-full h-full rounded-[14px] bg-default-100 dark:bg-default-800 overflow-hidden flex items-center justify-center">
                           {customAvatar ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={customAvatar} alt="Profile" className="w-full h-full object-cover" />
+                            <OptimizedImage
+                              src={customAvatar}
+                              alt={user?.name || "Profile"}
+                              width={128}
+                              height={128}
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
                             <span className="text-xl font-black text-blue-600 dark:text-blue-400">
                               {user?.name?.charAt(0)?.toUpperCase() || "U"}
