@@ -4,6 +4,8 @@
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-primary: var(--primary-color, #2563eb);
+  --color-primary-hover: var(--primary-hover, #1d4ed8);
   --color-theme-primary: var(--primary-color, #2563eb);
   --color-theme-hover: var(--primary-hover, #1d4ed8);
 }
