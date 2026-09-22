@@ -18,9 +18,6 @@ import {
   Key,
   UploadCloud,
   FileText,
-  Layers,
-  Radio,
-  Activity,
 } from "lucide-react";
 import { Button, Card } from "@heroui/react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -62,8 +59,8 @@ export default function MagicQuickAdd({ categories, accounts }: MagicQuickAddPro
   const [apiKey, setApiKey] = useState("");
   const [keySaved, setKeySaved] = useState(false);
 
-  // RAG & RabbitMQ Pipeline State
-  const [useRabbitMQ, setUseRabbitMQ] = useState(false);
+  // Document upload pipeline state (RabbitMQ always ON internally)
+  const useRabbitMQ = true;
   const [isRagUploading, setIsRagUploading] = useState(false);
   const [ragStatus, setRagStatus] = useState<{
     fileName?: string;
@@ -121,15 +118,15 @@ export default function MagicQuickAdd({ categories, accounts }: MagicQuickAddPro
           queue: res.data.queue,
           message: res.data.message,
         });
-        setSuccessMsg(`🚀 [RabbitMQ Queue] Dokumen "${file.name}" dialihkan ke worker queue ${res.data.queue} (Job #${res.data.jobId})!`);
+        setSuccessMsg(`🚀 Dokumen "${file.name}" sedang diproses di background!`);
       } else {
         const topMatch = res.data?.ragContext?.[0];
         setRagStatus({
           fileName: file.name,
           similarity: topMatch?.similarity,
-          message: `RAG pgvector selesai! ${topMatch ? `Kecocokan semantik: ${(topMatch.similarity * 100).toFixed(1)}%` : ""}`,
+          message: topMatch ? `Kecocokan: ${(topMatch.similarity * 100).toFixed(1)}%` : "Analisis selesai",
         });
-        setSuccessMsg(`📄 [pgvector RAG] Analisis dokumen "${file.name}" berhasil.`);
+        setSuccessMsg(`📄 Analisis dokumen "${file.name}" berhasil!`);
       }
 
       const promptName = file.name.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ");
@@ -274,22 +271,7 @@ export default function MagicQuickAdd({ categories, accounts }: MagicQuickAddPro
         </div>
 
         <div className="flex items-center gap-1.5">
-          {/* RabbitMQ Toggle Button */}
-          <button
-            type="button"
-            onClick={() => setUseRabbitMQ(!useRabbitMQ)}
-            className={`inline-flex items-center gap-1 text-[10.5px] px-2.5 py-1 rounded-lg border font-semibold transition-all cursor-pointer ${
-              useRabbitMQ
-                ? "bg-orange-500/15 border-orange-500/30 text-orange-600 dark:text-orange-400 shadow-2xs"
-                : "bg-white/80 dark:bg-gray-800/80 border-default-200 dark:border-default-700 text-default-500 hover:text-foreground"
-            }`}
-            title="Aktifkan pemrosesan dokumen asinkron via RabbitMQ broker"
-          >
-            <Radio className={`w-3 h-3 ${useRabbitMQ ? "animate-pulse text-orange-500" : ""}`} />
-            <span>RabbitMQ {useRabbitMQ ? "ON" : "OFF"}</span>
-          </button>
-
-          {/* RAG Upload Document Button */}
+          {/* Upload Struk Button */}
           <input
             ref={fileInputRef}
             type="file"
@@ -309,7 +291,7 @@ export default function MagicQuickAdd({ categories, accounts }: MagicQuickAddPro
             ) : (
               <UploadCloud className="w-3.5 h-3.5 mr-1 text-blue-500" />
             )}
-            <span>Upload Struk (RAG)</span>
+            <span>Upload Struk</span>
           </Button>
 
           <button
@@ -322,21 +304,15 @@ export default function MagicQuickAdd({ categories, accounts }: MagicQuickAddPro
         </div>
       </div>
 
-      {/* Live RAG / RabbitMQ Notification Banner */}
+      {/* Upload Status Notification */}
       {ragStatus && (
         <div className="mb-2.5 p-2 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60 text-[11px] flex items-center justify-between text-foreground animate-in fade-in">
           <div className="flex items-center gap-2">
-            {ragStatus.jobId ? (
-              <span className="px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-600 dark:text-orange-400 font-mono font-bold text-[9.5px]">
-                RABBITMQ
-              </span>
-            ) : (
-              <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-600 dark:text-blue-400 font-mono font-bold text-[9.5px]">
-                PGVECTOR RAG
-              </span>
-            )}
+            <span className="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-600 dark:text-blue-400 font-bold text-[9.5px]">
+              {ragStatus.jobId ? "⚡ DIPROSES" : "✅ SELESAI"}
+            </span>
             <span className="truncate">
-              {ragStatus.fileName}: {ragStatus.message || "Proses inferensi selesai"}
+              {ragStatus.fileName}: {ragStatus.jobId ? "Sedang dianalisis di background..." : "Analisis dokumen selesai"}
             </span>
           </div>
           <button
