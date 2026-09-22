@@ -131,807 +131,1465 @@ export default function LogoExperimentPage() {
     }
   };
 
-  // 10 Fluid, Gradient, Soft, Rounded Nova Star Variants (ZERO SHARP TIPS)
+  // 10 Asymmetric Core + Surrounding Nova Variants (ZERO SHARP TIPS, ZERO PLUS/CROSS SHAPES)
   const VARIANTS: NovaLogoVariant[] = useMemo(
     () => [
-      // 1. Metaball Fluid Nova
+      // 1. Spiral Orbital Nova
       {
-        id: "metaball-nova",
-        name: "Metaball Fluid Nova",
-        codename: "BUBBLE-01",
-        subtitle: "Organic Metaball Nodes · Cyan to Royal Violet",
+        id: "asym-spiral-nova",
+        name: "Spiral Orbital Nova",
+        codename: "ASYM-01",
+        subtitle: "Luminous Core Nucleus · Asymmetric Spiral Bubbles",
         concept:
-          "Empat gelembung cairan organik yang menyatu secara plastis dengan jembatan kurva metaball lembut mengitari inti cahaya putih. Tanpa sudut lancip sama sekali.",
+          "Inti energi bulat bercahaya di pusat, dikelilingi konstelasi 5 gelembung nova asimetris yang melayang mengitari gravitasi inti dengan jejak orbit lembut. Bebas dari bentuk simetris tanda tambah.",
         primaryGradients: ["#06b6d4", "#3b82f6", "#8b5cf6"],
         renderIcon: (size = 48) => (
           <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <linearGradient id="mb-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <linearGradient id="as1-bg" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#080e1e" />
                 <stop offset="100%" stopColor="#1e1b4b" />
               </linearGradient>
-              <linearGradient id="mb-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <linearGradient id="as1-grad" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#06b6d4" />
                 <stop offset="50%" stopColor="#3b82f6" />
                 <stop offset="100%" stopColor="#8b5cf6" />
               </linearGradient>
             </defs>
-            <rect width="100" height="100" rx="28" fill="url(#mb-bg)" />
-            {/* Fluid metaball shape with zero sharp points */}
+            <rect width="100" height="100" rx="28" fill="url(#as1-bg)" />
             <path
-              d="M50 20C54 20 58 24 58 32C58 40 60 42 68 42C76 42 80 46 80 50C80 54 76 58 68 58C60 58 58 60 58 68C58 76 54 80 50 80C46 80 42 76 42 68C42 60 40 58 32 58C24 58 20 54 20 50C20 46 24 42 32 42C40 42 42 40 42 32C42 24 46 20 50 20Z"
-              fill="url(#mb-grad)"
+              d="M22 42C26 22 65 20 76 36C85 49 82 72 60 80C40 86 22 72 28 54"
+              stroke="url(#as1-grad)"
+              strokeWidth="1.5"
+              strokeDasharray="3 4"
+              opacity="0.35"
             />
-            {/* Soft inner pearl */}
-            <circle cx="50" cy="50" r="11" fill="#ffffff" opacity="0.95" />
-            <circle cx="50" cy="50" r="5" fill="#06b6d4" />
+            <circle cx="48" cy="50" r="17" fill="url(#as1-grad)" />
+            <circle cx="43" cy="45" r="6" fill="#ffffff" opacity="0.45" />
+            <circle cx="48" cy="50" r="4" fill="#ffffff" opacity="0.9" />
+            <circle cx="72" cy="32" r="9" fill="url(#as1-grad)" />
+            <circle cx="70" cy="30" r="3" fill="#ffffff" opacity="0.5" />
+            <circle cx="82" cy="62" r="6.5" fill="url(#as1-grad)" />
+            <circle cx="30" cy="74" r="8" fill="url(#as1-grad)" />
+            <circle cx="19" cy="44" r="5" fill="url(#as1-grad)" />
+            <circle cx="34" cy="24" r="4.5" fill="url(#as1-grad)" />
           </svg>
         ),
         renderMark: (size = 64) => (
           <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <linearGradient id="mb-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <linearGradient id="as1-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#06b6d4" />
                 <stop offset="50%" stopColor="#3b82f6" />
                 <stop offset="100%" stopColor="#8b5cf6" />
               </linearGradient>
             </defs>
             <path
-              d="M50 18C55 18 60 23 60 32C60 40 60 40 68 40C77 40 82 45 82 50C82 55 77 60 68 60C60 60 60 60 60 68C60 77 55 82 50 82C45 82 40 77 40 68C40 60 40 60 32 60C23 60 18 55 18 50C18 45 23 40 32 40C40 40 40 40 40 32C40 23 45 18 50 18Z"
-              fill="url(#mb-m-grad)"
+              d="M22 42C26 22 65 20 76 36C85 49 82 72 60 80C40 86 22 72 28 54"
+              stroke="url(#as1-m-grad)"
+              strokeWidth="1.5"
+              strokeDasharray="3 4"
+              opacity="0.4"
             />
-            <circle cx="50" cy="50" r="12" fill="#ffffff" opacity="0.95" />
+            <circle cx="48" cy="50" r="18" fill="url(#as1-m-grad)" />
+            <circle cx="43" cy="45" r="6.5" fill="#ffffff" opacity="0.45" />
+            <circle cx="48" cy="50" r="4.5" fill="#ffffff" opacity="0.95" />
+            <circle cx="73" cy="31" r="9.5" fill="url(#as1-m-grad)" />
+            <circle cx="71" cy="29" r="3" fill="#ffffff" opacity="0.5" />
+            <circle cx="83" cy="63" r="7" fill="url(#as1-m-grad)" />
+            <circle cx="29" cy="75" r="8.5" fill="url(#as1-m-grad)" />
+            <circle cx="18" cy="43" r="5.5" fill="url(#as1-m-grad)" />
+            <circle cx="33" cy="23" r="5" fill="url(#as1-m-grad)" />
           </svg>
         ),
         renderLockup: () => (
           <div className="flex items-center gap-3">
             <div className="shrink-0">
-              <svg width={38} height={38} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg width={40} height={40} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="as1-l-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#06b6d4" />
+                    <stop offset="100%" stopColor="#8b5cf6" />
+                  </linearGradient>
+                </defs>
                 <rect width="100" height="100" rx="28" fill="#080e1e" />
-                <path d="M50 20C54 20 58 24 58 32C58 40 60 42 68 42C76 42 80 46 80 50C80 54 76 58 68 58C60 58 58 60 58 68C58 76 54 80 50 80C46 80 42 76 42 68C42 60 40 58 32 58C24 58 20 54 20 50C20 46 24 42 32 42C40 42 42 40 42 32C42 24 46 20 50 20Z" fill="#3b82f6" />
-                <circle cx="50" cy="50" r="10" fill="#ffffff" />
+                <circle cx="48" cy="50" r="16" fill="url(#as1-l-grad)" />
+                <circle cx="44" cy="46" r="5" fill="#ffffff" opacity="0.5" />
+                <circle cx="72" cy="32" r="8" fill="url(#as1-l-grad)" />
+                <circle cx="82" cy="62" r="6" fill="url(#as1-l-grad)" />
+                <circle cx="30" cy="74" r="7" fill="url(#as1-l-grad)" />
+                <circle cx="20" cy="44" r="4.5" fill="url(#as1-l-grad)" />
               </svg>
             </div>
             <div>
               <div className="flex items-baseline gap-1">
                 <span className="text-base font-extrabold tracking-tight text-foreground">Nova</span>
-                <span className="text-base font-extrabold tracking-tight bg-linear-to-r from-cyan-500 to-blue-600 bg-clip-text text-transparent">
+                <span className="text-base font-extrabold tracking-tight bg-linear-to-r from-cyan-500 via-blue-500 to-purple-600 bg-clip-text text-transparent">
                   Finance
                 </span>
               </div>
               <p className="text-[10px] font-medium text-default-400 -mt-0.5 tracking-wider uppercase">
-                AI Financial OS
+                Modern Financial Engine
               </p>
             </div>
           </div>
         ),
         getRawSvgIcon: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="mb-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="as1-bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#080e1e" />
       <stop offset="100%" stop-color="#1e1b4b" />
     </linearGradient>
-    <linearGradient id="mb-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="as1-grad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#06b6d4" />
       <stop offset="50%" stop-color="#3b82f6" />
       <stop offset="100%" stop-color="#8b5cf6" />
     </linearGradient>
   </defs>
-  <rect width="100" height="100" rx="28" fill="url(#mb-bg)" />
-  <path d="M50 20C54 20 58 24 58 32C58 40 60 42 68 42C76 42 80 46 80 50C80 54 76 58 68 58C60 58 58 60 58 68C58 76 54 80 50 80C46 80 42 76 42 68C42 60 40 58 32 58C24 58 20 54 20 50C20 46 24 42 32 42C40 42 42 40 42 32C42 24 46 20 50 20Z" fill="url(#mb-grad)" />
-  <circle cx="50" cy="50" r="11" fill="#ffffff" opacity="0.95" />
-  <circle cx="50" cy="50" r="5" fill="#06b6d4" />
+  <rect width="100" height="100" rx="28" fill="url(#as1-bg)" />
+  <circle cx="48" cy="50" r="17" fill="url(#as1-grad)" />
+  <circle cx="43" cy="45" r="6" fill="#ffffff" opacity="0.45" />
+  <circle cx="48" cy="50" r="4" fill="#ffffff" opacity="0.9" />
+  <circle cx="72" cy="32" r="9" fill="url(#as1-grad)" />
+  <circle cx="82" cy="62" r="6.5" fill="url(#as1-grad)" />
+  <circle cx="30" cy="74" r="8" fill="url(#as1-grad)" />
+  <circle cx="19" cy="44" r="5" fill="url(#as1-grad)" />
+  <circle cx="34" cy="24" r="4.5" fill="url(#as1-grad)" />
 </svg>`,
         getRawSvgMark: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="mb-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="as1-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#06b6d4" />
       <stop offset="50%" stop-color="#3b82f6" />
       <stop offset="100%" stop-color="#8b5cf6" />
     </linearGradient>
   </defs>
-  <path d="M50 18C55 18 60 23 60 32C60 40 60 40 68 40C77 40 82 45 82 50C82 55 77 60 68 60C60 60 60 60 60 68C60 77 55 82 50 82C45 82 40 77 40 68C40 60 40 60 32 60C23 60 18 55 18 50C18 45 23 40 32 40C40 40 40 40 40 32C40 23 45 18 50 18Z" fill="url(#mb-m-grad)" />
-  <circle cx="50" cy="50" r="12" fill="#ffffff" opacity="0.95" />
+  <circle cx="48" cy="50" r="18" fill="url(#as1-m-grad)" />
+  <circle cx="43" cy="45" r="6.5" fill="#ffffff" opacity="0.45" />
+  <circle cx="48" cy="50" r="4.5" fill="#ffffff" opacity="0.95" />
+  <circle cx="73" cy="31" r="9.5" fill="url(#as1-m-grad)" />
+  <circle cx="83" cy="63" r="7" fill="url(#as1-m-grad)" />
+  <circle cx="29" cy="75" r="8.5" fill="url(#as1-m-grad)" />
+  <circle cx="18" cy="43" r="5.5" fill="url(#as1-m-grad)" />
+  <circle cx="33" cy="23" r="5" fill="url(#as1-m-grad)" />
 </svg>`,
         getRawSvgLockup: () => `<svg width="260" height="60" viewBox="0 0 260 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="as1-l-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#8b5cf6" />
+    </linearGradient>
+  </defs>
   <rect width="48" height="48" x="6" y="6" rx="14" fill="#080e1e" />
-  <path d="M30 15C32 15 34 17 34 21C34 25 35 26 39 26C43 26 45 28 45 30C45 32 43 34 39 34C35 34 34 35 34 39C34 43 32 45 30 45C28 45 26 43 26 39C26 35 25 34 21 34C17 34 15 32 15 30C15 28 17 26 21 26C25 26 26 25 26 21C26 17 28 15 30 15Z" fill="#3b82f6" />
-  <circle cx="30" cy="30" r="5" fill="#ffffff" />
-  <text x="66" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Nova<tspan fill="#38bdf8">Finance</tspan></text>
-  <text x="67" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#94a3b8" letter-spacing="1.5">AI FINANCIAL OS</text>
+  <circle cx="28" cy="30" r="8" fill="url(#as1-l-grad)" />
+  <circle cx="40" cy="21" r="4" fill="url(#as1-l-grad)" />
+  <circle cx="44" cy="36" r="3" fill="url(#as1-l-grad)" />
+  <circle cx="19" cy="41" r="3.5" fill="url(#as1-l-grad)" />
+  <circle cx="14" cy="27" r="2.5" fill="url(#as1-l-grad)" />
+  <text x="66" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Nova<tspan fill="#06b6d4">Finance</tspan></text>
+  <text x="67" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#94a3b8" letter-spacing="1.5">MODERN FINANCIAL ENGINE</text>
 </svg>`,
       },
 
-      // 2. Soft Cloud Puff Nova
+      // 2. Solar Flare Nova
       {
-        id: "cloud-puff",
-        name: "Cloud Puff Nova",
-        codename: "BUBBLE-02",
-        subtitle: "Marshmallow Petals · Sunset Peach to Amber",
+        id: "asym-solar-flare",
+        name: "Solar Flare Nova",
+        codename: "ASYM-02",
+        subtitle: "Off-Center Warm Core · Ascending Flare Train",
         concept:
-          "Empat kelopak gelembung awan membulat tebal yang saling bertumpuk lembut seperti marshmallow dengan gradasi sunset rose ke golden amber.",
-        primaryGradients: ["#fb7185", "#f43f5e", "#f59e0b"],
+          "Inti emas hangat melayang organik di kiri-bawah, melontarkan rentetan semburan gelembung nova fluid yang naik secara asimetris ke arah kanan atas seperti komet fajar.",
+        primaryGradients: ["#ff6b6b", "#f97316", "#fbbf24"],
         renderIcon: (size = 48) => (
           <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <linearGradient id="cp-bg" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#1a091c" />
-                <stop offset="100%" stopColor="#2e081d" />
+              <linearGradient id="as2-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#1f1105" />
+                <stop offset="100%" stopColor="#431407" />
               </linearGradient>
-              <linearGradient id="cp-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#fb7185" />
-                <stop offset="50%" stopColor="#f43f5e" />
-                <stop offset="100%" stopColor="#f59e0b" />
-              </linearGradient>
-            </defs>
-            <rect width="100" height="100" rx="28" fill="url(#cp-bg)" />
-            {/* 4 Overlapping pillowy bubbles */}
-            <circle cx="50" cy="32" r="16" fill="url(#cp-grad)" opacity="0.9" />
-            <circle cx="68" cy="50" r="16" fill="url(#cp-grad)" opacity="0.9" />
-            <circle cx="50" cy="68" r="16" fill="url(#cp-grad)" opacity="0.9" />
-            <circle cx="32" cy="50" r="16" fill="url(#cp-grad)" opacity="0.9" />
-            <circle cx="50" cy="50" r="14" fill="#ffffff" />
-            <circle cx="50" cy="50" r="6" fill="#f43f5e" />
-          </svg>
-        ),
-        renderMark: (size = 64) => (
-          <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="30" r="18" fill="#fb7185" />
-            <circle cx="70" cy="50" r="18" fill="#f43f5e" />
-            <circle cx="50" cy="70" r="18" fill="#f59e0b" />
-            <circle cx="30" cy="50" r="18" fill="#fb7185" />
-            <circle cx="50" cy="50" r="14" fill="#ffffff" />
-          </svg>
-        ),
-        renderLockup: () => (
-          <div className="flex items-center gap-3">
-            <div className="shrink-0">
-              <svg width={38} height={38} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="100" height="100" rx="28" fill="#1a091c" />
-                <circle cx="50" cy="34" r="14" fill="#fb7185" />
-                <circle cx="66" cy="50" r="14" fill="#f43f5e" />
-                <circle cx="50" cy="66" r="14" fill="#f59e0b" />
-                <circle cx="34" cy="50" r="14" fill="#fb7185" />
-                <circle cx="50" cy="50" r="10" fill="#ffffff" />
-              </svg>
-            </div>
-            <div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-base font-extrabold tracking-tight text-foreground">Nova</span>
-                <span className="text-base font-extrabold tracking-tight bg-linear-to-r from-rose-500 to-amber-500 bg-clip-text text-transparent">
-                  Finance
-                </span>
-              </div>
-              <p className="text-[10px] font-medium text-default-400 -mt-0.5 tracking-wider uppercase">
-                Growth Acceleration
-              </p>
-            </div>
-          </div>
-        ),
-        getRawSvgIcon: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100" height="100" rx="28" fill="#1a091c" />
-  <circle cx="50" cy="32" r="16" fill="#fb7185" />
-  <circle cx="68" cy="50" r="16" fill="#f43f5e" />
-  <circle cx="50" cy="68" r="16" fill="#f59e0b" />
-  <circle cx="32" cy="50" r="16" fill="#fb7185" />
-  <circle cx="50" cy="50" r="14" fill="#ffffff" />
-  <circle cx="50" cy="50" r="6" fill="#f43f5e" />
-</svg>`,
-        getRawSvgMark: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="50" cy="30" r="18" fill="#fb7185" />
-  <circle cx="70" cy="50" r="18" fill="#f43f5e" />
-  <circle cx="50" cy="70" r="18" fill="#f59e0b" />
-  <circle cx="30" cy="50" r="18" fill="#fb7185" />
-  <circle cx="50" cy="50" r="14" fill="#ffffff" />
-</svg>`,
-        getRawSvgLockup: () => `<svg width="260" height="60" viewBox="0 0 260 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="48" height="48" x="6" y="6" rx="14" fill="#1a091c" />
-  <circle cx="30" cy="22" r="7" fill="#fb7185" />
-  <circle cx="38" cy="30" r="7" fill="#f43f5e" />
-  <circle cx="30" cy="38" r="7" fill="#f59e0b" />
-  <circle cx="22" cy="30" r="7" fill="#fb7185" />
-  <circle cx="30" cy="30" r="5" fill="#ffffff" />
-  <text x="66" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Nova<tspan fill="#fb7185">Finance</tspan></text>
-  <text x="67" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#94a3b8" letter-spacing="1.5">GROWTH ACCELERATION</text>
-</svg>`,
-      },
-
-      // 3. Liquid Pearl Orbit
-      {
-        id: "pearl-orbit",
-        name: "Liquid Pearl Orbit",
-        codename: "BUBBLE-03",
-        subtitle: "Glossy Droplet Satellite · Mint to Deep Lagoon",
-        concept:
-          "Satu gelembung mutiara sentral dikelilingi oleh empat gelembung likuid melayang yang terhubung oleh cincin halus. Mewakili kas likuid yang beredar bebas.",
-        primaryGradients: ["#34d399", "#10b981", "#0284c7"],
-        renderIcon: (size = 48) => (
-          <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="po-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#34d399" />
-                <stop offset="50%" stopColor="#10b981" />
-                <stop offset="100%" stopColor="#0284c7" />
+              <linearGradient id="as2-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#ff6b6b" />
+                <stop offset="45%" stopColor="#f97316" />
+                <stop offset="100%" stopColor="#fbbf24" />
               </linearGradient>
             </defs>
-            <rect width="100" height="100" rx="28" fill="#041f1e" />
-            <circle cx="50" cy="50" r="26" stroke="#10b981" strokeWidth="3" strokeDasharray="4 4" opacity="0.4" />
-            <circle cx="50" cy="24" r="9" fill="url(#po-grad)" />
-            <circle cx="76" cy="50" r="9" fill="url(#po-grad)" />
-            <circle cx="50" cy="76" r="9" fill="url(#po-grad)" />
-            <circle cx="24" cy="50" r="9" fill="url(#po-grad)" />
-            <circle cx="50" cy="50" r="14" fill="#ffffff" />
-            <circle cx="50" cy="50" r="7" fill="#10b981" />
+            <rect width="100" height="100" rx="28" fill="url(#as2-bg)" />
+            <circle cx="44" cy="54" r="18" fill="url(#as2-grad)" />
+            <circle cx="40" cy="50" r="7" fill="#ffffff" opacity="0.4" />
+            <circle cx="44" cy="54" r="4.5" fill="#ffffff" opacity="0.9" />
+            <circle cx="67" cy="42" r="10" fill="url(#as2-grad)" />
+            <circle cx="65" cy="40" r="3" fill="#ffffff" opacity="0.45" />
+            <circle cx="80" cy="27" r="7" fill="url(#as2-grad)" />
+            <circle cx="87" cy="16" r="4" fill="url(#as2-grad)" />
+            <circle cx="68" cy="74" r="5.5" fill="url(#as2-grad)" />
+            <circle cx="26" cy="36" r="4.5" fill="url(#as2-grad)" />
           </svg>
         ),
         renderMark: (size = 64) => (
           <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="22" r="10" fill="#34d399" />
-            <circle cx="78" cy="50" r="10" fill="#10b981" />
-            <circle cx="50" cy="78" r="10" fill="#0284c7" />
-            <circle cx="22" cy="50" r="10" fill="#34d399" />
-            <circle cx="50" cy="50" r="16" fill="#ffffff" />
+            <defs>
+              <linearGradient id="as2-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#ff6b6b" />
+                <stop offset="45%" stopColor="#f97316" />
+                <stop offset="100%" stopColor="#fbbf24" />
+              </linearGradient>
+            </defs>
+            <circle cx="44" cy="54" r="19" fill="url(#as2-m-grad)" />
+            <circle cx="40" cy="50" r="7.5" fill="#ffffff" opacity="0.45" />
+            <circle cx="44" cy="54" r="5" fill="#ffffff" opacity="0.95" />
+            <circle cx="68" cy="41" r="10.5" fill="url(#as2-m-grad)" />
+            <circle cx="81" cy="26" r="7.5" fill="url(#as2-m-grad)" />
+            <circle cx="88" cy="15" r="4.5" fill="url(#as2-m-grad)" />
+            <circle cx="69" cy="75" r="6" fill="url(#as2-m-grad)" />
+            <circle cx="25" cy="35" r="5" fill="url(#as2-m-grad)" />
           </svg>
         ),
         renderLockup: () => (
           <div className="flex items-center gap-3">
             <div className="shrink-0">
-              <svg width={38} height={38} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="100" height="100" rx="28" fill="#041f1e" />
-                <circle cx="50" cy="24" r="8" fill="#34d399" />
-                <circle cx="76" cy="50" r="8" fill="#10b981" />
-                <circle cx="50" cy="76" r="8" fill="#0284c7" />
-                <circle cx="24" cy="50" r="8" fill="#34d399" />
-                <circle cx="50" cy="50" r="12" fill="#ffffff" />
+              <svg width={40} height={40} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="as2-l-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#ff6b6b" />
+                    <stop offset="100%" stopColor="#fbbf24" />
+                  </linearGradient>
+                </defs>
+                <rect width="100" height="100" rx="28" fill="#1f1105" />
+                <circle cx="44" cy="54" r="16" fill="url(#as2-l-grad)" />
+                <circle cx="66" cy="42" r="9" fill="url(#as2-l-grad)" />
+                <circle cx="79" cy="27" r="6.5" fill="url(#as2-l-grad)" />
+                <circle cx="86" cy="17" r="3.5" fill="url(#as2-l-grad)" />
+                <circle cx="67" cy="73" r="5" fill="url(#as2-l-grad)" />
               </svg>
             </div>
             <div>
               <div className="flex items-baseline gap-1">
                 <span className="text-base font-extrabold tracking-tight text-foreground">Nova</span>
-                <span className="text-base font-extrabold tracking-tight bg-linear-to-r from-emerald-400 to-teal-500 bg-clip-text text-transparent">
+                <span className="text-base font-extrabold tracking-tight bg-linear-to-r from-rose-500 via-orange-500 to-amber-400 bg-clip-text text-transparent">
                   Finance
                 </span>
               </div>
               <p className="text-[10px] font-medium text-default-400 -mt-0.5 tracking-wider uppercase">
-                Treasury & Liquidity
+                Dynamic Growth Platform
               </p>
             </div>
           </div>
         ),
         getRawSvgIcon: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100" height="100" rx="28" fill="#041f1e" />
-  <circle cx="50" cy="24" r="9" fill="#34d399" />
-  <circle cx="76" cy="50" r="9" fill="#10b981" />
-  <circle cx="50" cy="76" r="9" fill="#0284c7" />
-  <circle cx="24" cy="50" r="9" fill="#34d399" />
-  <circle cx="50" cy="50" r="14" fill="#ffffff" />
-  <circle cx="50" cy="50" r="7" fill="#10b981" />
+  <defs>
+    <linearGradient id="as2-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1f1105" />
+      <stop offset="100%" stop-color="#431407" />
+    </linearGradient>
+    <linearGradient id="as2-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff6b6b" />
+      <stop offset="45%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#fbbf24" />
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="28" fill="url(#as2-bg)" />
+  <circle cx="44" cy="54" r="18" fill="url(#as2-grad)" />
+  <circle cx="40" cy="50" r="7" fill="#ffffff" opacity="0.4" />
+  <circle cx="44" cy="54" r="4.5" fill="#ffffff" opacity="0.9" />
+  <circle cx="67" cy="42" r="10" fill="url(#as2-grad)" />
+  <circle cx="80" cy="27" r="7" fill="url(#as2-grad)" />
+  <circle cx="87" cy="16" r="4" fill="url(#as2-grad)" />
+  <circle cx="68" cy="74" r="5.5" fill="url(#as2-grad)" />
+  <circle cx="26" cy="36" r="4.5" fill="url(#as2-grad)" />
 </svg>`,
         getRawSvgMark: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="50" cy="22" r="10" fill="#34d399" />
-  <circle cx="78" cy="50" r="10" fill="#10b981" />
-  <circle cx="50" cy="78" r="10" fill="#0284c7" />
-  <circle cx="22" cy="50" r="10" fill="#34d399" />
-  <circle cx="50" cy="50" r="16" fill="#ffffff" />
+  <defs>
+    <linearGradient id="as2-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff6b6b" />
+      <stop offset="45%" stop-color="#f97316" />
+      <stop offset="100%" stop-color="#fbbf24" />
+    </linearGradient>
+  </defs>
+  <circle cx="44" cy="54" r="19" fill="url(#as2-m-grad)" />
+  <circle cx="40" cy="50" r="7.5" fill="#ffffff" opacity="0.45" />
+  <circle cx="44" cy="54" r="5" fill="#ffffff" opacity="0.95" />
+  <circle cx="68" cy="41" r="10.5" fill="url(#as2-m-grad)" />
+  <circle cx="81" cy="26" r="7.5" fill="url(#as2-m-grad)" />
+  <circle cx="88" cy="15" r="4.5" fill="url(#as2-m-grad)" />
+  <circle cx="69" cy="75" r="6" fill="url(#as2-m-grad)" />
+  <circle cx="25" cy="35" r="5" fill="url(#as2-m-grad)" />
 </svg>`,
         getRawSvgLockup: () => `<svg width="260" height="60" viewBox="0 0 260 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="48" height="48" x="6" y="6" rx="14" fill="#041f1e" />
-  <circle cx="30" cy="18" r="4" fill="#34d399" />
-  <circle cx="42" cy="30" r="4" fill="#10b981" />
-  <circle cx="30" cy="42" r="4" fill="#0284c7" />
-  <circle cx="18" cy="30" r="4" fill="#34d399" />
-  <circle cx="30" cy="30" r="6" fill="#ffffff" />
-  <text x="66" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Nova<tspan fill="#34d399">Finance</tspan></text>
-  <text x="67" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#94a3b8" letter-spacing="1.5">TREASURY & LIQUIDITY</text>
+  <defs>
+    <linearGradient id="as2-l-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff6b6b" />
+      <stop offset="100%" stop-color="#fbbf24" />
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" x="6" y="6" rx="14" fill="#1f1105" />
+  <circle cx="24" cy="32" r="8" fill="url(#as2-l-grad)" />
+  <circle cx="36" cy="24" r="5" fill="url(#as2-l-grad)" />
+  <circle cx="43" cy="16" r="3.5" fill="url(#as2-l-grad)" />
+  <circle cx="37" cy="41" r="3" fill="url(#as2-l-grad)" />
+  <text x="66" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Nova<tspan fill="#f97316">Finance</tspan></text>
+  <text x="67" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#94a3b8" letter-spacing="1.5">DYNAMIC GROWTH PLATFORM</text>
 </svg>`,
       },
 
-      // 4. Pill Capsule Nova
+      // 3. Quantum Pearl Orbit
       {
-        id: "pill-capsule",
-        name: "Pill Capsule Nova",
-        codename: "BUBBLE-04",
-        subtitle: "Rounded Pill Bars · Electric Indigo & Cyan",
+        id: "asym-quantum-pearl",
+        name: "Quantum Pearl Orbit",
+        codename: "ASYM-03",
+        subtitle: "Luminous Orb · Tilted Elliptical Bubble Satellite",
         concept:
-          "Empat kapsul membulat halus berujung setengah lingkaran (pill capsule) yang beririsan membentuk bintang plus modern nan dinamis khas Linear.",
-        primaryGradients: ["#6366f1", "#38bdf8", "#818cf8"],
-        renderIcon: (size = 48) => (
-          <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="100" height="100" rx="28" fill="#0b1026" />
-            {/* Vertical Pill Capsule */}
-            <rect x="42" y="18" width="16" height="64" rx="8" fill="#6366f1" />
-            {/* Horizontal Pill Capsule */}
-            <rect x="18" y="42" width="64" height="16" rx="8" fill="#38bdf8" opacity="0.85" />
-            <circle cx="50" cy="50" r="10" fill="#ffffff" />
-          </svg>
-        ),
-        renderMark: (size = 64) => (
-          <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="42" y="16" width="16" height="68" rx="8" fill="#6366f1" />
-            <rect x="16" y="42" width="68" height="16" rx="8" fill="#38bdf8" opacity="0.85" />
-            <circle cx="50" cy="50" r="11" fill="#ffffff" />
-          </svg>
-        ),
-        renderLockup: () => (
-          <div className="flex items-center gap-3">
-            <div className="shrink-0">
-              <svg width={38} height={38} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="100" height="100" rx="28" fill="#0b1026" />
-                <rect x="42" y="18" width="16" height="64" rx="8" fill="#6366f1" />
-                <rect x="18" y="42" width="64" height="16" rx="8" fill="#38bdf8" />
-                <circle cx="50" cy="50" r="8" fill="#ffffff" />
-              </svg>
-            </div>
-            <div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-base font-extrabold tracking-tight text-foreground">Nova</span>
-                <span className="text-base font-extrabold tracking-tight bg-linear-to-r from-indigo-500 to-cyan-500 bg-clip-text text-transparent">
-                  Finance
-                </span>
-              </div>
-              <p className="text-[10px] font-medium text-default-400 -mt-0.5 tracking-wider uppercase">
-                Modular Platform
-              </p>
-            </div>
-          </div>
-        ),
-        getRawSvgIcon: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100" height="100" rx="28" fill="#0b1026" />
-  <rect x="42" y="18" width="16" height="64" rx="8" fill="#6366f1" />
-  <rect x="18" y="42" width="64" height="16" rx="8" fill="#38bdf8" opacity="0.85" />
-  <circle cx="50" cy="50" r="10" fill="#ffffff" />
-</svg>`,
-        getRawSvgMark: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="42" y="16" width="16" height="68" rx="8" fill="#6366f1" />
-  <rect x="16" y="42" width="68" height="16" rx="8" fill="#38bdf8" opacity="0.85" />
-  <circle cx="50" cy="50" r="11" fill="#ffffff" />
-</svg>`,
-        getRawSvgLockup: () => `<svg width="260" height="60" viewBox="0 0 260 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="48" height="48" x="6" y="6" rx="14" fill="#0b1026" />
-  <rect x="26" y="15" width="8" height="30" rx="4" fill="#6366f1" />
-  <rect x="15" y="26" width="30" height="8" rx="4" fill="#38bdf8" />
-  <circle cx="30" cy="30" r="4" fill="#ffffff" />
-  <text x="66" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Nova<tspan fill="#38bdf8">Finance</tspan></text>
-  <text x="67" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#94a3b8" letter-spacing="1.5">MODULAR PLATFORM</text>
-</svg>`,
-      },
-
-      // 5. Jelly Glass Bubble
-      {
-        id: "jelly-bubble",
-        name: "Jelly Glass Nova",
-        codename: "BUBBLE-05",
-        subtitle: "Translucent Refraction · Violet, Rose & Ice Blue",
-        concept:
-          "Gelembung cairan jelly transparan dengan pembiasan spekular putih dan kurva squircle membal lembut menyerupai desain visual Apple Intelligence.",
-        primaryGradients: ["#a855f7", "#ec4899", "#38bdf8"],
+          "Mutiara cairan di pusat dikelilingi oleh cincin busur orbital miring rounded asimetris dengan 3 stasiun gelembung nova mengorbit dinamis.",
+        primaryGradients: ["#1d4ed8", "#06b6d4", "#10b981"],
         renderIcon: (size = 48) => (
           <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <linearGradient id="jb-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#a855f7" />
-                <stop offset="50%" stopColor="#ec4899" />
+              <linearGradient id="as3-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#031526" />
+                <stop offset="100%" stopColor="#062e3d" />
+              </linearGradient>
+              <linearGradient id="as3-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#1d4ed8" />
+                <stop offset="50%" stopColor="#06b6d4" />
+                <stop offset="100%" stopColor="#10b981" />
+              </linearGradient>
+            </defs>
+            <rect width="100" height="100" rx="28" fill="url(#as3-bg)" />
+            <ellipse
+              cx="50"
+              cy="50"
+              rx="37"
+              ry="18"
+              transform="rotate(-32 50 50)"
+              fill="none"
+              stroke="url(#as3-grad)"
+              strokeWidth="3.5"
+              opacity="0.65"
+            />
+            <circle cx="50" cy="50" r="16.5" fill="url(#as3-grad)" />
+            <circle cx="46" cy="46" r="6" fill="#ffffff" opacity="0.45" />
+            <circle cx="50" cy="50" r="4" fill="#ffffff" opacity="0.9" />
+            <circle cx="76" cy="33" r="9" fill="url(#as3-grad)" />
+            <circle cx="74" cy="31" r="3" fill="#ffffff" opacity="0.5" />
+            <circle cx="24" cy="67" r="7.5" fill="url(#as3-grad)" />
+            <circle cx="34" cy="22" r="5" fill="url(#as3-grad)" />
+            <circle cx="64" cy="78" r="5.5" fill="url(#as3-grad)" />
+          </svg>
+        ),
+        renderMark: (size = 64) => (
+          <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="as3-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#1d4ed8" />
+                <stop offset="50%" stopColor="#06b6d4" />
+                <stop offset="100%" stopColor="#10b981" />
+              </linearGradient>
+            </defs>
+            <ellipse
+              cx="50"
+              cy="50"
+              rx="37"
+              ry="18"
+              transform="rotate(-32 50 50)"
+              fill="none"
+              stroke="url(#as3-m-grad)"
+              strokeWidth="4"
+              opacity="0.75"
+            />
+            <circle cx="50" cy="50" r="17.5" fill="url(#as3-m-grad)" />
+            <circle cx="46" cy="46" r="6.5" fill="#ffffff" opacity="0.5" />
+            <circle cx="50" cy="50" r="4.5" fill="#ffffff" opacity="0.95" />
+            <circle cx="77" cy="33" r="9.5" fill="url(#as3-m-grad)" />
+            <circle cx="23" cy="67" r="8" fill="url(#as3-m-grad)" />
+            <circle cx="34" cy="21" r="5.5" fill="url(#as3-m-grad)" />
+            <circle cx="65" cy="79" r="6" fill="url(#as3-m-grad)" />
+          </svg>
+        ),
+        renderLockup: () => (
+          <div className="flex items-center gap-3">
+            <div className="shrink-0">
+              <svg width={40} height={40} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="as3-l-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#1d4ed8" />
+                    <stop offset="100%" stopColor="#10b981" />
+                  </linearGradient>
+                </defs>
+                <rect width="100" height="100" rx="28" fill="#031526" />
+                <ellipse cx="50" cy="50" rx="35" ry="17" transform="rotate(-32 50 50)" fill="none" stroke="url(#as3-l-grad)" strokeWidth="3" opacity="0.6" />
+                <circle cx="50" cy="50" r="15" fill="url(#as3-l-grad)" />
+                <circle cx="75" cy="33" r="7.5" fill="url(#as3-l-grad)" />
+                <circle cx="25" cy="67" r="6.5" fill="url(#as3-l-grad)" />
+              </svg>
+            </div>
+            <div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-base font-extrabold tracking-tight text-foreground">Nova</span>
+                <span className="text-base font-extrabold tracking-tight bg-linear-to-r from-blue-600 via-cyan-500 to-emerald-400 bg-clip-text text-transparent">
+                  Finance
+                </span>
+              </div>
+              <p className="text-[10px] font-medium text-default-400 -mt-0.5 tracking-wider uppercase">
+                Quantum Capital Protocol
+              </p>
+            </div>
+          </div>
+        ),
+        getRawSvgIcon: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="as3-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#031526" />
+      <stop offset="100%" stop-color="#062e3d" />
+    </linearGradient>
+    <linearGradient id="as3-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1d4ed8" />
+      <stop offset="50%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="28" fill="url(#as3-bg)" />
+  <ellipse cx="50" cy="50" rx="37" ry="18" transform="rotate(-32 50 50)" fill="none" stroke="url(#as3-grad)" stroke-width="3.5" opacity="0.65" />
+  <circle cx="50" cy="50" r="16.5" fill="url(#as3-grad)" />
+  <circle cx="46" cy="46" r="6" fill="#ffffff" opacity="0.45" />
+  <circle cx="50" cy="50" r="4" fill="#ffffff" opacity="0.9" />
+  <circle cx="76" cy="33" r="9" fill="url(#as3-grad)" />
+  <circle cx="24" cy="67" r="7.5" fill="url(#as3-grad)" />
+  <circle cx="34" cy="22" r="5" fill="url(#as3-grad)" />
+  <circle cx="64" cy="78" r="5.5" fill="url(#as3-grad)" />
+</svg>`,
+        getRawSvgMark: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="as3-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1d4ed8" />
+      <stop offset="50%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+  <ellipse cx="50" cy="50" rx="37" ry="18" transform="rotate(-32 50 50)" fill="none" stroke="url(#as3-m-grad)" stroke-width="4" opacity="0.75" />
+  <circle cx="50" cy="50" r="17.5" fill="url(#as3-m-grad)" />
+  <circle cx="46" cy="46" r="6.5" fill="#ffffff" opacity="0.5" />
+  <circle cx="50" cy="50" r="4.5" fill="#ffffff" opacity="0.95" />
+  <circle cx="77" cy="33" r="9.5" fill="url(#as3-m-grad)" />
+  <circle cx="23" cy="67" r="8" fill="url(#as3-m-grad)" />
+  <circle cx="34" cy="21" r="5.5" fill="url(#as3-m-grad)" />
+  <circle cx="65" cy="79" r="6" fill="url(#as3-m-grad)" />
+</svg>`,
+        getRawSvgLockup: () => `<svg width="260" height="60" viewBox="0 0 260 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="as3-l-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1d4ed8" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" x="6" y="6" rx="14" fill="#031526" />
+  <ellipse cx="30" cy="30" rx="18" ry="9" transform="rotate(-32 30 30)" fill="none" stroke="url(#as3-l-grad)" stroke-width="2" opacity="0.7" />
+  <circle cx="30" cy="30" r="7.5" fill="url(#as3-l-grad)" />
+  <circle cx="42" cy="22" r="4" fill="url(#as3-l-grad)" />
+  <circle cx="18" cy="38" r="3.5" fill="url(#as3-l-grad)" />
+  <text x="66" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Nova<tspan fill="#06b6d4">Finance</tspan></text>
+  <text x="67" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#94a3b8" letter-spacing="1.5">QUANTUM CAPITAL PROTOCOL</text>
+</svg>`,
+      },
+
+      // 4. Crescent Gravity Nova
+      {
+        id: "asym-crescent-gravity",
+        name: "Crescent Gravity Nova",
+        codename: "ASYM-04",
+        subtitle: "Anchored Center Core · Half-Moon Bubble Shield",
+        concept:
+          "Inti bulat solid di tengah yang dilindungi oleh formasi gelembung nova sabit melengkung asimetris di satu sisi, memberikan siluet elegan dan futuristik.",
+        primaryGradients: ["#f43f5e", "#d946ef", "#6366f1"],
+        renderIcon: (size = 48) => (
+          <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="as4-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#1a0b2e" />
+                <stop offset="100%" stopColor="#2e081e" />
+              </linearGradient>
+              <linearGradient id="as4-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#f43f5e" />
+                <stop offset="50%" stopColor="#d946ef" />
+                <stop offset="100%" stopColor="#6366f1" />
+              </linearGradient>
+            </defs>
+            <rect width="100" height="100" rx="28" fill="url(#as4-bg)" />
+            <circle cx="42" cy="50" r="18" fill="url(#as4-grad)" />
+            <circle cx="37" cy="45" r="7" fill="#ffffff" opacity="0.4" />
+            <circle cx="42" cy="50" r="4.5" fill="#ffffff" opacity="0.9" />
+            <circle cx="64" cy="27" r="8.5" fill="url(#as4-grad)" />
+            <circle cx="78" cy="48" r="11.5" fill="url(#as4-grad)" />
+            <circle cx="75" cy="46" r="3.5" fill="#ffffff" opacity="0.5" />
+            <circle cx="68" cy="73" r="8.5" fill="url(#as4-grad)" />
+            <circle cx="48" cy="82" r="5" fill="url(#as4-grad)" />
+            <circle cx="20" cy="30" r="3.5" fill="url(#as4-grad)" />
+          </svg>
+        ),
+        renderMark: (size = 64) => (
+          <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="as4-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#f43f5e" />
+                <stop offset="50%" stopColor="#d946ef" />
+                <stop offset="100%" stopColor="#6366f1" />
+              </linearGradient>
+            </defs>
+            <circle cx="42" cy="50" r="19" fill="url(#as4-m-grad)" />
+            <circle cx="37" cy="45" r="7.5" fill="#ffffff" opacity="0.45" />
+            <circle cx="42" cy="50" r="5" fill="#ffffff" opacity="0.95" />
+            <circle cx="65" cy="26" r="9" fill="url(#as4-m-grad)" />
+            <circle cx="79" cy="48" r="12" fill="url(#as4-m-grad)" />
+            <circle cx="69" cy="74" r="9" fill="url(#as4-m-grad)" />
+            <circle cx="48" cy="83" r="5.5" fill="url(#as4-m-grad)" />
+            <circle cx="20" cy="29" r="4" fill="url(#as4-m-grad)" />
+          </svg>
+        ),
+        renderLockup: () => (
+          <div className="flex items-center gap-3">
+            <div className="shrink-0">
+              <svg width={40} height={40} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="as4-l-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#f43f5e" />
+                    <stop offset="100%" stopColor="#6366f1" />
+                  </linearGradient>
+                </defs>
+                <rect width="100" height="100" rx="28" fill="#1a0b2e" />
+                <circle cx="42" cy="50" r="16" fill="url(#as4-l-grad)" />
+                <circle cx="64" cy="27" r="7.5" fill="url(#as4-l-grad)" />
+                <circle cx="77" cy="48" r="10" fill="url(#as4-l-grad)" />
+                <circle cx="67" cy="72" r="7.5" fill="url(#as4-l-grad)" />
+              </svg>
+            </div>
+            <div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-base font-extrabold tracking-tight text-foreground">Nova</span>
+                <span className="text-base font-extrabold tracking-tight bg-linear-to-r from-rose-500 via-fuchsia-500 to-indigo-500 bg-clip-text text-transparent">
+                  Finance
+                </span>
+              </div>
+              <p className="text-[10px] font-medium text-default-400 -mt-0.5 tracking-wider uppercase">
+                Intelligent Financial Pulse
+              </p>
+            </div>
+          </div>
+        ),
+        getRawSvgIcon: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="as4-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a0b2e" />
+      <stop offset="100%" stop-color="#2e081e" />
+    </linearGradient>
+    <linearGradient id="as4-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f43f5e" />
+      <stop offset="50%" stop-color="#d946ef" />
+      <stop offset="100%" stop-color="#6366f1" />
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="28" fill="url(#as4-bg)" />
+  <circle cx="42" cy="50" r="18" fill="url(#as4-grad)" />
+  <circle cx="37" cy="45" r="7" fill="#ffffff" opacity="0.4" />
+  <circle cx="42" cy="50" r="4.5" fill="#ffffff" opacity="0.9" />
+  <circle cx="64" cy="27" r="8.5" fill="url(#as4-grad)" />
+  <circle cx="78" cy="48" r="11.5" fill="url(#as4-grad)" />
+  <circle cx="68" cy="73" r="8.5" fill="url(#as4-grad)" />
+  <circle cx="48" cy="82" r="5" fill="url(#as4-grad)" />
+  <circle cx="20" cy="30" r="3.5" fill="url(#as4-grad)" />
+</svg>`,
+        getRawSvgMark: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="as4-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f43f5e" />
+      <stop offset="50%" stop-color="#d946ef" />
+      <stop offset="100%" stop-color="#6366f1" />
+    </linearGradient>
+  </defs>
+  <circle cx="42" cy="50" r="19" fill="url(#as4-m-grad)" />
+  <circle cx="37" cy="45" r="7.5" fill="#ffffff" opacity="0.45" />
+  <circle cx="42" cy="50" r="5" fill="#ffffff" opacity="0.95" />
+  <circle cx="65" cy="26" r="9" fill="url(#as4-m-grad)" />
+  <circle cx="79" cy="48" r="12" fill="url(#as4-m-grad)" />
+  <circle cx="69" cy="74" r="9" fill="url(#as4-m-grad)" />
+  <circle cx="48" cy="83" r="5.5" fill="url(#as4-m-grad)" />
+  <circle cx="20" cy="29" r="4" fill="url(#as4-m-grad)" />
+</svg>`,
+        getRawSvgLockup: () => `<svg width="260" height="60" viewBox="0 0 260 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="as4-l-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f43f5e" />
+      <stop offset="100%" stop-color="#6366f1" />
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" x="6" y="6" rx="14" fill="#1a0b2e" />
+  <circle cx="24" cy="30" r="8" fill="url(#as4-l-grad)" />
+  <circle cx="35" cy="19" r="4" fill="url(#as4-l-grad)" />
+  <circle cx="42" cy="30" r="5.5" fill="url(#as4-l-grad)" />
+  <circle cx="37" cy="41" r="4" fill="url(#as4-l-grad)" />
+  <text x="66" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Nova<tspan fill="#f43f5e">Finance</tspan></text>
+  <text x="67" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#94a3b8" letter-spacing="1.5">INTELLIGENT FINANCIAL PULSE</text>
+</svg>`,
+      },
+
+      // 5. Eclipse Corona Nova
+      {
+        id: "asym-eclipse-corona",
+        name: "Eclipse Corona Nova",
+        codename: "ASYM-05",
+        subtitle: "Deep Nucleus · Asymmetric Solar Corona Clusters",
+        concept:
+          "Inti nova pekat di pusat dengan semburan korona cairan asimetris yang membuncah ke kiri-atas dan kanan-bawah dalam fluiditas ungu dan biru es.",
+        primaryGradients: ["#581c87", "#8b5cf6", "#38bdf8"],
+        renderIcon: (size = 48) => (
+          <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="as5-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#0b071e" />
+                <stop offset="100%" stopColor="#1e1040" />
+              </linearGradient>
+              <linearGradient id="as5-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#581c87" />
+                <stop offset="50%" stopColor="#8b5cf6" />
                 <stop offset="100%" stopColor="#38bdf8" />
               </linearGradient>
             </defs>
-            <rect width="100" height="100" rx="28" fill="#140728" />
-            <circle cx="50" cy="50" r="30" fill="url(#jb-grad)" opacity="0.85" />
-            {/* Soft inner bubble reflection */}
-            <ellipse cx="44" cy="40" rx="14" ry="8" transform="rotate(-30 44 40)" fill="#ffffff" opacity="0.5" />
-            <circle cx="62" cy="58" r="5" fill="#ffffff" opacity="0.4" />
+            <rect width="100" height="100" rx="28" fill="url(#as5-bg)" />
+            <circle cx="50" cy="50" r="16.5" fill="url(#as5-grad)" />
+            <circle cx="50" cy="50" r="11" fill="#ffffff" opacity="0.3" />
+            <circle cx="47" cy="47" r="5" fill="#ffffff" opacity="0.9" />
+            <circle cx="28" cy="26" r="11" fill="url(#as5-grad)" />
+            <circle cx="17" cy="38" r="6" fill="url(#as5-grad)" />
+            <circle cx="75" cy="68" r="9.5" fill="url(#as5-grad)" />
+            <circle cx="85" cy="58" r="5" fill="url(#as5-grad)" />
+            <circle cx="76" cy="34" r="6" fill="url(#as5-grad)" />
+            <circle cx="38" cy="78" r="4.5" fill="url(#as5-grad)" />
           </svg>
         ),
         renderMark: (size = 64) => (
           <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="34" fill="#a855f7" />
-            <ellipse cx="42" cy="38" rx="16" ry="9" transform="rotate(-30 42 38)" fill="#ffffff" opacity="0.55" />
+            <defs>
+              <linearGradient id="as5-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#581c87" />
+                <stop offset="50%" stopColor="#8b5cf6" />
+                <stop offset="100%" stopColor="#38bdf8" />
+              </linearGradient>
+            </defs>
+            <circle cx="50" cy="50" r="17.5" fill="url(#as5-m-grad)" />
+            <circle cx="50" cy="50" r="11.5" fill="#ffffff" opacity="0.35" />
+            <circle cx="47" cy="47" r="5.5" fill="#ffffff" opacity="0.95" />
+            <circle cx="28" cy="25" r="11.5" fill="url(#as5-m-grad)" />
+            <circle cx="16" cy="37" r="6.5" fill="url(#as5-m-grad)" />
+            <circle cx="76" cy="69" r="10" fill="url(#as5-m-grad)" />
+            <circle cx="86" cy="58" r="5.5" fill="url(#as5-m-grad)" />
+            <circle cx="77" cy="33" r="6.5" fill="url(#as5-m-grad)" />
+            <circle cx="37" cy="79" r="5" fill="url(#as5-m-grad)" />
           </svg>
         ),
         renderLockup: () => (
           <div className="flex items-center gap-3">
             <div className="shrink-0">
-              <svg width={38} height={38} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="100" height="100" rx="28" fill="#140728" />
-                <circle cx="50" cy="50" r="28" fill="#a855f7" />
-                <ellipse cx="44" cy="40" rx="12" ry="7" transform="rotate(-30 44 40)" fill="#ffffff" opacity="0.6" />
+              <svg width={40} height={40} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="as5-l-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#8b5cf6" />
+                    <stop offset="100%" stopColor="#38bdf8" />
+                  </linearGradient>
+                </defs>
+                <rect width="100" height="100" rx="28" fill="#0b071e" />
+                <circle cx="50" cy="50" r="15" fill="url(#as5-l-grad)" />
+                <circle cx="30" cy="28" r="9" fill="url(#as5-l-grad)" />
+                <circle cx="74" cy="67" r="8" fill="url(#as5-l-grad)" />
+                <circle cx="75" cy="35" r="5" fill="url(#as5-l-grad)" />
               </svg>
             </div>
             <div>
               <div className="flex items-baseline gap-1">
                 <span className="text-base font-extrabold tracking-tight text-foreground">Nova</span>
-                <span className="text-base font-extrabold tracking-tight bg-linear-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+                <span className="text-base font-extrabold tracking-tight bg-linear-to-r from-purple-500 via-violet-400 to-sky-400 bg-clip-text text-transparent">
                   Finance
                 </span>
               </div>
               <p className="text-[10px] font-medium text-default-400 -mt-0.5 tracking-wider uppercase">
-                Fluid Copilot Intelligence
+                Enterprise Cloud Matrix
               </p>
             </div>
           </div>
         ),
         getRawSvgIcon: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100" height="100" rx="28" fill="#140728" />
-  <circle cx="50" cy="50" r="30" fill="#a855f7" />
-  <ellipse cx="44" cy="40" rx="14" ry="8" transform="rotate(-30 44 40)" fill="#ffffff" opacity="0.5" />
+  <defs>
+    <linearGradient id="as5-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b071e" />
+      <stop offset="100%" stop-color="#1e1040" />
+    </linearGradient>
+    <linearGradient id="as5-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#581c87" />
+      <stop offset="50%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="28" fill="url(#as5-bg)" />
+  <circle cx="50" cy="50" r="16.5" fill="url(#as5-grad)" />
+  <circle cx="50" cy="50" r="11" fill="#ffffff" opacity="0.3" />
+  <circle cx="47" cy="47" r="5" fill="#ffffff" opacity="0.9" />
+  <circle cx="28" cy="26" r="11" fill="url(#as5-grad)" />
+  <circle cx="17" cy="38" r="6" fill="url(#as5-grad)" />
+  <circle cx="75" cy="68" r="9.5" fill="url(#as5-grad)" />
+  <circle cx="76" cy="34" r="6" fill="url(#as5-grad)" />
+  <circle cx="38" cy="78" r="4.5" fill="url(#as5-grad)" />
 </svg>`,
         getRawSvgMark: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="50" cy="50" r="34" fill="#a855f7" />
-  <ellipse cx="42" cy="38" rx="16" ry="9" transform="rotate(-30 42 38)" fill="#ffffff" opacity="0.55" />
+  <defs>
+    <linearGradient id="as5-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#581c87" />
+      <stop offset="50%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="17.5" fill="url(#as5-m-grad)" />
+  <circle cx="50" cy="50" r="11.5" fill="#ffffff" opacity="0.35" />
+  <circle cx="47" cy="47" r="5.5" fill="#ffffff" opacity="0.95" />
+  <circle cx="28" cy="25" r="11.5" fill="url(#as5-m-grad)" />
+  <circle cx="16" cy="37" r="6.5" fill="url(#as5-m-grad)" />
+  <circle cx="76" cy="69" r="10" fill="url(#as5-m-grad)" />
+  <circle cx="77" cy="33" r="6.5" fill="url(#as5-m-grad)" />
+  <circle cx="37" cy="79" r="5" fill="url(#as5-m-grad)" />
 </svg>`,
         getRawSvgLockup: () => `<svg width="260" height="60" viewBox="0 0 260 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="48" height="48" x="6" y="6" rx="14" fill="#140728" />
-  <circle cx="30" cy="30" r="14" fill="#a855f7" />
-  <ellipse cx="27" cy="25" rx="6" ry="3.5" transform="rotate(-30 27 25)" fill="#ffffff" opacity="0.6" />
-  <text x="66" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Nova<tspan fill="#a855f7">Finance</tspan></text>
-  <text x="67" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#94a3b8" letter-spacing="1.5">FLUID COPILOT INTELLIGENCE</text>
+  <defs>
+    <linearGradient id="as5-l-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6" />
+      <stop offset="100%" stop-color="#38bdf8" />
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" x="6" y="6" rx="14" fill="#0b071e" />
+  <circle cx="30" cy="30" r="8" fill="url(#as5-l-grad)" />
+  <circle cx="18" cy="18" r="5" fill="url(#as5-l-grad)" />
+  <circle cx="42" cy="40" r="4.5" fill="url(#as5-l-grad)" />
+  <circle cx="43" cy="20" r="3" fill="url(#as5-l-grad)" />
+  <text x="66" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Nova<tspan fill="#8b5cf6">Finance</tspan></text>
+  <text x="67" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#94a3b8" letter-spacing="1.5">ENTERPRISE CLOUD MATRIX</text>
 </svg>`,
       },
 
-      // 6. Clover Bubble Core
+      // 6. Nebula Swarm Nova
       {
-        id: "clover-bubble",
-        name: "Clover Bubble Core",
-        codename: "BUBBLE-06",
-        subtitle: "Organic 4-Leaf Bubble Petals · Sapphire to Violet",
+        id: "asym-nebula-swarm",
+        name: "Nebula Swarm Nova",
+        codename: "ASYM-06",
+        subtitle: "Central Core · Asymmetric Constellation Swarm",
         concept:
-          "Empat tetesan gelembung membulat berbentuk daun semanggi keberuntungan finansial yang bersentuhan lembut di pusat logo.",
-        primaryGradients: ["#1d4ed8", "#3b82f6", "#7c3aed"],
+          "Inti bercahaya di tengah dikelilingi kawanan 6 gelembung nova fluid dengan ukuran bertingkat dalam alur diagonal organik. Menampilkan energi likuiditas kosmik.",
+        primaryGradients: ["#fb7185", "#ea580c", "#f59e0b"],
         renderIcon: (size = 48) => (
           <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="100" height="100" rx="28" fill="#060f26" />
-            <circle cx="36" cy="36" r="14" fill="#3b82f6" />
-            <circle cx="64" cy="36" r="14" fill="#7c3aed" />
-            <circle cx="64" cy="64" r="14" fill="#3b82f6" />
-            <circle cx="36" cy="64" r="14" fill="#1d4ed8" />
-            <circle cx="50" cy="50" r="8" fill="#ffffff" />
+            <defs>
+              <linearGradient id="as6-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#1e0c08" />
+                <stop offset="100%" stopColor="#3d1406" />
+              </linearGradient>
+              <linearGradient id="as6-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#fb7185" />
+                <stop offset="50%" stopColor="#ea580c" />
+                <stop offset="100%" stopColor="#f59e0b" />
+              </linearGradient>
+            </defs>
+            <rect width="100" height="100" rx="28" fill="url(#as6-bg)" />
+            <circle cx="50" cy="50" r="16.5" fill="url(#as6-grad)" />
+            <circle cx="46" cy="46" r="6" fill="#ffffff" opacity="0.45" />
+            <circle cx="50" cy="50" r="4" fill="#ffffff" opacity="0.9" />
+            <circle cx="68" cy="24" r="8.5" fill="url(#as6-grad)" />
+            <circle cx="82" cy="42" r="6" fill="url(#as6-grad)" />
+            <circle cx="72" cy="76" r="5" fill="url(#as6-grad)" />
+            <circle cx="50" cy="80" r="4" fill="url(#as6-grad)" />
+            <circle cx="26" cy="68" r="10" fill="url(#as6-grad)" />
+            <circle cx="24" cy="66" r="3" fill="#ffffff" opacity="0.5" />
+            <circle cx="20" cy="38" r="5.5" fill="url(#as6-grad)" />
           </svg>
         ),
         renderMark: (size = 64) => (
           <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="36" cy="36" r="16" fill="#3b82f6" />
-            <circle cx="64" cy="36" r="16" fill="#7c3aed" />
-            <circle cx="64" cy="64" r="16" fill="#3b82f6" />
-            <circle cx="36" cy="64" r="16" fill="#1d4ed8" />
-            <circle cx="50" cy="50" r="9" fill="#ffffff" />
+            <defs>
+              <linearGradient id="as6-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#fb7185" />
+                <stop offset="50%" stopColor="#ea580c" />
+                <stop offset="100%" stopColor="#f59e0b" />
+              </linearGradient>
+            </defs>
+            <circle cx="50" cy="50" r="17.5" fill="url(#as6-m-grad)" />
+            <circle cx="46" cy="46" r="6.5" fill="#ffffff" opacity="0.5" />
+            <circle cx="50" cy="50" r="4.5" fill="#ffffff" opacity="0.95" />
+            <circle cx="69" cy="23" r="9" fill="url(#as6-m-grad)" />
+            <circle cx="83" cy="41" r="6.5" fill="url(#as6-m-grad)" />
+            <circle cx="73" cy="77" r="5.5" fill="url(#as6-m-grad)" />
+            <circle cx="50" cy="81" r="4.5" fill="url(#as6-m-grad)" />
+            <circle cx="25" cy="68" r="10.5" fill="url(#as6-m-grad)" />
+            <circle cx="19" cy="37" r="6" fill="url(#as6-m-grad)" />
           </svg>
         ),
         renderLockup: () => (
           <div className="flex items-center gap-3">
             <div className="shrink-0">
-              <svg width={38} height={38} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="100" height="100" rx="28" fill="#060f26" />
-                <circle cx="38" cy="38" r="12" fill="#3b82f6" />
-                <circle cx="62" cy="38" r="12" fill="#7c3aed" />
-                <circle cx="62" cy="62" r="12" fill="#3b82f6" />
-                <circle cx="38" cy="62" r="12" fill="#1d4ed8" />
-                <circle cx="50" cy="50" r="6" fill="#ffffff" />
+              <svg width={40} height={40} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="as6-l-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#fb7185" />
+                    <stop offset="100%" stopColor="#f59e0b" />
+                  </linearGradient>
+                </defs>
+                <rect width="100" height="100" rx="28" fill="#1e0c08" />
+                <circle cx="50" cy="50" r="15" fill="url(#as6-l-grad)" />
+                <circle cx="68" cy="26" r="7.5" fill="url(#as6-l-grad)" />
+                <circle cx="81" cy="44" r="5" fill="url(#as6-l-grad)" />
+                <circle cx="27" cy="67" r="8.5" fill="url(#as6-l-grad)" />
+                <circle cx="22" cy="38" r="4.5" fill="url(#as6-l-grad)" />
               </svg>
             </div>
             <div>
               <div className="flex items-baseline gap-1">
                 <span className="text-base font-extrabold tracking-tight text-foreground">Nova</span>
-                <span className="text-base font-extrabold tracking-tight bg-linear-to-r from-blue-500 to-indigo-600 bg-clip-text text-transparent">
+                <span className="text-base font-extrabold tracking-tight bg-linear-to-r from-rose-500 via-orange-500 to-amber-500 bg-clip-text text-transparent">
                   Finance
                 </span>
               </div>
               <p className="text-[10px] font-medium text-default-400 -mt-0.5 tracking-wider uppercase">
-                Capital Ledger Hub
+                Fluid Capital Ecosystem
               </p>
             </div>
           </div>
         ),
         getRawSvgIcon: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100" height="100" rx="28" fill="#060f26" />
-  <circle cx="36" cy="36" r="14" fill="#3b82f6" />
-  <circle cx="64" cy="36" r="14" fill="#7c3aed" />
-  <circle cx="64" cy="64" r="14" fill="#3b82f6" />
-  <circle cx="36" cy="64" r="14" fill="#1d4ed8" />
-  <circle cx="50" cy="50" r="8" fill="#ffffff" />
+  <defs>
+    <linearGradient id="as6-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e0c08" />
+      <stop offset="100%" stop-color="#3d1406" />
+    </linearGradient>
+    <linearGradient id="as6-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fb7185" />
+      <stop offset="50%" stop-color="#ea580c" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="28" fill="url(#as6-bg)" />
+  <circle cx="50" cy="50" r="16.5" fill="url(#as6-grad)" />
+  <circle cx="46" cy="46" r="6" fill="#ffffff" opacity="0.45" />
+  <circle cx="50" cy="50" r="4" fill="#ffffff" opacity="0.9" />
+  <circle cx="68" cy="24" r="8.5" fill="url(#as6-grad)" />
+  <circle cx="82" cy="42" r="6" fill="url(#as6-grad)" />
+  <circle cx="72" cy="76" r="5" fill="url(#as6-grad)" />
+  <circle cx="50" cy="80" r="4" fill="url(#as6-grad)" />
+  <circle cx="26" cy="68" r="10" fill="url(#as6-grad)" />
+  <circle cx="20" cy="38" r="5.5" fill="url(#as6-grad)" />
 </svg>`,
         getRawSvgMark: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="36" cy="36" r="16" fill="#3b82f6" />
-  <circle cx="64" cy="36" r="16" fill="#7c3aed" />
-  <circle cx="64" cy="64" r="16" fill="#3b82f6" />
-  <circle cx="36" cy="64" r="16" fill="#1d4ed8" />
-  <circle cx="50" cy="50" r="9" fill="#ffffff" />
+  <defs>
+    <linearGradient id="as6-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fb7185" />
+      <stop offset="50%" stop-color="#ea580c" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="17.5" fill="url(#as6-m-grad)" />
+  <circle cx="46" cy="46" r="6.5" fill="#ffffff" opacity="0.5" />
+  <circle cx="50" cy="50" r="4.5" fill="#ffffff" opacity="0.95" />
+  <circle cx="69" cy="23" r="9" fill="url(#as6-m-grad)" />
+  <circle cx="83" cy="41" r="6.5" fill="url(#as6-m-grad)" />
+  <circle cx="73" cy="77" r="5.5" fill="url(#as6-m-grad)" />
+  <circle cx="25" cy="68" r="10.5" fill="url(#as6-m-grad)" />
+  <circle cx="19" cy="37" r="6" fill="url(#as6-m-grad)" />
 </svg>`,
         getRawSvgLockup: () => `<svg width="260" height="60" viewBox="0 0 260 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="48" height="48" x="6" y="6" rx="14" fill="#060f26" />
-  <circle cx="24" cy="24" r="6" fill="#3b82f6" />
-  <circle cx="36" cy="24" r="6" fill="#7c3aed" />
-  <circle cx="36" cy="36" r="6" fill="#3b82f6" />
-  <circle cx="24" cy="36" r="6" fill="#1d4ed8" />
-  <circle cx="30" cy="30" r="3.5" fill="#ffffff" />
-  <text x="66" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Nova<tspan fill="#3b82f6">Finance</tspan></text>
-  <text x="67" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#94a3b8" letter-spacing="1.5">CAPITAL LEDGER HUB</text>
+  <defs>
+    <linearGradient id="as6-l-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fb7185" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" x="6" y="6" rx="14" fill="#1e0c08" />
+  <circle cx="30" cy="30" r="8" fill="url(#as6-l-grad)" />
+  <circle cx="40" cy="18" r="4" fill="url(#as6-l-grad)" />
+  <circle cx="18" cy="38" r="4.5" fill="url(#as6-l-grad)" />
+  <circle cx="42" cy="38" r="3" fill="url(#as6-l-grad)" />
+  <text x="66" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Nova<tspan fill="#ea580c">Finance</tspan></text>
+  <text x="67" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#94a3b8" letter-spacing="1.5">FLUID CAPITAL ECOSYSTEM</text>
 </svg>`,
       },
 
-      // 7. Dual Droplet Yin-Yang
+      // 7. Planetary Saturnian Nova
       {
-        id: "dual-droplet",
-        name: "Dual Droplet Flow",
-        codename: "BUBBLE-07",
-        subtitle: "Sinusoidal Liquid Swirl · Coral Rose to Fuchsia",
+        id: "asym-saturnian-flow",
+        name: "Planetary Saturnian Nova",
+        codename: "ASYM-07",
+        subtitle: "Spherical Core · Diagonal Fluid Ribbon Halo",
         concept:
-          "Dua lengan cairan melengkung halus yang saling melingkar memeluk satu sama lain, melambangkan siklus debit dan kredit yang tak pernah terputus.",
-        primaryGradients: ["#f43f5e", "#d946ef", "#a855f7"],
+          "Inti bola planet di tengah dengan pita cincin cairan rounded asimetris melintang diagonal, dihiasi satelit gelembung dengan kontras neon lime dan aqua.",
+        primaryGradients: ["#84cc16", "#10b981", "#06b6d4"],
         renderIcon: (size = 48) => (
           <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="100" height="100" rx="28" fill="#1a0720" />
+            <defs>
+              <linearGradient id="as7-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#031a14" />
+                <stop offset="100%" stopColor="#042f2c" />
+              </linearGradient>
+              <linearGradient id="as7-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#84cc16" />
+                <stop offset="50%" stopColor="#10b981" />
+                <stop offset="100%" stopColor="#06b6d4" />
+              </linearGradient>
+            </defs>
+            <rect width="100" height="100" rx="28" fill="url(#as7-bg)" />
             <path
-              d="M50 20C66 20 80 34 80 50C80 66 66 80 50 80C34 80 34 66 50 66C60 66 66 60 66 50C66 40 58 34 50 34C34 34 20 48 20 50C20 34 34 20 50 20Z"
-              fill="#f43f5e"
+              d="M16 66C24 50 48 38 76 30C82 28 86 32 84 36C76 52 52 64 24 72C18 74 14 70 16 66Z"
+              fill="url(#as7-grad)"
+              opacity="0.8"
             />
-            <circle cx="50" cy="50" r="9" fill="#ffffff" />
+            <circle cx="50" cy="50" r="17" fill="url(#as7-grad)" />
+            <circle cx="46" cy="45" r="6" fill="#ffffff" opacity="0.45" />
+            <circle cx="50" cy="50" r="4" fill="#ffffff" opacity="0.9" />
+            <circle cx="78" cy="20" r="7.5" fill="url(#as7-grad)" />
+            <circle cx="76" cy="18" r="2.5" fill="#ffffff" opacity="0.5" />
+            <circle cx="22" cy="82" r="5" fill="url(#as7-grad)" />
+            <circle cx="28" cy="28" r="6" fill="url(#as7-grad)" />
           </svg>
         ),
         renderMark: (size = 64) => (
           <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="as7-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#84cc16" />
+                <stop offset="50%" stopColor="#10b981" />
+                <stop offset="100%" stopColor="#06b6d4" />
+              </linearGradient>
+            </defs>
             <path
-              d="M50 18C68 18 82 32 82 50C82 68 68 82 50 82C32 82 32 66 50 66C60 66 68 60 68 50C68 40 60 34 50 34C32 34 18 48 18 50C18 32 32 18 50 18Z"
-              fill="#f43f5e"
+              d="M16 66C24 50 48 38 76 30C82 28 86 32 84 36C76 52 52 64 24 72C18 74 14 70 16 66Z"
+              fill="url(#as7-m-grad)"
+              opacity="0.85"
             />
-            <circle cx="50" cy="50" r="10" fill="#ffffff" />
+            <circle cx="50" cy="50" r="18" fill="url(#as7-m-grad)" />
+            <circle cx="46" cy="45" r="6.5" fill="#ffffff" opacity="0.5" />
+            <circle cx="50" cy="50" r="4.5" fill="#ffffff" opacity="0.95" />
+            <circle cx="79" cy="19" r="8" fill="url(#as7-m-grad)" />
+            <circle cx="21" cy="83" r="5.5" fill="url(#as7-m-grad)" />
+            <circle cx="27" cy="27" r="6.5" fill="url(#as7-m-grad)" />
           </svg>
         ),
         renderLockup: () => (
           <div className="flex items-center gap-3">
             <div className="shrink-0">
-              <svg width={38} height={38} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="100" height="100" rx="28" fill="#1a0720" />
-                <path d="M50 20C66 20 80 34 80 50C80 66 66 80 50 80C34 80 34 66 50 66C60 66 66 60 66 50C66 40 58 34 50 34C34 34 20 48 20 50C20 34 34 20 50 20Z" fill="#f43f5e" />
-                <circle cx="50" cy="50" r="7" fill="#ffffff" />
+              <svg width={40} height={40} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="as7-l-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#84cc16" />
+                    <stop offset="100%" stopColor="#06b6d4" />
+                  </linearGradient>
+                </defs>
+                <rect width="100" height="100" rx="28" fill="#031a14" />
+                <path d="M18 64C24 50 48 38 74 30C80 28 84 32 82 36C74 50 50 62 26 70C20 72 16 68 18 64Z" fill="url(#as7-l-grad)" opacity="0.8" />
+                <circle cx="50" cy="50" r="15" fill="url(#as7-l-grad)" />
+                <circle cx="76" cy="22" r="6.5" fill="url(#as7-l-grad)" />
+                <circle cx="24" cy="78" r="4.5" fill="url(#as7-l-grad)" />
               </svg>
             </div>
             <div>
               <div className="flex items-baseline gap-1">
                 <span className="text-base font-extrabold tracking-tight text-foreground">Nova</span>
-                <span className="text-base font-extrabold tracking-tight bg-linear-to-r from-rose-500 to-pink-500 bg-clip-text text-transparent">
+                <span className="text-base font-extrabold tracking-tight bg-linear-to-r from-lime-500 via-emerald-400 to-cyan-400 bg-clip-text text-transparent">
                   Finance
                 </span>
               </div>
               <p className="text-[10px] font-medium text-default-400 -mt-0.5 tracking-wider uppercase">
-                Perpetual Cash Flow
+                Sustainable Liquidity Grid
               </p>
             </div>
           </div>
         ),
         getRawSvgIcon: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100" height="100" rx="28" fill="#1a0720" />
-  <path d="M50 20C66 20 80 34 80 50C80 66 66 80 50 80C34 80 34 66 50 66C60 66 66 60 66 50C66 40 58 34 50 34C34 34 20 48 20 50C20 34 34 20 50 20Z" fill="#f43f5e" />
-  <circle cx="50" cy="50" r="9" fill="#ffffff" />
+  <defs>
+    <linearGradient id="as7-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#031a14" />
+      <stop offset="100%" stop-color="#042f2c" />
+    </linearGradient>
+    <linearGradient id="as7-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#84cc16" />
+      <stop offset="50%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="28" fill="url(#as7-bg)" />
+  <path d="M16 66C24 50 48 38 76 30C82 28 86 32 84 36C76 52 52 64 24 72C18 74 14 70 16 66Z" fill="url(#as7-grad)" opacity="0.8" />
+  <circle cx="50" cy="50" r="17" fill="url(#as7-grad)" />
+  <circle cx="46" cy="45" r="6" fill="#ffffff" opacity="0.45" />
+  <circle cx="50" cy="50" r="4" fill="#ffffff" opacity="0.9" />
+  <circle cx="78" cy="20" r="7.5" fill="url(#as7-grad)" />
+  <circle cx="22" cy="82" r="5" fill="url(#as7-grad)" />
+  <circle cx="28" cy="28" r="6" fill="url(#as7-grad)" />
 </svg>`,
         getRawSvgMark: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M50 18C68 18 82 32 82 50C82 68 68 82 50 82C32 82 32 66 50 66C60 66 68 60 68 50C68 40 60 34 50 34C32 34 18 48 18 50C18 32 32 18 50 18Z" fill="#f43f5e" />
-  <circle cx="50" cy="50" r="10" fill="#ffffff" />
+  <defs>
+    <linearGradient id="as7-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#84cc16" />
+      <stop offset="50%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+  </defs>
+  <path d="M16 66C24 50 48 38 76 30C82 28 86 32 84 36C76 52 52 64 24 72C18 74 14 70 16 66Z" fill="url(#as7-m-grad)" opacity="0.85" />
+  <circle cx="50" cy="50" r="18" fill="url(#as7-m-grad)" />
+  <circle cx="46" cy="45" r="6.5" fill="#ffffff" opacity="0.5" />
+  <circle cx="50" cy="50" r="4.5" fill="#ffffff" opacity="0.95" />
+  <circle cx="79" cy="19" r="8" fill="url(#as7-m-grad)" />
+  <circle cx="21" cy="83" r="5.5" fill="url(#as7-m-grad)" />
+  <circle cx="27" cy="27" r="6.5" fill="url(#as7-m-grad)" />
 </svg>`,
         getRawSvgLockup: () => `<svg width="260" height="60" viewBox="0 0 260 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="48" height="48" x="6" y="6" rx="14" fill="#1a0720" />
-  <circle cx="30" cy="30" r="6" fill="#f43f5e" />
-  <text x="66" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Nova<tspan fill="#f43f5e">Finance</tspan></text>
-  <text x="67" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#94a3b8" letter-spacing="1.5">PERPETUAL CASH FLOW</text>
+  <defs>
+    <linearGradient id="as7-l-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#84cc16" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" x="6" y="6" rx="14" fill="#031a14" />
+  <circle cx="30" cy="30" r="8" fill="url(#as7-l-grad)" />
+  <circle cx="41" cy="17" r="4" fill="url(#as7-l-grad)" />
+  <circle cx="18" cy="41" r="3" fill="url(#as7-l-grad)" />
+  <circle cx="18" cy="20" r="3.5" fill="url(#as7-l-grad)" />
+  <text x="66" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Nova<tspan fill="#10b981">Finance</tspan></text>
+  <text x="67" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#94a3b8" letter-spacing="1.5">SUSTAINABLE LIQUIDITY GRID</text>
 </svg>`,
       },
 
-      // 8. Torus Bubble Ring
+      // 8. Pulsar Bubble Jet
       {
-        id: "torus-bubble",
-        name: "Torus Bubble Ring",
-        codename: "BUBBLE-08",
-        subtitle: "Liquid Donut Loops · Neon Lime to Aqua",
+        id: "asym-pulsar-jet",
+        name: "Pulsar Bubble Jet",
+        codename: "ASYM-08",
+        subtitle: "High-Energy Nucleus · Directional Bubble Ejection",
         concept:
-          "Cincin donat cair tebal dengan empat simpul gelembung membulat dan inti air mengambang. Sangat segar, cerah, dan berorientasi masa depan.",
-        primaryGradients: ["#84cc16", "#06b6d4", "#3b82f6"],
+          "Inti bulat padat di tengah dengan jet gelembung asimetris yang meluncur deras ke satu arah dan gelembung satelit penyeimbang di sisi berlawanan.",
+        primaryGradients: ["#1e40af", "#6366f1", "#c084fc"],
         renderIcon: (size = 48) => (
           <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="100" height="100" rx="28" fill="#081816" />
-            <circle cx="50" cy="50" r="28" stroke="#06b6d4" strokeWidth="12" />
-            <circle cx="50" cy="22" r="7" fill="#84cc16" />
-            <circle cx="78" cy="50" r="7" fill="#84cc16" />
-            <circle cx="50" cy="78" r="7" fill="#84cc16" />
-            <circle cx="22" cy="50" r="7" fill="#84cc16" />
-            <circle cx="50" cy="50" r="8" fill="#ffffff" />
+            <defs>
+              <linearGradient id="as8-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#080c26" />
+                <stop offset="100%" stopColor="#1e1b4b" />
+              </linearGradient>
+              <linearGradient id="as8-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#1e40af" />
+                <stop offset="50%" stopColor="#6366f1" />
+                <stop offset="100%" stopColor="#c084fc" />
+              </linearGradient>
+            </defs>
+            <rect width="100" height="100" rx="28" fill="url(#as8-bg)" />
+            <circle cx="50" cy="50" r="16.5" fill="url(#as8-grad)" />
+            <circle cx="46" cy="46" r="6" fill="#ffffff" opacity="0.5" />
+            <circle cx="50" cy="50" r="4" fill="#ffffff" opacity="0.9" />
+            <circle cx="68" cy="35" r="9" fill="url(#as8-grad)" />
+            <circle cx="66" cy="33" r="3" fill="#ffffff" opacity="0.5" />
+            <circle cx="82" cy="23" r="6.5" fill="url(#as8-grad)" />
+            <circle cx="91" cy="14" r="3.5" fill="url(#as8-grad)" />
+            <circle cx="30" cy="67" r="8" fill="url(#as8-grad)" />
+            <circle cx="52" cy="78" r="4.5" fill="url(#as8-grad)" />
           </svg>
         ),
         renderMark: (size = 64) => (
           <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="30" stroke="#06b6d4" strokeWidth="14" />
-            <circle cx="50" cy="50" r="9" fill="#ffffff" />
+            <defs>
+              <linearGradient id="as8-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#1e40af" />
+                <stop offset="50%" stopColor="#6366f1" />
+                <stop offset="100%" stopColor="#c084fc" />
+              </linearGradient>
+            </defs>
+            <circle cx="50" cy="50" r="17.5" fill="url(#as8-m-grad)" />
+            <circle cx="46" cy="46" r="6.5" fill="#ffffff" opacity="0.5" />
+            <circle cx="50" cy="50" r="4.5" fill="#ffffff" opacity="0.95" />
+            <circle cx="69" cy="34" r="9.5" fill="url(#as8-m-grad)" />
+            <circle cx="83" cy="22" r="7" fill="url(#as8-m-grad)" />
+            <circle cx="92" cy="13" r="4" fill="url(#as8-m-grad)" />
+            <circle cx="29" cy="68" r="8.5" fill="url(#as8-m-grad)" />
+            <circle cx="52" cy="79" r="5" fill="url(#as8-m-grad)" />
           </svg>
         ),
         renderLockup: () => (
           <div className="flex items-center gap-3">
             <div className="shrink-0">
-              <svg width={38} height={38} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="100" height="100" rx="28" fill="#081816" />
-                <circle cx="50" cy="50" r="24" stroke="#06b6d4" strokeWidth="10" />
-                <circle cx="50" cy="50" r="6" fill="#ffffff" />
+              <svg width={40} height={40} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="as8-l-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#6366f1" />
+                    <stop offset="100%" stopColor="#c084fc" />
+                  </linearGradient>
+                </defs>
+                <rect width="100" height="100" rx="28" fill="#080c26" />
+                <circle cx="50" cy="50" r="15" fill="url(#as8-l-grad)" />
+                <circle cx="68" cy="35" r="8" fill="url(#as8-l-grad)" />
+                <circle cx="82" cy="23" r="5.5" fill="url(#as8-l-grad)" />
+                <circle cx="32" cy="66" r="7" fill="url(#as8-l-grad)" />
               </svg>
             </div>
             <div>
               <div className="flex items-baseline gap-1">
                 <span className="text-base font-extrabold tracking-tight text-foreground">Nova</span>
-                <span className="text-base font-extrabold tracking-tight bg-linear-to-r from-lime-400 to-cyan-500 bg-clip-text text-transparent">
+                <span className="text-base font-extrabold tracking-tight bg-linear-to-r from-blue-600 via-indigo-500 to-purple-400 bg-clip-text text-transparent">
                   Finance
                 </span>
               </div>
               <p className="text-[10px] font-medium text-default-400 -mt-0.5 tracking-wider uppercase">
-                Automated Liquidity
+                Real-Time Ledger Engine
               </p>
             </div>
           </div>
         ),
         getRawSvgIcon: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100" height="100" rx="28" fill="#081816" />
-  <circle cx="50" cy="50" r="28" stroke="#06b6d4" stroke-width="12" />
-  <circle cx="50" cy="22" r="7" fill="#84cc16" />
-  <circle cx="78" cy="50" r="7" fill="#84cc16" />
-  <circle cx="50" cy="78" r="7" fill="#84cc16" />
-  <circle cx="22" cy="50" r="7" fill="#84cc16" />
-  <circle cx="50" cy="50" r="8" fill="#ffffff" />
+  <defs>
+    <linearGradient id="as8-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#080c26" />
+      <stop offset="100%" stop-color="#1e1b4b" />
+    </linearGradient>
+    <linearGradient id="as8-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e40af" />
+      <stop offset="50%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#c084fc" />
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="28" fill="url(#as8-bg)" />
+  <circle cx="50" cy="50" r="16.5" fill="url(#as8-grad)" />
+  <circle cx="46" cy="46" r="6" fill="#ffffff" opacity="0.5" />
+  <circle cx="50" cy="50" r="4" fill="#ffffff" opacity="0.9" />
+  <circle cx="68" cy="35" r="9" fill="url(#as8-grad)" />
+  <circle cx="82" cy="23" r="6.5" fill="url(#as8-grad)" />
+  <circle cx="91" cy="14" r="3.5" fill="url(#as8-grad)" />
+  <circle cx="30" cy="67" r="8" fill="url(#as8-grad)" />
+  <circle cx="52" cy="78" r="4.5" fill="url(#as8-grad)" />
 </svg>`,
         getRawSvgMark: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="50" cy="50" r="30" stroke="#06b6d4" stroke-width="14" />
-  <circle cx="50" cy="50" r="9" fill="#ffffff" />
+  <defs>
+    <linearGradient id="as8-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e40af" />
+      <stop offset="50%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#c084fc" />
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="17.5" fill="url(#as8-m-grad)" />
+  <circle cx="46" cy="46" r="6.5" fill="#ffffff" opacity="0.5" />
+  <circle cx="50" cy="50" r="4.5" fill="#ffffff" opacity="0.95" />
+  <circle cx="69" cy="34" r="9.5" fill="url(#as8-m-grad)" />
+  <circle cx="83" cy="22" r="7" fill="url(#as8-m-grad)" />
+  <circle cx="92" cy="13" r="4" fill="url(#as8-m-grad)" />
+  <circle cx="29" cy="68" r="8.5" fill="url(#as8-m-grad)" />
+  <circle cx="52" cy="79" r="5" fill="url(#as8-m-grad)" />
 </svg>`,
         getRawSvgLockup: () => `<svg width="260" height="60" viewBox="0 0 260 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="48" height="48" x="6" y="6" rx="14" fill="#081816" />
-  <circle cx="30" cy="30" r="12" stroke="#06b6d4" stroke-width="6" />
-  <circle cx="30" cy="30" r="4" fill="#ffffff" />
-  <text x="66" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Nova<tspan fill="#06b6d4">Finance</tspan></text>
-  <text x="67" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#94a3b8" letter-spacing="1.5">AUTOMATED LIQUIDITY</text>
+  <defs>
+    <linearGradient id="as8-l-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#c084fc" />
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" x="6" y="6" rx="14" fill="#080c26" />
+  <circle cx="28" cy="30" r="8" fill="url(#as8-l-grad)" />
+  <circle cx="39" cy="20" r="4.5" fill="url(#as8-l-grad)" />
+  <circle cx="17" cy="39" r="4" fill="url(#as8-l-grad)" />
+  <text x="66" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Nova<tspan fill="#6366f1">Finance</tspan></text>
+  <text x="67" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#94a3b8" letter-spacing="1.5">REAL-TIME LEDGER ENGINE</text>
 </svg>`,
       },
 
-      // 9. TearDrop Bloom
+      // 9. Genesis Nucleus Nova
       {
-        id: "teardrop-bloom",
-        name: "TearDrop Bloom Nova",
-        codename: "BUBBLE-09",
-        subtitle: "Curved Droplet Petals · Royal Purple to Cobalt",
+        id: "asym-genesis-spores",
+        name: "Genesis Nucleus Nova",
+        codename: "ASYM-09",
+        subtitle: "Egg-Shaped Smooth Core · Spore Bubble Constellation",
         concept:
-          "Empat tetesan kurva berujung bulat cembung yang mekar lembut dari titik pusat putih. Simbol kebangkitan dan perluasan aset bisnis secara organik.",
-        primaryGradients: ["#7c3aed", "#2563eb", "#38bdf8"],
+          "Inti sel telur kosmik rounded yang dikelilingi oleh 5 spora gelembung nova asimetris dengan formasi konstelasi spiral gradasi emas dan kecubung mewah.",
+        primaryGradients: ["#f59e0b", "#e11d48", "#701a75"],
         renderIcon: (size = 48) => (
           <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="100" height="100" rx="28" fill="#0c0721" />
-            {/* 4 Soft Teardrops */}
-            <path d="M50 20C56 20 60 26 60 34C60 42 56 46 50 50C44 46 40 42 40 34C40 26 44 20 50 20Z" fill="#7c3aed" />
-            <path d="M80 50C80 56 74 60 66 60C58 60 54 56 50 50C54 44 58 40 66 40C74 40 80 44 80 50Z" fill="#2563eb" />
-            <path d="M50 80C44 80 40 74 40 66C40 58 44 54 50 50C56 54 60 58 60 66C60 74 56 80 50 80Z" fill="#7c3aed" />
-            <path d="M20 50C20 44 26 40 34 40C42 40 46 44 50 50C46 56 42 60 34 60C26 60 20 56 20 50Z" fill="#2563eb" />
-            <circle cx="50" cy="50" r="10" fill="#ffffff" />
+            <defs>
+              <linearGradient id="as9-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#21081a" />
+                <stop offset="100%" stopColor="#3b0827" />
+              </linearGradient>
+              <linearGradient id="as9-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#f59e0b" />
+                <stop offset="50%" stopColor="#e11d48" />
+                <stop offset="100%" stopColor="#701a75" />
+              </linearGradient>
+            </defs>
+            <rect width="100" height="100" rx="28" fill="url(#as9-bg)" />
+            <circle cx="48" cy="52" r="17.5" fill="url(#as9-grad)" />
+            <circle cx="44" cy="48" r="6" fill="#ffffff" opacity="0.45" />
+            <circle cx="48" cy="52" r="4" fill="#ffffff" opacity="0.9" />
+            <circle cx="74" cy="32" r="9.5" fill="url(#as9-grad)" />
+            <circle cx="72" cy="30" r="3" fill="#ffffff" opacity="0.5" />
+            <circle cx="26" cy="30" r="7" fill="url(#as9-grad)" />
+            <circle cx="80" cy="68" r="5.5" fill="url(#as9-grad)" />
+            <circle cx="34" cy="78" r="6.5" fill="url(#as9-grad)" />
+            <circle cx="56" cy="84" r="3.5" fill="url(#as9-grad)" />
           </svg>
         ),
         renderMark: (size = 64) => (
           <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M50 18C56 18 62 26 62 34C62 42 56 46 50 50C44 46 38 42 38 34C38 26 44 18 50 18Z" fill="#7c3aed" />
-            <path d="M82 50C82 56 74 62 66 62C58 62 54 56 50 50C54 44 58 38 66 38C74 38 82 44 82 50Z" fill="#2563eb" />
-            <path d="M50 82C44 82 38 74 38 66C38 58 44 54 50 50C56 54 62 58 62 66C62 74 56 82 50 82Z" fill="#7c3aed" />
-            <path d="M18 50C18 44 26 38 34 38C42 38 46 44 50 50C46 56 42 62 34 62C26 62 18 56 18 50Z" fill="#2563eb" />
-            <circle cx="50" cy="50" r="11" fill="#ffffff" />
+            <defs>
+              <linearGradient id="as9-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#f59e0b" />
+                <stop offset="50%" stopColor="#e11d48" />
+                <stop offset="100%" stopColor="#701a75" />
+              </linearGradient>
+            </defs>
+            <circle cx="48" cy="52" r="18.5" fill="url(#as9-m-grad)" />
+            <circle cx="44" cy="48" r="6.5" fill="#ffffff" opacity="0.5" />
+            <circle cx="48" cy="52" r="4.5" fill="#ffffff" opacity="0.95" />
+            <circle cx="75" cy="31" r="10" fill="url(#as9-m-grad)" />
+            <circle cx="25" cy="29" r="7.5" fill="url(#as9-m-grad)" />
+            <circle cx="81" cy="69" r="6" fill="url(#as9-m-grad)" />
+            <circle cx="33" cy="79" r="7" fill="url(#as9-m-grad)" />
+            <circle cx="56" cy="85" r="4" fill="url(#as9-m-grad)" />
           </svg>
         ),
         renderLockup: () => (
           <div className="flex items-center gap-3">
             <div className="shrink-0">
-              <svg width={38} height={38} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="100" height="100" rx="28" fill="#0c0721" />
-                <circle cx="50" cy="50" r="16" fill="#7c3aed" />
-                <circle cx="50" cy="50" r="8" fill="#ffffff" />
+              <svg width={40} height={40} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="as9-l-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#f59e0b" />
+                    <stop offset="100%" stopColor="#701a75" />
+                  </linearGradient>
+                </defs>
+                <rect width="100" height="100" rx="28" fill="#21081a" />
+                <circle cx="48" cy="52" r="15" fill="url(#as9-l-grad)" />
+                <circle cx="73" cy="33" r="8" fill="url(#as9-l-grad)" />
+                <circle cx="27" cy="31" r="6" fill="url(#as9-l-grad)" />
+                <circle cx="35" cy="77" r="5.5" fill="url(#as9-l-grad)" />
               </svg>
             </div>
             <div>
               <div className="flex items-baseline gap-1">
                 <span className="text-base font-extrabold tracking-tight text-foreground">Nova</span>
-                <span className="text-base font-extrabold tracking-tight bg-linear-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
+                <span className="text-base font-extrabold tracking-tight bg-linear-to-r from-amber-500 via-rose-500 to-fuchsia-600 bg-clip-text text-transparent">
                   Finance
                 </span>
               </div>
               <p className="text-[10px] font-medium text-default-400 -mt-0.5 tracking-wider uppercase">
-                Asset Growth Engine
+                Genesis Asset Architecture
               </p>
             </div>
           </div>
         ),
         getRawSvgIcon: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100" height="100" rx="28" fill="#0c0721" />
-  <path d="M50 20C56 20 60 26 60 34C60 42 56 46 50 50C44 46 40 42 40 34C40 26 44 20 50 20Z" fill="#7c3aed" />
-  <path d="M80 50C80 56 74 60 66 60C58 60 54 56 50 50C54 44 58 40 66 40C74 40 80 44 80 50Z" fill="#2563eb" />
-  <path d="M50 80C44 80 40 74 40 66C40 58 44 54 50 50C56 54 60 58 60 66C60 74 56 80 50 80Z" fill="#7c3aed" />
-  <path d="M20 50C20 44 26 40 34 40C42 40 46 44 50 50C46 56 42 60 34 60C26 60 20 56 20 50Z" fill="#2563eb" />
-  <circle cx="50" cy="50" r="10" fill="#ffffff" />
+  <defs>
+    <linearGradient id="as9-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#21081a" />
+      <stop offset="100%" stop-color="#3b0827" />
+    </linearGradient>
+    <linearGradient id="as9-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="50%" stop-color="#e11d48" />
+      <stop offset="100%" stop-color="#701a75" />
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="28" fill="url(#as9-bg)" />
+  <circle cx="48" cy="52" r="17.5" fill="url(#as9-grad)" />
+  <circle cx="44" cy="48" r="6" fill="#ffffff" opacity="0.45" />
+  <circle cx="48" cy="52" r="4" fill="#ffffff" opacity="0.9" />
+  <circle cx="74" cy="32" r="9.5" fill="url(#as9-grad)" />
+  <circle cx="26" cy="30" r="7" fill="url(#as9-grad)" />
+  <circle cx="80" cy="68" r="5.5" fill="url(#as9-grad)" />
+  <circle cx="34" cy="78" r="6.5" fill="url(#as9-grad)" />
+  <circle cx="56" cy="84" r="3.5" fill="url(#as9-grad)" />
 </svg>`,
         getRawSvgMark: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M50 18C56 18 62 26 62 34C62 42 56 46 50 50C44 46 38 42 38 34C38 26 44 18 50 18Z" fill="#7c3aed" />
-  <path d="M82 50C82 56 74 62 66 62C58 62 54 56 50 50C54 44 58 38 66 38C74 38 82 44 82 50Z" fill="#2563eb" />
-  <path d="M50 82C44 82 38 74 38 66C38 58 44 54 50 50C56 54 62 58 62 66C62 74 56 82 50 82Z" fill="#7c3aed" />
-  <path d="M18 50C18 44 26 38 34 38C42 38 46 44 50 50C46 56 42 62 34 62C26 62 18 56 18 50Z" fill="#2563eb" />
-  <circle cx="50" cy="50" r="11" fill="#ffffff" />
+  <defs>
+    <linearGradient id="as9-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="50%" stop-color="#e11d48" />
+      <stop offset="100%" stop-color="#701a75" />
+    </linearGradient>
+  </defs>
+  <circle cx="48" cy="52" r="18.5" fill="url(#as9-m-grad)" />
+  <circle cx="44" cy="48" r="6.5" fill="#ffffff" opacity="0.5" />
+  <circle cx="48" cy="52" r="4.5" fill="#ffffff" opacity="0.95" />
+  <circle cx="75" cy="31" r="10" fill="url(#as9-m-grad)" />
+  <circle cx="25" cy="29" r="7.5" fill="url(#as9-m-grad)" />
+  <circle cx="81" cy="69" r="6" fill="url(#as9-m-grad)" />
+  <circle cx="33" cy="79" r="7" fill="url(#as9-m-grad)" />
+  <circle cx="56" cy="85" r="4" fill="url(#as9-m-grad)" />
 </svg>`,
         getRawSvgLockup: () => `<svg width="260" height="60" viewBox="0 0 260 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="48" height="48" x="6" y="6" rx="14" fill="#0c0721" />
-  <circle cx="30" cy="30" r="9" fill="#7c3aed" />
-  <circle cx="30" cy="30" r="4.5" fill="#ffffff" />
-  <text x="66" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Nova<tspan fill="#7c3aed">Finance</tspan></text>
-  <text x="67" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#94a3b8" letter-spacing="1.5">ASSET GROWTH ENGINE</text>
+  <defs>
+    <linearGradient id="as9-l-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#701a75" />
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" x="6" y="6" rx="14" fill="#21081a" />
+  <circle cx="26" cy="30" r="8" fill="url(#as9-l-grad)" />
+  <circle cx="40" cy="20" r="4" fill="url(#as9-l-grad)" />
+  <circle cx="16" cy="18" r="3" fill="url(#as9-l-grad)" />
+  <circle cx="21" cy="41" r="3" fill="url(#as9-l-grad)" />
+  <text x="66" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Nova<tspan fill="#f59e0b">Finance</tspan></text>
+  <text x="67" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#94a3b8" letter-spacing="1.5">GENESIS ASSET ARCHITECTURE</text>
 </svg>`,
       },
 
-      // 10. Bubble Monogram "N"
+      // 10. Kinetic Vortex Nova
       {
-        id: "bubble-monogram",
-        name: "Bubble Monogram N",
-        codename: "BUBBLE-10",
-        subtitle: "Rounded Tube 'N' + Floating Gold Bubble · Executive Core",
+        id: "asym-kinetic-vortex",
+        name: "Kinetic Vortex Nova",
+        codename: "ASYM-10",
+        subtitle: "Center Power Orb · Multi-Node Gravitational Swirl",
         concept:
-          "Monogram huruf 'N' yang dibentuk dari tabung gelembung tebal berujung membulat sempurna (`stroke-linecap='round'`), dinobatkan mutiara emas cair di sudut kanan atas.",
-        primaryGradients: ["#2563eb", "#3b82f6", "#fbbf24"],
+          "Inti pusaran energi di tengah dengan lengan pusaran cairan rounded melilit secara asimetris dari kiri-bawah memutari inti ke kanan-atas.",
+        primaryGradients: ["#06b6d4", "#0ea5e9", "#312e81"],
         renderIcon: (size = 48) => (
           <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="100" height="100" rx="28" fill="#09142b" />
-            {/* Smooth rounded tube N */}
+            <defs>
+              <linearGradient id="as10-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#041226" />
+                <stop offset="100%" stopColor="#0a2046" />
+              </linearGradient>
+              <linearGradient id="as10-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#06b6d4" />
+                <stop offset="50%" stopColor="#0ea5e9" />
+                <stop offset="100%" stopColor="#312e81" />
+              </linearGradient>
+            </defs>
+            <rect width="100" height="100" rx="28" fill="url(#as10-bg)" />
             <path
-              d="M32 70V30L68 70V30"
-              stroke="#3b82f6"
-              strokeWidth="12"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              d="M30 68C18 52 24 30 46 22C68 14 84 28 80 44C76 60 58 66 46 60"
+              fill="none"
+              stroke="url(#as10-grad)"
+              strokeWidth="2.5"
+              strokeDasharray="4 5"
+              opacity="0.4"
             />
-            {/* Floating Gold Bubble Spark */}
-            <circle cx="76" cy="22" r="7" fill="#fbbf24" />
+            <circle cx="50" cy="50" r="16" fill="url(#as10-grad)" />
+            <circle cx="46" cy="46" r="6" fill="#ffffff" opacity="0.5" />
+            <circle cx="50" cy="50" r="4" fill="#ffffff" opacity="0.9" />
+            <circle cx="28" cy="68" r="9" fill="url(#as10-grad)" />
+            <circle cx="18" cy="46" r="6" fill="url(#as10-grad)" />
+            <circle cx="34" cy="24" r="7.5" fill="url(#as10-grad)" />
+            <circle cx="62" cy="19" r="6" fill="url(#as10-grad)" />
+            <circle cx="82" cy="30" r="9" fill="url(#as10-grad)" />
+            <circle cx="80" cy="28" r="3" fill="#ffffff" opacity="0.5" />
+            <circle cx="76" cy="64" r="7" fill="url(#as10-grad)" />
           </svg>
         ),
         renderMark: (size = 64) => (
           <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="as10-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#06b6d4" />
+                <stop offset="50%" stopColor="#0ea5e9" />
+                <stop offset="100%" stopColor="#312e81" />
+              </linearGradient>
+            </defs>
             <path
-              d="M32 72V28L68 72V28"
-              stroke="#3b82f6"
-              strokeWidth="13"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              d="M30 68C18 52 24 30 46 22C68 14 84 28 80 44C76 60 58 66 46 60"
+              fill="none"
+              stroke="url(#as10-m-grad)"
+              strokeWidth="3"
+              strokeDasharray="4 5"
+              opacity="0.45"
             />
-            <circle cx="78" cy="20" r="8" fill="#fbbf24" />
+            <circle cx="50" cy="50" r="17" fill="url(#as10-m-grad)" />
+            <circle cx="46" cy="46" r="6.5" fill="#ffffff" opacity="0.5" />
+            <circle cx="50" cy="50" r="4.5" fill="#ffffff" opacity="0.95" />
+            <circle cx="27" cy="69" r="9.5" fill="url(#as10-m-grad)" />
+            <circle cx="17" cy="45" r="6.5" fill="url(#as10-m-grad)" />
+            <circle cx="33" cy="23" r="8" fill="url(#as10-m-grad)" />
+            <circle cx="63" cy="18" r="6.5" fill="url(#as10-m-grad)" />
+            <circle cx="83" cy="29" r="9.5" fill="url(#as10-m-grad)" />
+            <circle cx="77" cy="65" r="7.5" fill="url(#as10-m-grad)" />
           </svg>
         ),
         renderLockup: () => (
           <div className="flex items-center gap-3">
             <div className="shrink-0">
-              <svg width={38} height={38} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="100" height="100" rx="28" fill="#09142b" />
-                <path d="M34 68V32L66 68V32" stroke="#3b82f6" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="72" cy="24" r="5" fill="#fbbf24" />
+              <svg width={40} height={40} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="as10-l-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#06b6d4" />
+                    <stop offset="100%" stopColor="#0ea5e9" />
+                  </linearGradient>
+                </defs>
+                <rect width="100" height="100" rx="28" fill="#041226" />
+                <circle cx="50" cy="50" r="15" fill="url(#as10-l-grad)" />
+                <circle cx="28" cy="68" r="8" fill="url(#as10-l-grad)" />
+                <circle cx="34" cy="24" r="6.5" fill="url(#as10-l-grad)" />
+                <circle cx="82" cy="30" r="8" fill="url(#as10-l-grad)" />
+                <circle cx="76" cy="64" r="6" fill="url(#as10-l-grad)" />
               </svg>
             </div>
             <div>
               <div className="flex items-baseline gap-1">
                 <span className="text-base font-extrabold tracking-tight text-foreground">Nova</span>
-                <span className="text-base font-extrabold tracking-tight bg-linear-to-r from-blue-500 to-indigo-600 bg-clip-text text-transparent">
+                <span className="text-base font-extrabold tracking-tight bg-linear-to-r from-cyan-400 via-sky-500 to-blue-600 bg-clip-text text-transparent">
                   Finance
                 </span>
               </div>
               <p className="text-[10px] font-medium text-default-400 -mt-0.5 tracking-wider uppercase">
-                Executive Capital OS
+                Kinetic Treasury Protocol
               </p>
             </div>
           </div>
         ),
         getRawSvgIcon: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100" height="100" rx="28" fill="#09142b" />
-  <path d="M32 70V30L68 70V30" stroke="#3b82f6" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
-  <circle cx="76" cy="22" r="7" fill="#fbbf24" />
+  <defs>
+    <linearGradient id="as10-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#041226" />
+      <stop offset="100%" stop-color="#0a2046" />
+    </linearGradient>
+    <linearGradient id="as10-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="50%" stop-color="#0ea5e9" />
+      <stop offset="100%" stop-color="#312e81" />
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="28" fill="url(#as10-bg)" />
+  <circle cx="50" cy="50" r="16" fill="url(#as10-grad)" />
+  <circle cx="46" cy="46" r="6" fill="#ffffff" opacity="0.5" />
+  <circle cx="50" cy="50" r="4" fill="#ffffff" opacity="0.9" />
+  <circle cx="28" cy="68" r="9" fill="url(#as10-grad)" />
+  <circle cx="18" cy="46" r="6" fill="url(#as10-grad)" />
+  <circle cx="34" cy="24" r="7.5" fill="url(#as10-grad)" />
+  <circle cx="62" cy="19" r="6" fill="url(#as10-grad)" />
+  <circle cx="82" cy="30" r="9" fill="url(#as10-grad)" />
+  <circle cx="76" cy="64" r="7" fill="url(#as10-grad)" />
 </svg>`,
         getRawSvgMark: () => `<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M32 72V28L68 72V28" stroke="#3b82f6" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" />
-  <circle cx="78" cy="20" r="8" fill="#fbbf24" />
+  <defs>
+    <linearGradient id="as10-m-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="50%" stop-color="#0ea5e9" />
+      <stop offset="100%" stop-color="#312e81" />
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="17" fill="url(#as10-m-grad)" />
+  <circle cx="46" cy="46" r="6.5" fill="#ffffff" opacity="0.5" />
+  <circle cx="50" cy="50" r="4.5" fill="#ffffff" opacity="0.95" />
+  <circle cx="27" cy="69" r="9.5" fill="url(#as10-m-grad)" />
+  <circle cx="17" cy="45" r="6.5" fill="url(#as10-m-grad)" />
+  <circle cx="33" cy="23" r="8" fill="url(#as10-m-grad)" />
+  <circle cx="63" cy="18" r="6.5" fill="url(#as10-m-grad)" />
+  <circle cx="83" cy="29" r="9.5" fill="url(#as10-m-grad)" />
+  <circle cx="77" cy="65" r="7.5" fill="url(#as10-m-grad)" />
 </svg>`,
         getRawSvgLockup: () => `<svg width="260" height="60" viewBox="0 0 260 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="48" height="48" x="6" y="6" rx="14" fill="#09142b" />
-  <path d="M22 36V22L36 36V22" stroke="#3b82f6" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
-  <circle cx="39" cy="18" r="3" fill="#fbbf24" />
-  <text x="66" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Nova<tspan fill="#3b82f6">Finance</tspan></text>
-  <text x="67" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#94a3b8" letter-spacing="1.5">EXECUTIVE CAPITAL OS</text>
+  <defs>
+    <linearGradient id="as10-l-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#0ea5e9" />
+    </linearGradient>
+  </defs>
+  <rect width="48" height="48" x="6" y="6" rx="14" fill="#041226" />
+  <circle cx="30" cy="30" r="8" fill="url(#as10-l-grad)" />
+  <circle cx="18" cy="39" r="4" fill="url(#as10-l-grad)" />
+  <circle cx="22" cy="19" r="3.5" fill="url(#as10-l-grad)" />
+  <circle cx="42" cy="21" r="4" fill="url(#as10-l-grad)" />
+  <circle cx="40" cy="39" r="3" fill="url(#as10-l-grad)" />
+  <text x="66" y="34" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#ffffff">Nova<tspan fill="#0ea5e9">Finance</tspan></text>
+  <text x="67" y="47" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#94a3b8" letter-spacing="1.5">KINETIC TREASURY PROTOCOL</text>
 </svg>`,
       },
     ],
