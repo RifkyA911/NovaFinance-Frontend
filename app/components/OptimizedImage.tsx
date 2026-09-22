@@ -14,6 +14,7 @@ export interface OptimizedImageProps {
   unoptimized?: boolean;
   fallbackIcon?: React.ReactNode;
   fallbackText?: string;
+  style?: React.CSSProperties;
 }
 
 /**
@@ -34,6 +35,7 @@ export default function OptimizedImage({
   unoptimized,
   fallbackIcon,
   fallbackText,
+  style,
 }: OptimizedImageProps) {
   const [hasError, setHasError] = useState(false);
 
@@ -78,6 +80,7 @@ export default function OptimizedImage({
     <div
       className={`relative overflow-hidden shrink-0 transform-gpu antialiased select-none ${className}`}
       style={{
+        ...style,
         width: fill ? "100%" : width,
         height: fill ? "100%" : height,
         WebkitFontSmoothing: "antialiased",
