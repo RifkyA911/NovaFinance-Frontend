@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import OptimizedImage from "@/app/components/OptimizedImage";
 import {
   Button,
   Select,
@@ -634,10 +635,12 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
               >
                 {/* Brand / Entity Icon (Square Ratio 1:1) */}
                 {navBrandLogo || (selectedWorkspace as any)?.customBrandLogo ? (
-                  <img
+                  <OptimizedImage
                     src={navBrandLogo || (selectedWorkspace as any)?.customBrandLogo}
                     alt="Logo"
-                    className="w-6 h-6 aspect-square rounded-lg object-cover shrink-0 border border-default-200/80 dark:border-default-700/80 bg-default-100/80 dark:bg-default-800/80 shadow-2xs"
+                    width={24}
+                    height={24}
+                    className="w-6 h-6 rounded-lg border border-default-200/80 dark:border-default-700/80 shadow-2xs"
                   />
                 ) : (
                   <div
@@ -701,10 +704,12 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                       >
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
                           {(ws as any)?.customBrandLogo ? (
-                            <img
+                            <OptimizedImage
                               src={(ws as any).customBrandLogo}
                               alt={(ws as any)?.customBrandName || ws.name}
-                              className={`w-7 h-7 aspect-square rounded-lg object-cover shrink-0 border shadow-2xs ${
+                              width={28}
+                              height={28}
+                              className={`w-7 h-7 rounded-lg border shadow-2xs ${
                                 isSelected
                                   ? "border-blue-500/40"
                                   : "border-default-200/80 dark:border-default-700/80"
