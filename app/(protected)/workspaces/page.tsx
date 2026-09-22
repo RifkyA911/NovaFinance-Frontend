@@ -662,82 +662,98 @@ export default function WorkspacesPage() {
           </div>
         </div>
 
-        {/* Row 2: Buttons dan gitu aja */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* View Mode Toggle: DnD vs TanStack Table */}
-          <div className="flex items-center p-1 rounded-xl bg-white dark:bg-gray-900 border border-default-200 dark:border-default-700 shadow-2xs">
-            <button
-              type="button"
-              onClick={() => setViewMode("dnd")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                viewMode === "dnd"
-                  ? "bg-blue-600 text-white shadow-2xs"
-                  : "text-default-500 hover:text-foreground"
-              }`}
-              title="Tampilan Kartu Drag-and-Drop"
+        {/* Row 2: Controls (Left) and Actions (Far Right) */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
+          {/* Left Controls: View Mode & Shortcuts */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* View Mode Toggle: Grid vs Tabel */}
+            <div className="flex items-center p-1 rounded-xl bg-white dark:bg-gray-900 border border-default-200 dark:border-default-700 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setViewMode("dnd")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  viewMode === "dnd"
+                    ? "text-white shadow-2xs font-bold"
+                    : "text-default-500 hover:text-foreground"
+                }`}
+                style={
+                  viewMode === "dnd"
+                    ? { backgroundColor: "var(--primary-color)", color: "#ffffff" }
+                    : undefined
+                }
+                title="Tampilan Grid Kartu (Drag-and-Drop)"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>Grid Kartu</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("table")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  viewMode === "table"
+                    ? "text-white shadow-2xs font-bold"
+                    : "text-default-500 hover:text-foreground"
+                }`}
+                style={
+                  viewMode === "table"
+                    ? { backgroundColor: "var(--primary-color)", color: "#ffffff" }
+                    : undefined
+                }
+                title="Tampilan Daftar Tabel"
+              >
+                <TableIcon className="w-3.5 h-3.5" />
+                <span>Daftar Tabel</span>
+              </button>
+            </div>
+
+            {/* RBAC Info Button */}
+            <Button
+              size="sm"
+              variant="outline"
+              onPress={() => setShowRbacModal(true)}
+              className="h-9 px-3 text-xs font-semibold bg-white dark:bg-gray-900 border-default-200 dark:border-default-700 text-default-700 dark:text-default-300 hover:bg-default-50 cursor-pointer shadow-2xs"
             >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span>Kartu (DnD)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("table")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                viewMode === "table"
-                  ? "bg-blue-600 text-white shadow-2xs"
-                  : "text-default-500 hover:text-foreground"
-              }`}
-              title="Tampilan Tabel TanStack"
+              <Users className="w-3.5 h-3.5 mr-1 text-indigo-500" />
+              <span>Kelola RBAC</span>
+            </Button>
+
+            {/* Kas & Rekening Bank Shortcut */}
+            <Link
+              href="/wallets"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-gray-900 hover:bg-default-50 text-default-800 dark:text-default-200 font-semibold text-xs h-9 border border-default-200 dark:border-default-700 shadow-2xs transition cursor-pointer"
             >
-              <TableIcon className="w-3.5 h-3.5" />
-              <span>Tabel TanStack</span>
-            </button>
+              <Wallet className="w-3.5 h-3.5" style={{ color: "var(--primary-color)" }} />
+              <span>Kas & Rekening</span>
+            </Link>
           </div>
 
-          {/* AI Entity Advisor Button */}
-          <Button
-            size="sm"
-            variant="outline"
-            onPress={() => setShowAiAdvisorModal(true)}
-            className="h-9 px-3 text-xs font-semibold bg-white dark:bg-gray-900 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 cursor-pointer shadow-2xs"
-          >
-            <Sparkles className="w-3.5 h-3.5 mr-1 text-purple-500" />
-            <span>AI Advisor</span>
-          </Button>
+          {/* Far Right: AI Advisor & Tambah Workspace */}
+          <div className="flex items-center gap-2 ml-auto">
+            {/* AI Entity Advisor Button with Premium Gradient */}
+            <Button
+              size="sm"
+              onPress={() => setShowAiAdvisorModal(true)}
+              className="h-9 px-3.5 text-xs font-bold bg-linear-to-r from-violet-600 via-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/25 hover:opacity-95 active:scale-95 transition-all border border-purple-400/30 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 mr-1.5 text-amber-300 animate-pulse" />
+              <span>AI Entity Advisor</span>
+            </Button>
 
-          {/* RBAC Info Button */}
-          <Button
-            size="sm"
-            variant="outline"
-            onPress={() => setShowRbacModal(true)}
-            className="h-9 px-3 text-xs font-semibold bg-white dark:bg-gray-900 border-default-200 dark:border-default-700 text-default-700 dark:text-default-300 hover:bg-default-50 cursor-pointer shadow-2xs"
-          >
-            <Users className="w-3.5 h-3.5 mr-1 text-indigo-500" />
-            <span>Kelola RBAC</span>
-          </Button>
-
-          {/* Master Wallets Shortcut */}
-          <Link
-            href="/wallets"
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-gray-900 hover:bg-default-50 text-default-800 dark:text-default-200 font-semibold text-xs h-9 border border-default-200 dark:border-default-700 shadow-2xs transition cursor-pointer"
-          >
-            <Wallet className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <span>Wallets</span>
-          </Link>
-
-          {/* Create Workspace Button */}
-          <Button
-            size="sm"
-            variant="primary"
-            onPress={() => {
-              setError("");
-              setShowCreateModal(true);
-            }}
-            className="h-9 px-4 text-xs font-semibold bg-linear-to-r from-blue-600 via-indigo-600 to-purple-600 text-white cursor-pointer shadow-xs hover:opacity-95 transition-all"
-          >
-            <Plus className="w-3.5 h-3.5 mr-1.5" />
-            <span>Tambah Workspace</span>
-          </Button>
+            {/* Create Workspace Button */}
+            <Button
+              size="sm"
+              variant="primary"
+              onPress={() => {
+                setError("");
+                setShowCreateModal(true);
+              }}
+              className="h-9 px-4 text-xs font-semibold text-white cursor-pointer shadow-xs hover:opacity-95 active:scale-95 transition-all"
+              style={{ backgroundColor: "var(--primary-color)" }}
+            >
+              <Plus className="w-3.5 h-3.5 mr-1.5" />
+              <span>Tambah Workspace</span>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -866,25 +882,37 @@ export default function WorkspacesPage() {
 
           {/* Type Filter Pills */}
           <div className="flex items-center gap-1.5 flex-wrap text-xs">
-            {["all", "personal", "umkm", "pt"].map((type) => (
-              <button
-                key={type}
-                onClick={() => setTypeFilter(type)}
-                className={`px-3 py-1.5 rounded-xl font-semibold text-xs transition cursor-pointer shadow-2xs ${
-                  typeFilter === type
-                    ? "bg-blue-600 text-white shadow-sm shadow-blue-500/30 border border-blue-600"
-                    : "bg-white dark:bg-default-800/80 hover:bg-default-100 dark:hover:bg-default-700 border border-default-200 dark:border-default-700 text-default-700 dark:text-default-300"
-                }`}
-              >
-                {type === "all"
-                  ? "Semua Entitas"
-                  : type === "personal"
-                  ? "Personal"
-                  : type === "umkm"
-                  ? "UMKM (Usaha)"
-                  : "PT (Korporat)"}
-              </button>
-            ))}
+            {["all", "personal", "umkm", "pt"].map((type) => {
+              const isSelected = typeFilter === type;
+              return (
+                <button
+                  key={type}
+                  onClick={() => setTypeFilter(type)}
+                  className={`px-3 py-1.5 rounded-xl font-semibold text-xs transition cursor-pointer shadow-2xs ${
+                    isSelected
+                      ? "text-white shadow-xs font-bold border-transparent"
+                      : "bg-white dark:bg-default-800/80 hover:bg-default-100 dark:hover:bg-default-700 border border-default-200 dark:border-default-700 text-default-700 dark:text-default-300"
+                  }`}
+                  style={
+                    isSelected
+                      ? {
+                          backgroundColor: "var(--primary-color)",
+                          borderColor: "var(--primary-color)",
+                          color: "#ffffff",
+                        }
+                      : undefined
+                  }
+                >
+                  {type === "all"
+                    ? "Semua Entitas"
+                    : type === "personal"
+                    ? "Personal"
+                    : type === "umkm"
+                    ? "UMKM (Usaha)"
+                    : "PT (Korporat)"}
+                </button>
+              );
+            })}
           </div>
 
           {viewMode === "dnd" && (

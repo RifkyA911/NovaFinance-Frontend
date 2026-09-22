@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Landmark, CreditCard, Coins } from "lucide-react";
 
 interface BankLogoProps {
+  customLogo?: string | null;
   bankName?: string | null;
   accountName?: string | null;
   type?: string | null;
@@ -48,6 +49,7 @@ export function getBankSlug(bankName?: string | null, accountName?: string | nul
 }
 
 export default function BankLogo({
+  customLogo,
   bankName,
   accountName,
   type,
@@ -56,6 +58,22 @@ export default function BankLogo({
 }: BankLogoProps) {
   const [hasError, setHasError] = useState(false);
   const slug = getBankSlug(bankName, accountName, type);
+
+  // If custom uploaded logo is available
+  if (customLogo) {
+    return (
+      <div
+        className={`relative shrink-0 rounded-xl overflow-hidden shadow-2xs border border-default-200/80 dark:border-default-700/80 bg-white dark:bg-gray-900 ${className}`}
+        style={{ width: size, height: size }}
+      >
+        <img
+          src={customLogo}
+          alt={accountName || "Custom Logo"}
+          className="w-full h-full object-cover select-none pointer-events-none"
+        />
+      </div>
+    );
+  }
 
   if (slug && !hasError) {
     return (

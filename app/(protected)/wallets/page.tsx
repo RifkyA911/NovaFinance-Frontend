@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -35,6 +35,8 @@ import {
   LayoutGrid,
   Table as TableIcon,
   CheckCircle2,
+  Upload,
+  Image as ImageIcon,
 } from "lucide-react";
 import { Card, Button, Chip } from "@heroui/react";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -118,6 +120,9 @@ export default function WalletsMasterPage() {
   const [formAccountNumber, setFormAccountNumber] = useState("");
   const [formBalance, setFormBalance] = useState("0");
   const [formCurrency, setFormCurrency] = useState("IDR");
+  const [formCustomLogo, setFormCustomLogo] = useState<string | null>(null);
+  const [formNotes, setFormNotes] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Loading & Alert state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -146,6 +151,57 @@ export default function WalletsMasterPage() {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(num);
+  };
+
+  // Professional Multi-Currency Intl Formatter with Live Display
+  const formatIntlPreview = (val: number | string, curr: string = "IDR") => {
+    const num = typeof val === "string" ? parseFloat(val) : val;
+    if (isNaN(num)) return `${curr} 0`;
+    try {
+      const locale =
+        curr === "IDR"
+          ? "id-ID"
+          : curr === "USD"
+          ? "en-US"
+          : curr === "EUR"
+          ? "de-DE"
+          : curr === "SGD"
+          ? "en-SG"
+          : curr === "GBP"
+          ? "en-GB"
+          : curr === "JPY"
+          ? "ja-JP"
+          : "id-ID";
+      return new Intl.NumberFormat(locale, {
+        style: "currency",
+        currency: curr,
+        maximumFractionDigits: curr === "IDR" || curr === "JPY" ? 0 : 2,
+      }).format(num);
+    } catch {
+      return `${curr} ${num.toLocaleString()}`;
+    }
+  };
+
+  const formatCompactK = (num: number) => {
+    if (num >= 1000000000) return `${(num / 1000000000).toFixed(0)}M`;
+    if (num >= 1000000) return `${(num / 1000000).toFixed(0)}Jt`;
+    if (num >= 1000) return `${(num / 1000).toFixed(0)}rb`;
+    return String(num);
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      setErrorMessage("Ukuran file logo maksimal 2MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setFormCustomLogo(reader.result as string);
+      playSoftChime();
+    };
+    reader.readAsDataURL(file);
   };
 
   // KPI Calculations
@@ -193,6 +249,8 @@ export default function WalletsMasterPage() {
     setFormAccountNumber("");
     setFormBalance("0");
     setFormCurrency(currency);
+    setFormCustomLogo(null);
+    setFormNotes("");
     setErrorMessage("");
     setIsCreateModalOpen(true);
   };
@@ -206,6 +264,8 @@ export default function WalletsMasterPage() {
     setFormAccountNumber(acc.accountNumber || "");
     setFormBalance(String(acc.balance ?? "0"));
     setFormCurrency(acc.currency || currency);
+    setFormCustomLogo((acc as any).customLogo || null);
+    setFormNotes((acc as any).notes || "");
     setErrorMessage("");
     setIsEditModalOpen(true);
   };
@@ -237,7 +297,8 @@ export default function WalletsMasterPage() {
         currency: formCurrency || currency,
         bankName: formBankName.trim() || undefined,
         accountNumber: formAccountNumber.trim() || undefined,
-      });
+        ...(formCustomLogo ? { customLogo: formCustomLogo } : {}),
+      } as any);
 
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.accounts(selectedWorkspace.id) }),
@@ -273,7 +334,8 @@ export default function WalletsMasterPage() {
         currency: formCurrency || currency,
         bankName: formBankName.trim() || undefined,
         accountNumber: formAccountNumber.trim() || undefined,
-      });
+        ...(formCustomLogo ? { customLogo: formCustomLogo } : {}),
+      } as any);
 
       if (selectedWorkspace?.id) {
         await Promise.all([
@@ -433,6 +495,7 @@ export default function WalletsMasterPage() {
           return (
             <div className="flex items-center gap-3 py-1">
               <BankLogo
+                customLogo={(acc as any).customLogo}
                 bankName={acc.bankName}
                 accountName={acc.name}
                 type={acc.type}
@@ -615,7 +678,7 @@ export default function WalletsMasterPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                Master Wallets & Liquidity Hub
+                Kas & Rekening Bank
               </h1>
               <span className="text-xs px-2 py-0.5 rounded-full bg-theme-primary/10 text-theme-primary font-semibold border border-theme-primary/20">
                 Drag & Drop Ready
@@ -627,84 +690,89 @@ export default function WalletsMasterPage() {
               )}
             </div>
             <p className="text-xs sm:text-sm text-default-500 mt-0.5">
-              Manajemen brankas kas, rekening bank, dan e-wallet dengan fitur transfer antar dompet instan via drag & drop.
+              Manajemen brankas kas fisik, rekening giro bank, dan dompet digital dengan transfer instan antar akun via drag & drop.
             </p>
           </div>
         </div>
 
-        {/* Row 2: Buttons dan gitu aja */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* View Mode Toggle: DnD vs TanStack Table */}
-          <div className="flex items-center p-1 rounded-xl bg-white dark:bg-gray-900 border border-default-200 dark:border-default-700 shadow-2xs">
-            <button
-              type="button"
-              onClick={() => setViewMode("dnd")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                viewMode === "dnd"
-                  ? "text-white shadow-2xs font-bold"
-                  : "text-default-500 hover:text-foreground"
-              }`}
-              style={
-                viewMode === "dnd"
-                  ? { backgroundColor: "var(--primary-color)", color: "#ffffff" }
-                  : undefined
-              }
-              title="Tampilan Grid Kartu (Drag-and-Drop)"
+        {/* Row 2: Controls (Left) and Actions (Far Right) */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
+          {/* Left Controls: View Mode & Workspace Entity Link */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* View Mode Toggle: Grid vs Tabel */}
+            <div className="flex items-center p-1 rounded-xl bg-white dark:bg-gray-900 border border-default-200 dark:border-default-700 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setViewMode("dnd")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  viewMode === "dnd"
+                    ? "text-white shadow-2xs font-bold"
+                    : "text-default-500 hover:text-foreground"
+                }`}
+                style={
+                  viewMode === "dnd"
+                    ? { backgroundColor: "var(--primary-color)", color: "#ffffff" }
+                    : undefined
+                }
+                title="Tampilan Grid Kartu (Drag-and-Drop)"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>Grid Kartu</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("table")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  viewMode === "table"
+                    ? "text-white shadow-2xs font-bold"
+                    : "text-default-500 hover:text-foreground"
+                }`}
+                style={
+                  viewMode === "table"
+                    ? { backgroundColor: "var(--primary-color)", color: "#ffffff" }
+                    : undefined
+                }
+                title="Tampilan Daftar Tabel"
+              >
+                <TableIcon className="w-3.5 h-3.5" />
+                <span>Daftar Tabel</span>
+              </button>
+            </div>
+
+            {/* Pilih Entitas Workspace */}
+            <Link
+              href="/workspaces"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-gray-900 hover:bg-default-50 dark:hover:bg-default-800 text-default-800 dark:text-default-200 font-semibold text-xs h-9 border border-default-200 dark:border-default-700 shadow-2xs transition cursor-pointer"
             >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span>Grid Kartu</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("table")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                viewMode === "table"
-                  ? "text-white shadow-2xs font-bold"
-                  : "text-default-500 hover:text-foreground"
-              }`}
-              style={
-                viewMode === "table"
-                  ? { backgroundColor: "var(--primary-color)", color: "#ffffff" }
-                  : undefined
-              }
-              title="Tampilan Daftar Tabel"
-            >
-              <TableIcon className="w-3.5 h-3.5" />
-              <span>Daftar Tabel</span>
-            </button>
+              <Building2 className="w-3.5 h-3.5 text-default-500" />
+              <span>Pilih Entitas Workspace</span>
+            </Link>
           </div>
 
-          {/* AI Treasury Advisor Button */}
-          <Button
-            size="sm"
-            variant="outline"
-            onPress={() => setIsAiTreasuryOpen(true)}
-            className="h-9 px-3 text-xs font-semibold bg-white dark:bg-gray-900 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/40 cursor-pointer shadow-2xs"
-          >
-            <Sparkles className="w-3.5 h-3.5 mr-1 text-purple-500" />
-            <span>AI Treasury Advisor</span>
-          </Button>
+          {/* Far Right: AI Treasury Advisor & Buka Rekening Baru */}
+          <div className="flex items-center gap-2 ml-auto">
+            {/* AI Treasury Advisor Button with Premium Gradient */}
+            <Button
+              size="sm"
+              onPress={() => setIsAiTreasuryOpen(true)}
+              className="h-9 px-3.5 text-xs font-bold bg-linear-to-r from-violet-600 via-purple-600 to-indigo-600 text-white shadow-md shadow-purple-500/25 hover:opacity-95 active:scale-95 transition-all border border-purple-400/30 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 mr-1.5 text-amber-300 animate-pulse" />
+              <span>AI Treasury Advisor</span>
+            </Button>
 
-          {/* Pilih Entitas Workspace */}
-          <Link
-            href="/workspaces"
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-gray-900 hover:bg-default-50 dark:hover:bg-default-800 text-default-800 dark:text-default-200 font-semibold text-xs h-9 border border-default-200 dark:border-default-700 shadow-2xs transition cursor-pointer"
-          >
-            <Building2 className="w-3.5 h-3.5 text-default-500" />
-            <span>Pilih Entitas Workspace</span>
-          </Link>
-
-          {/* Tambah Rekening Baru Button */}
-          <Button
-            size="sm"
-            variant="primary"
-            onPress={handleOpenCreate}
-            className="h-9 px-4 text-xs font-semibold bg-theme-gradient text-white cursor-pointer shadow-xs hover:opacity-95 active:scale-95 transition-all shadow-theme-primary"
-            style={{ backgroundColor: "var(--primary-color)" }}
-          >
-            <Plus className="w-3.5 h-3.5 mr-1.5" />
-            <span>Tambah Rekening Baru</span>
-          </Button>
+            {/* Buka Rekening Baru Button */}
+            <Button
+              size="sm"
+              variant="primary"
+              onPress={handleOpenCreate}
+              className="h-9 px-4 text-xs font-semibold text-white cursor-pointer shadow-xs hover:opacity-95 active:scale-95 transition-all"
+              style={{ backgroundColor: "var(--primary-color)" }}
+            >
+              <Plus className="w-3.5 h-3.5 mr-1.5" />
+              <span>Buka Rekening Baru</span>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -1048,6 +1116,7 @@ export default function WalletsMasterPage() {
                         </div>
 
                         <BankLogo
+                          customLogo={(acc as any).customLogo}
                           bankName={acc.bankName}
                           accountName={acc.name}
                           type={acc.type}
@@ -1387,142 +1456,274 @@ export default function WalletsMasterPage() {
         </div>
       )}
 
-      {/* 8. Modal Tambah Rekening Baru */}
+      {/* 8. Modal Tambah / Buka Rekening Baru (Wide 2x Layout) */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
-          <Card className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl border border-default-200/80 dark:border-default-800 shadow-2xl overflow-hidden p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-default-100 dark:border-default-800 pb-3">
-              <div className="flex items-center gap-2">
+          <Card className="w-full max-w-3xl bg-white dark:bg-gray-900 rounded-2xl border border-default-200/80 dark:border-default-800 shadow-2xl overflow-hidden p-6 sm:p-7 space-y-5">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-default-100 dark:border-default-800 pb-3.5">
+              <div className="flex items-center gap-3">
                 <div
-                  className="p-2 rounded-xl bg-theme-primary/10 text-theme-primary"
-                  style={{ color: "var(--primary-color)" }}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center shadow-2xs shrink-0"
+                  style={{ backgroundColor: "var(--primary-subtle)", color: "var(--primary-color)" }}
                 >
                   <Plus className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-foreground">Tambah Rekening / Dompet Baru</h3>
-                  <p className="text-xs text-default-500">Daftarkan akun kas ke workspace aktif</p>
+                  <h3 className="text-base font-bold text-foreground">Buka Rekening & Akun Kas Baru</h3>
+                  <p className="text-xs text-default-500">
+                    Registrasi akun bank, e-wallet, kas fisik, atau plafon kredit dengan double-entry terintegrasi
+                  </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsCreateModalOpen(false)}
-                className="text-default-400 hover:text-foreground cursor-pointer"
+                className="p-1.5 rounded-lg text-default-400 hover:text-foreground hover:bg-default-100 dark:hover:bg-default-800 transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmitCreate} className="space-y-3.5 text-xs">
+            {/* Hidden File Input for Logo Upload */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleLogoUpload}
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              className="hidden"
+            />
+
+            <form onSubmit={handleSubmitCreate} className="space-y-5 text-xs">
               {errorMessage && (
-                <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 text-xs flex items-center gap-2">
-                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
                   <span>{errorMessage}</span>
                 </div>
               )}
 
-              {/* Tipe Rekening */}
-              <div className="space-y-1">
-                <label className="font-semibold text-foreground">Tipe Rekening / Dompet *</label>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {(["bank", "ewallet", "cash", "credit"] as const).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setFormType(t)}
-                      className={`h-8 rounded-xl font-semibold text-xs transition uppercase cursor-pointer ${
-                        formType === t
-                          ? "text-white shadow-xs font-bold"
-                          : "bg-default-50 dark:bg-default-800 text-default-600 dark:text-default-400 hover:text-foreground border border-default-200 dark:border-default-700"
-                      }`}
-                      style={
-                        formType === t
-                          ? { backgroundColor: "var(--primary-color)", color: "#ffffff" }
-                          : undefined
-                      }
-                    >
-                      {t}
-                    </button>
-                  ))}
+              {/* 2-Column Professional Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* ── Left Column: Account Details ── */}
+                <div className="space-y-3.5">
+                  {/* Tipe Rekening */}
+                  <div className="space-y-1">
+                    <label className="font-semibold text-foreground">Tipe Akun Kas *</label>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {(["bank", "ewallet", "cash", "credit"] as const).map((t) => {
+                        const isSel = formType === t;
+                        return (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setFormType(t)}
+                            className={`h-8.5 rounded-xl font-semibold text-xs transition uppercase cursor-pointer ${
+                              isSel
+                                ? "text-white shadow-xs font-bold"
+                                : "bg-default-50 dark:bg-default-800 text-default-600 dark:text-default-400 hover:text-foreground border border-default-200 dark:border-default-700"
+                            }`}
+                            style={
+                              isSel
+                                ? { backgroundColor: "var(--primary-color)", color: "#ffffff" }
+                                : undefined
+                            }
+                          >
+                            {t}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Nama Rekening */}
+                  <div className="space-y-1">
+                    <label className="font-semibold text-foreground">Nama Akun / Rekening *</label>
+                    <input
+                      type="text"
+                      placeholder="Contoh: BCA Giro Operasional, GoPay Merchant, Petty Cash HQ"
+                      value={formName}
+                      onChange={(e) => setFormName(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-default-200 dark:border-default-700 bg-default-50 dark:bg-default-800 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-primary/40"
+                      required
+                    />
+                  </div>
+
+                  {/* Bank / Provider */}
+                  <div className="space-y-1">
+                    <label className="font-semibold text-foreground">Institusi / Bank / Provider</label>
+                    <input
+                      type="text"
+                      placeholder="BCA, Mandiri, BRI, GoPay, Chase, Wise..."
+                      value={formBankName}
+                      onChange={(e) => setFormBankName(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-default-200 dark:border-default-700 bg-default-50 dark:bg-default-800 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-primary/40"
+                    />
+                    <div className="flex items-center gap-1 mt-1.5 overflow-x-auto py-0.5">
+                      {BANK_PRESETS.slice(0, 10).map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setFormBankName(p)}
+                          className="px-2.5 py-1 rounded-md text-[10px] bg-default-50 dark:bg-default-800 hover:bg-default-100 dark:hover:bg-default-700 border border-default-200 dark:border-default-700 text-default-600 dark:text-default-300 shrink-0 cursor-pointer font-medium"
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Nomor Rekening */}
+                  <div className="space-y-1">
+                    <label className="font-semibold text-foreground">Nomor Rekening / VA / IBAN (Opsional)</label>
+                    <input
+                      type="text"
+                      placeholder="Contoh: 123-456-7890 atau 0812-xxxx-xxxx"
+                      value={formAccountNumber}
+                      onChange={(e) => setFormAccountNumber(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-default-200 dark:border-default-700 bg-default-50 dark:bg-default-800 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-primary/40 font-mono"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {/* Nama Rekening */}
-              <div className="space-y-1">
-                <label className="font-semibold text-foreground">Nama Akun / Rekening *</label>
-                <input
-                  type="text"
-                  placeholder="Contoh: BCA Tahapan, Mandiri Utama, GoPay Harian"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-default-200 dark:border-default-700 bg-default-50 dark:bg-default-800 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-primary/40"
-                  required
-                />
-              </div>
+                {/* ── Right Column: Visual, Currency & Balance ── */}
+                <div className="space-y-3.5">
+                  {/* Brand Visual & Logo Upload */}
+                  <div className="p-3 rounded-xl bg-default-50/80 dark:bg-default-800/50 border border-default-200/60 dark:border-default-700/60 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="font-semibold text-foreground text-xs">Identitas Visual & Logo</label>
+                      <span className="text-[10px] text-default-400">PNG, SVG, JPG (Max 2MB)</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <BankLogo
+                        customLogo={formCustomLogo}
+                        bankName={formBankName}
+                        accountName={formName}
+                        type={formType}
+                        size={48}
+                      />
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-default-900 border border-default-200 dark:border-default-700 hover:bg-default-100 text-foreground shadow-2xs flex items-center gap-1.5 transition cursor-pointer"
+                          >
+                            <Upload className="w-3.5 h-3.5 text-default-500" />
+                            <span>Upload Logo</span>
+                          </button>
+                          {formCustomLogo && (
+                            <button
+                              type="button"
+                              onClick={() => setFormCustomLogo(null)}
+                              className="px-2 py-1 rounded-lg text-[11px] font-medium text-rose-600 hover:bg-rose-500/10 transition cursor-pointer"
+                            >
+                              Reset Default
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-[10.5px] text-default-400 leading-tight">
+                          {formCustomLogo
+                            ? "Logo kustom terpasang untuk rekening ini."
+                            : "Logo otomatis dicocokkan dengan nama bank / e-wallet jika tersedia."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-              {/* Bank / Provider */}
-              <div className="space-y-1">
-                <label className="font-semibold text-foreground">Nama Bank / Provider</label>
-                <input
-                  type="text"
-                  placeholder="BCA, Mandiri, BRI, GoPay..."
-                  value={formBankName}
-                  onChange={(e) => setFormBankName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-default-200 dark:border-default-700 bg-default-50 dark:bg-default-800 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-primary/40"
-                />
-                <div className="flex items-center gap-1 mt-1 overflow-x-auto py-0.5">
-                  {BANK_PRESETS.slice(0, 7).map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setFormBankName(p)}
-                      className="px-2 py-0.5 rounded-md text-[10px] bg-default-50 dark:bg-default-800 hover:bg-default-100 dark:hover:bg-default-700 border border-default-200 dark:border-default-700 text-default-600 dark:text-default-300 shrink-0 cursor-pointer"
+                  {/* Mata Uang Akun */}
+                  <div className="space-y-1">
+                    <label className="font-semibold text-foreground">Mata Uang Akun (Currency)</label>
+                    <select
+                      value={formCurrency}
+                      onChange={(e) => setFormCurrency(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-default-200 dark:border-default-700 bg-default-50 dark:bg-default-800 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-primary/40 font-mono font-medium"
                     >
-                      {p}
-                    </button>
-                  ))}
+                      <option value="IDR">IDR - Indonesian Rupiah (Rp)</option>
+                      <option value="USD">USD - US Dollar ($)</option>
+                      <option value="EUR">EUR - Euro (€)</option>
+                      <option value="SGD">SGD - Singapore Dollar (S$)</option>
+                      <option value="JPY">JPY - Japanese Yen (¥)</option>
+                      <option value="GBP">GBP - British Pound (£)</option>
+                      <option value="AUD">AUD - Australian Dollar (A$)</option>
+                      <option value="MYR">MYR - Malaysian Ringgit (RM)</option>
+                    </select>
+                  </div>
+
+                  {/* Saldo Awal Likuid with Live Intl Preview */}
+                  <div className="space-y-1.5 p-3 rounded-xl bg-default-50/80 dark:bg-default-800/50 border border-default-200/60 dark:border-default-700/60">
+                    <div className="flex items-center justify-between">
+                      <label className="font-semibold text-foreground text-xs">Saldo Awal ({formCurrency}) *</label>
+                      <span className="text-[10px] text-default-400 font-mono">Format Intl Aktif</span>
+                    </div>
+                    <input
+                      type="number"
+                      step="1000"
+                      value={formBalance}
+                      onChange={(e) => setFormBalance(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-default-200 dark:border-default-700 bg-white dark:bg-default-900 text-foreground text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-theme-primary/40"
+                      placeholder="0"
+                      required
+                    />
+
+                    {/* Live Intl Currency Box */}
+                    <div className="p-2 rounded-lg bg-default-100/80 dark:bg-default-800/80 border border-default-200/60 dark:border-default-700/60 flex items-center justify-between">
+                      <span className="text-[10px] text-default-400 uppercase font-mono tracking-wider">Format Resmi Intl:</span>
+                      <span className="font-mono font-extrabold text-xs" style={{ color: "var(--primary-color)" }}>
+                        {formatIntlPreview(formBalance, formCurrency)}
+                      </span>
+                    </div>
+
+                    {/* Quick chips */}
+                    <div className="flex items-center gap-1 pt-1 flex-wrap">
+                      {[1000000, 5000000, 10000000, 50000000].map((v) => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setFormBalance(String(Number(formBalance || 0) + v))}
+                          className="px-2 py-0.5 rounded-md text-[10px] bg-white dark:bg-default-900 border border-default-200 dark:border-default-700 text-default-600 dark:text-default-300 font-mono hover:bg-default-100 cursor-pointer"
+                        >
+                          +{formatCompactK(v)}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setFormBalance("0")}
+                        className="px-2 py-0.5 rounded-md text-[10px] bg-rose-500/10 text-rose-600 border border-rose-500/20 font-mono hover:bg-rose-500/20 cursor-pointer"
+                      >
+                        Reset 0
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Catatan / Peruntukan Akun */}
+                  <div className="space-y-1">
+                    <label className="font-semibold text-foreground">Catatan & Peruntukan Akun (Opsional)</label>
+                    <input
+                      type="text"
+                      placeholder="Misal: Operasional payroll karyawan & transfer vendor"
+                      value={formNotes}
+                      onChange={(e) => setFormNotes(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-default-200 dark:border-default-700 bg-default-50 dark:bg-default-800 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-primary/40"
+                    />
+                  </div>
                 </div>
-              </div>
-
-              {/* Nomor Rekening */}
-              <div className="space-y-1">
-                <label className="font-semibold text-foreground">Nomor Rekening / No. HP (Opsional)</label>
-                <input
-                  type="text"
-                  placeholder="Contoh: 1234567890"
-                  value={formAccountNumber}
-                  onChange={(e) => setFormAccountNumber(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-default-200 dark:border-default-700 bg-default-50 dark:bg-default-800 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-primary/40 font-mono"
-                />
-              </div>
-
-              {/* Saldo Awal */}
-              <div className="space-y-1">
-                <label className="font-semibold text-foreground">Saldo Awal ({currency})</label>
-                <input
-                  type="number"
-                  step="1000"
-                  value={formBalance}
-                  onChange={(e) => setFormBalance(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-default-200 dark:border-default-700 bg-default-50 dark:bg-default-800 text-foreground text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-theme-primary/40"
-                />
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-default-100 dark:border-default-800">
+              <div className="flex items-center justify-end gap-2.5 pt-3.5 border-t border-default-100 dark:border-default-800">
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="px-3.5 py-2 rounded-xl bg-default-100 dark:bg-default-800 hover:bg-default-200 dark:hover:bg-default-700 text-foreground text-xs font-medium cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-default-100 dark:bg-default-800 hover:bg-default-200 dark:hover:bg-default-700 text-foreground text-xs font-semibold cursor-pointer transition"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-xl text-white font-semibold text-xs shadow-xs hover:opacity-95 disabled:opacity-50 transition cursor-pointer"
+                  className="px-5 py-2 rounded-xl text-white font-semibold text-xs shadow-xs hover:opacity-95 disabled:opacity-50 transition cursor-pointer"
                   style={{ backgroundColor: "var(--primary-color)" }}
                 >
-                  {isSubmitting ? "Menyimpan..." : "Simpan Rekening"}
+                  {isSubmitting ? "Mendaftarkan Rekening..." : "Buka Rekening Kas"}
                 </button>
               </div>
             </form>
@@ -1530,146 +1731,262 @@ export default function WalletsMasterPage() {
         </div>
       )}
 
-      {/* 9. Modal Edit Rekening */}
+      {/* 9. Modal Edit Rekening & Penyesuaian Saldo (Wide 2x Layout) */}
       {isEditModalOpen && selectedAccount && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in">
-          <Card className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl border border-default-200/80 dark:border-default-800 shadow-2xl overflow-hidden p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-default-100 dark:border-default-800 pb-3">
-              <div className="flex items-center gap-2">
+          <Card className="w-full max-w-3xl bg-white dark:bg-gray-900 rounded-2xl border border-default-200/80 dark:border-default-800 shadow-2xl overflow-hidden p-6 sm:p-7 space-y-5">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-default-100 dark:border-default-800 pb-3.5">
+              <div className="flex items-center gap-3">
                 <div
-                  className="p-2 rounded-xl bg-theme-primary/10 text-theme-primary"
-                  style={{ color: "var(--primary-color)" }}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center shadow-2xs shrink-0"
+                  style={{ backgroundColor: "var(--primary-subtle)", color: "var(--primary-color)" }}
                 >
                   <Edit2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-foreground">Edit Rekening / Sesuaikan Saldo</h3>
-                  <p className="text-xs text-default-500">Perbarui informasi rekening kas</p>
+                  <h3 className="text-base font-bold text-foreground">Edit Rekening & Rekonsiliasi Kas</h3>
+                  <p className="text-xs text-default-500">
+                    Perbarui profil institusi, identitas visual, atau rekonsiliasi saldo kas
+                  </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsEditModalOpen(false)}
-                className="text-default-400 hover:text-foreground cursor-pointer"
+                className="p-1.5 rounded-lg text-default-400 hover:text-foreground hover:bg-default-100 dark:hover:bg-default-800 transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmitUpdate} className="space-y-3.5 text-xs">
+            {/* Hidden File Input for Logo Upload */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleLogoUpload}
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              className="hidden"
+            />
+
+            <form onSubmit={handleSubmitUpdate} className="space-y-5 text-xs">
               {errorMessage && (
-                <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 text-xs flex items-center gap-2">
-                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
                   <span>{errorMessage}</span>
                 </div>
               )}
 
-              {/* Tipe Rekening */}
-              <div className="space-y-1">
-                <label className="font-semibold text-foreground">Tipe Rekening / Dompet</label>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {(["bank", "ewallet", "cash", "credit"] as const).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setFormType(t)}
-                      className={`h-8 rounded-xl font-semibold text-xs transition uppercase cursor-pointer ${
-                        formType === t
-                          ? "text-white shadow-xs font-bold"
-                          : "bg-default-50 dark:bg-default-800 text-default-600 dark:text-default-400 hover:text-foreground border border-default-200 dark:border-default-700"
-                      }`}
-                      style={
-                        formType === t
-                          ? { backgroundColor: "var(--primary-color)", color: "#ffffff" }
-                          : undefined
-                      }
+              {/* 2-Column Professional Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* ── Left Column: Account Details ── */}
+                <div className="space-y-3.5">
+                  {/* Tipe Rekening */}
+                  <div className="space-y-1">
+                    <label className="font-semibold text-foreground">Tipe Akun Kas</label>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {(["bank", "ewallet", "cash", "credit"] as const).map((t) => {
+                        const isSel = formType === t;
+                        return (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setFormType(t)}
+                            className={`h-8.5 rounded-xl font-semibold text-xs transition uppercase cursor-pointer ${
+                              isSel
+                                ? "text-white shadow-xs font-bold"
+                                : "bg-default-50 dark:bg-default-800 text-default-600 dark:text-default-400 hover:text-foreground border border-default-200 dark:border-default-700"
+                            }`}
+                            style={
+                              isSel
+                                ? { backgroundColor: "var(--primary-color)", color: "#ffffff" }
+                                : undefined
+                            }
+                          >
+                            {t}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Nama Rekening */}
+                  <div className="space-y-1">
+                    <label className="font-semibold text-foreground">Nama Akun / Rekening *</label>
+                    <input
+                      type="text"
+                      value={formName}
+                      onChange={(e) => setFormName(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-default-200 dark:border-default-700 bg-default-50 dark:bg-default-800 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-primary/40"
+                      required
+                    />
+                  </div>
+
+                  {/* Bank / Provider */}
+                  <div className="space-y-1">
+                    <label className="font-semibold text-foreground">Institusi / Bank / Provider</label>
+                    <input
+                      type="text"
+                      placeholder="BCA, Mandiri, BRI, GoPay, Chase, Wise..."
+                      value={formBankName}
+                      onChange={(e) => setFormBankName(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-default-200 dark:border-default-700 bg-default-50 dark:bg-default-800 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-primary/40"
+                    />
+                    <div className="flex items-center gap-1 mt-1.5 overflow-x-auto py-0.5">
+                      {BANK_PRESETS.slice(0, 10).map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setFormBankName(p)}
+                          className="px-2.5 py-1 rounded-md text-[10px] bg-default-50 dark:bg-default-800 hover:bg-default-100 dark:hover:bg-default-700 border border-default-200 dark:border-default-700 text-default-600 dark:text-default-300 shrink-0 cursor-pointer font-medium"
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Nomor Rekening */}
+                  <div className="space-y-1">
+                    <label className="font-semibold text-foreground">Nomor Rekening / Akun</label>
+                    <input
+                      type="text"
+                      value={formAccountNumber}
+                      onChange={(e) => setFormAccountNumber(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-default-200 dark:border-default-700 bg-default-50 dark:bg-default-800 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-primary/40 font-mono"
+                    />
+                  </div>
+                </div>
+
+                {/* ── Right Column: Visual, Currency & Reconciliation ── */}
+                <div className="space-y-3.5">
+                  {/* Brand Visual & Logo Upload */}
+                  <div className="p-3 rounded-xl bg-default-50/80 dark:bg-default-800/50 border border-default-200/60 dark:border-default-700/60 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="font-semibold text-foreground text-xs">Identitas Visual & Logo</label>
+                      <span className="text-[10px] text-default-400">PNG, SVG, JPG (Max 2MB)</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <BankLogo
+                        customLogo={formCustomLogo}
+                        bankName={formBankName}
+                        accountName={formName}
+                        type={formType}
+                        size={48}
+                      />
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-default-900 border border-default-200 dark:border-default-700 hover:bg-default-100 text-foreground shadow-2xs flex items-center gap-1.5 transition cursor-pointer"
+                          >
+                            <Upload className="w-3.5 h-3.5 text-default-500" />
+                            <span>Ganti Logo</span>
+                          </button>
+                          {formCustomLogo && (
+                            <button
+                              type="button"
+                              onClick={() => setFormCustomLogo(null)}
+                              className="px-2 py-1 rounded-lg text-[11px] font-medium text-rose-600 hover:bg-rose-500/10 transition cursor-pointer"
+                            >
+                              Reset Default
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-[10.5px] text-default-400 leading-tight">
+                          {formCustomLogo
+                            ? "Logo kustom terpasang untuk rekening ini."
+                            : "Logo otomatis dicocokkan dengan nama bank / e-wallet jika tersedia."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mata Uang Akun */}
+                  <div className="space-y-1">
+                    <label className="font-semibold text-foreground">Mata Uang Akun (Currency)</label>
+                    <select
+                      value={formCurrency}
+                      onChange={(e) => setFormCurrency(e.target.value)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-default-200 dark:border-default-700 bg-default-50 dark:bg-default-800 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-primary/40 font-mono font-medium"
                     >
-                      {t}
-                    </button>
-                  ))}
+                      <option value="IDR">IDR - Indonesian Rupiah (Rp)</option>
+                      <option value="USD">USD - US Dollar ($)</option>
+                      <option value="EUR">EUR - Euro (€)</option>
+                      <option value="SGD">SGD - Singapore Dollar (S$)</option>
+                      <option value="JPY">JPY - Japanese Yen (¥)</option>
+                      <option value="GBP">GBP - British Pound (£)</option>
+                      <option value="AUD">AUD - Australian Dollar (A$)</option>
+                      <option value="MYR">MYR - Malaysian Ringgit (RM)</option>
+                    </select>
+                  </div>
+
+                  {/* Penyesuaian Saldo Kas with Live Intl Preview */}
+                  <div className="space-y-1.5 p-3 rounded-xl bg-default-50/80 dark:bg-default-800/50 border border-default-200/60 dark:border-default-700/60">
+                    <div className="flex items-center justify-between">
+                      <label className="font-semibold text-foreground text-xs">Penyesuaian Saldo Kas ({formCurrency})</label>
+                      <span className="text-[10px] text-default-400 font-mono">Rekonsiliasi Kas</span>
+                    </div>
+                    <input
+                      type="number"
+                      step="1000"
+                      value={formBalance}
+                      onChange={(e) => setFormBalance(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-default-200 dark:border-default-700 bg-white dark:bg-default-900 text-foreground text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-theme-primary/40"
+                    />
+
+                    {/* Live Intl Currency Box */}
+                    <div className="p-2 rounded-lg bg-default-100/80 dark:bg-default-800/80 border border-default-200/60 dark:border-default-700/60 flex items-center justify-between">
+                      <span className="text-[10px] text-default-400 uppercase font-mono tracking-wider">Format Resmi Intl:</span>
+                      <span className="font-mono font-extrabold text-xs" style={{ color: "var(--primary-color)" }}>
+                        {formatIntlPreview(formBalance, formCurrency)}
+                      </span>
+                    </div>
+
+                    {/* Quick chips */}
+                    <div className="flex items-center gap-1 pt-1 flex-wrap">
+                      {[1000000, 5000000, 10000000, 50000000].map((v) => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setFormBalance(String(Number(formBalance || 0) + v))}
+                          className="px-2 py-0.5 rounded-md text-[10px] bg-white dark:bg-default-900 border border-default-200 dark:border-default-700 text-default-600 dark:text-default-300 font-mono hover:bg-default-100 cursor-pointer"
+                        >
+                          +{formatCompactK(v)}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setFormBalance("0")}
+                        className="px-2 py-0.5 rounded-md text-[10px] bg-rose-500/10 text-rose-600 border border-rose-500/20 font-mono hover:bg-rose-500/20 cursor-pointer"
+                      >
+                        Reset 0
+                      </button>
+                    </div>
+
+                    <p className="text-[10.5px] text-default-400 leading-relaxed pt-1">
+                      💡 Gunakan fitur ini untuk set saldo awal akun baru atau rekonsiliasi opname kas fisik. Untuk mutasi operasional harian, catat di menu Transaksi agar double-entry ledger tetap seimbang.
+                    </p>
+                  </div>
                 </div>
-              </div>
-
-              {/* Nama Rekening */}
-              <div className="space-y-1">
-                <label className="font-semibold text-foreground">Nama Akun / Rekening *</label>
-                <input
-                  type="text"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-default-200 dark:border-default-700 bg-default-50 dark:bg-default-800 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-primary/40"
-                  required
-                />
-              </div>
-
-              {/* Bank / Provider */}
-              <div className="space-y-1">
-                <label className="font-semibold text-foreground">Nama Bank / Provider</label>
-                <input
-                  type="text"
-                  placeholder="BCA, Mandiri, BRI, GoPay, Chase..."
-                  value={formBankName}
-                  onChange={(e) => setFormBankName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-default-200 dark:border-default-700 bg-default-50 dark:bg-default-800 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-primary/40"
-                />
-                <div className="flex items-center gap-1 mt-1 overflow-x-auto py-0.5">
-                  {BANK_PRESETS.slice(0, 8).map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => setFormBankName(p)}
-                      className="px-2 py-0.5 rounded-md text-[10px] bg-default-50 dark:bg-default-800 hover:bg-default-100 dark:hover:bg-default-700 border border-default-200 dark:border-default-700 text-default-600 dark:text-default-300 shrink-0 cursor-pointer"
-                    >
-                      {p}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Nomor Rekening */}
-              <div className="space-y-1">
-                <label className="font-semibold text-foreground">Nomor Rekening / Akun</label>
-                <input
-                  type="text"
-                  value={formAccountNumber}
-                  onChange={(e) => setFormAccountNumber(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-default-200 dark:border-default-700 bg-default-50 dark:bg-default-800 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-primary/40 font-mono"
-                />
-              </div>
-
-              {/* Penyesuaian Saldo Kas */}
-              <div className="space-y-1.5 p-3 rounded-xl bg-default-50/80 dark:bg-default-800/50 border border-default-200/60 dark:border-default-700/60">
-                <div className="flex items-center justify-between">
-                  <label className="font-semibold text-foreground text-xs">Penyesuaian Saldo Kas ({currency})</label>
-                  <span className="text-[10px] text-default-400 font-mono">Rekonsiliasi / Saldo Awal</span>
-                </div>
-                <input
-                  type="number"
-                  step="1000"
-                  value={formBalance}
-                  onChange={(e) => setFormBalance(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-default-200 dark:border-default-700 bg-white dark:bg-default-900 text-foreground text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-theme-primary/40"
-                />
-                <p className="text-[10.5px] text-default-400 leading-relaxed">
-                  💡 <strong>Mengapa saldo bisa disesuaikan?</strong> Fitur ini berguna saat onboarding akun baru atau opname fisik (rekonsiliasi selisih kas). Untuk transaksi operasional reguler, catat melalui menu Transaksi agar buku besar (double-entry ledger) tetap presisi.
-                </p>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-default-100 dark:border-default-800">
+              <div className="flex items-center justify-end gap-2.5 pt-3.5 border-t border-default-100 dark:border-default-800">
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-3.5 py-2 rounded-xl bg-default-100 dark:bg-default-800 hover:bg-default-200 dark:hover:bg-default-700 text-foreground text-xs font-medium cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-default-100 dark:bg-default-800 hover:bg-default-200 dark:hover:bg-default-700 text-foreground text-xs font-semibold cursor-pointer transition"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-xl text-white font-semibold text-xs shadow-xs hover:opacity-95 disabled:opacity-50 transition cursor-pointer"
+                  className="px-5 py-2 rounded-xl text-white font-semibold text-xs shadow-xs hover:opacity-95 disabled:opacity-50 transition cursor-pointer"
                   style={{ backgroundColor: "var(--primary-color)" }}
                 >
-                  {isSubmitting ? "Menyimpan..." : "Perbarui Rekening"}
+                  {isSubmitting ? "Menyimpan Perubahan..." : "Perbarui Rekening"}
                 </button>
               </div>
             </form>
