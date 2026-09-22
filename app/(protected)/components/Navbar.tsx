@@ -637,7 +637,7 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                   <img
                     src={navBrandLogo}
                     alt="Logo"
-                    className="w-5.5 h-5.5 aspect-square rounded-md object-contain shrink-0 border border-default-200/80 dark:border-default-700/80 bg-default-100/80 dark:bg-default-800/80 p-0.5 shadow-2xs"
+                    className="w-5.5 h-5.5 aspect-square rounded-md object-cover shrink-0 border border-default-200/80 dark:border-default-700/80 bg-default-100/80 dark:bg-default-800/80 shadow-2xs"
                   />
                 ) : (
                   <div
@@ -700,15 +700,27 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                          <div
-                            className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
-                              isSelected
-                                ? "bg-blue-500 text-white shadow-2xs"
-                                : "bg-default-100 dark:bg-default-800 text-default-600 dark:text-default-300"
-                            }`}
-                          >
-                            <Building2 className="w-3.5 h-3.5" />
-                          </div>
+                          {(ws as any)?.customBrandLogo ? (
+                            <img
+                              src={(ws as any).customBrandLogo}
+                              alt={(ws as any)?.customBrandName || ws.name}
+                              className={`w-7 h-7 rounded-lg object-cover shrink-0 border shadow-2xs ${
+                                isSelected
+                                  ? "border-blue-500/40"
+                                  : "border-default-200/80 dark:border-default-700/80"
+                              }`}
+                            />
+                          ) : (
+                            <div
+                              className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                                isSelected
+                                  ? "bg-blue-500 text-white shadow-2xs"
+                                  : "bg-default-100 dark:bg-default-800 text-default-600 dark:text-default-300"
+                              }`}
+                            >
+                              <Building2 className="w-3.5 h-3.5" />
+                            </div>
+                          )}
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-xs font-bold text-foreground leading-tight">
                               {(ws as any)?.customBrandName || ws.name}
