@@ -638,8 +638,8 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                   <OptimizedImage
                     src={navBrandLogo || (selectedWorkspace as any)?.customBrandLogo}
                     alt="Logo"
-                    width={24}
-                    height={24}
+                    width={48}
+                    height={48}
                     className="w-6 h-6 rounded-lg border border-default-200/80 dark:border-default-700/80 shadow-2xs"
                   />
                 ) : (
@@ -707,8 +707,8 @@ export default function Navbar({ onToggleSidebar }: NavbarProps) {
                             <OptimizedImage
                               src={(ws as any).customBrandLogo}
                               alt={(ws as any)?.customBrandName || ws.name}
-                              width={28}
-                              height={28}
+                              width={56}
+                              height={56}
                               className={`w-7 h-7 rounded-lg border shadow-2xs ${
                                 isSelected
                                   ? "border-blue-500/40"
