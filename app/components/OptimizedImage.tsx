@@ -64,7 +64,8 @@ export default function OptimizedImage({
 
   const isDataUri = src.startsWith("data:") || src.startsWith("blob:");
   const isSvg = src.endsWith(".svg") || src.includes("data:image/svg+xml");
-  const shouldSkipOptimization = unoptimized ?? (isDataUri || isSvg);
+  const isLocalOrPrivate = src.includes("localhost") || src.includes("127.0.0.1");
+  const shouldSkipOptimization = unoptimized ?? (isDataUri || isSvg || isLocalOrPrivate);
 
   return (
     <div
