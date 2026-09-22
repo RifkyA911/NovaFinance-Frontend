@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+    <rect width="48" height="48" rx="12" fill="#EE4D2D"/>
+    <path d="M16 27C17 30 20 32 24 32C28 32 31 29.5 31 26C31 22 26 21 24 20C21.5 19 18 18 18 15C18 12.5 20.5 10.5 24 10.5C27 10.5 29.5 12 30.5 14" stroke="white" stroke-width="3.5" stroke-linecap="round"/>
+    <text x="24" y="39" font-family="Arial, sans-serif" font-size="6.5" font-weight="bold" fill="white" text-anchor="middle">SEABANK</text>
+  </svg>

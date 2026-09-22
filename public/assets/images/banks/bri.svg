@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+    <rect width="48" height="48" rx="12" fill="#00529C"/>
+    <rect x="10" y="16" width="28" height="16" rx="4" fill="#003366"/>
+    <text x="24" y="28" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#FFFFFF" text-anchor="middle">BRI</text>
+    <path d="M10 29C14 30.5 20 31 24 31C28 31 34 30.5 38 29" stroke="#F37021" stroke-width="2.5" stroke-linecap="round"/>
+  </svg>

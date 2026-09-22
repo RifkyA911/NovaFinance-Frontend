@@ -50,22 +50,37 @@ import {
   type LegacyColumnDef,
 } from "@tanstack/react-table/legacy";
 import { flexRender, type SortingState } from "@tanstack/react-table";
+import BankLogo from "@/app/components/BankLogo";
 
 const BANK_PRESETS = [
   "BCA",
   "Mandiri",
   "BRI",
   "BNI",
+  "BSI (Syariah)",
   "Bank Jago",
   "SeaBank",
-  "BSI (Syariah)",
   "CIMB Niaga",
   "Permata",
+  "Danamon",
+  "Blu BCA",
+  "Jenius",
+  "OCBC NISP",
   "GoPay",
   "OVO",
   "DANA",
   "ShopeePay",
+  "LinkAja",
+  "Chase",
+  "Bank of America",
+  "Wells Fargo",
+  "Citibank",
+  "PayPal",
+  "Wise",
+  "Stripe",
+  "Revolut",
   "Cash / Tunai",
+  "Crypto Wallet",
 ];
 
 export default function WalletsMasterPage() {
@@ -414,31 +429,15 @@ export default function WalletsMasterPage() {
         header: "Rekening & Institusi",
         cell: ({ row }) => {
           const acc = row.original;
-          const isBank = acc.type === "bank";
-          const isEwallet = acc.type === "ewallet";
-          const isCash = acc.type === "cash";
 
           return (
             <div className="flex items-center gap-3 py-1">
-              <div
-                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-2xs ${
-                  isBank
-                    ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                    : isEwallet
-                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                    : isCash
-                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                    : "bg-purple-500/10 text-purple-600 dark:text-purple-400"
-                }`}
-              >
-                {isBank ? (
-                  <Landmark className="w-4.5 h-4.5" />
-                ) : isEwallet ? (
-                  <CreditCard className="w-4.5 h-4.5" />
-                ) : (
-                  <Coins className="w-4.5 h-4.5" />
-                )}
-              </div>
+              <BankLogo
+                bankName={acc.bankName}
+                accountName={acc.name}
+                type={acc.type}
+                size={36}
+              />
               <div className="min-w-0">
                 <span className="font-bold text-xs text-foreground block truncate">{acc.name}</span>
                 <span className="text-[10px] text-default-400">
@@ -484,14 +483,18 @@ export default function WalletsMasterPage() {
           const sharePercent = totalBalance > 0 ? Math.max(0, (balanceNum / totalBalance) * 100) : 0;
 
           return (
-            <div className="space-y-1">
-              <div className={`font-mono font-bold text-xs ${balanceNum < 0 ? "text-rose-500" : "text-foreground"}`}>
+            <div>
+              <span
+                className={`font-mono font-bold text-xs ${
+                  balanceNum < 0 ? "text-rose-500" : "text-foreground"
+                }`}
+              >
                 {formatCurrency(balanceNum)}
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-20 bg-default-100 dark:bg-default-800 rounded-full h-1.5 overflow-hidden">
+              </span>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="w-16 bg-default-100 dark:bg-default-800 rounded-full h-1 overflow-hidden">
                   <div
-                    className="h-full rounded-full transition-all duration-300"
+                    className="h-full rounded-full transition-all"
                     style={{
                       width: `${Math.min(100, sharePercent)}%`,
                       backgroundColor: "var(--primary-color)",
@@ -509,17 +512,31 @@ export default function WalletsMasterPage() {
         header: "Tipe & Kategori",
         cell: ({ row }) => {
           const type = row.original.type;
-          const badgeStyles =
-            type === "bank"
-              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
-              : type === "ewallet"
-              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-              : type === "cash"
-              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-              : "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20";
+          const isBank = type === "bank";
+          const isEwallet = type === "ewallet";
+          const isCash = type === "cash";
 
           return (
-            <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${badgeStyles}`}>
+            <span
+              className={
+                isBank
+                  ? "inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase border"
+                  : isEwallet
+                  ? "inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                  : isCash
+                  ? "inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                  : "inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
+              }
+              style={
+                isBank
+                  ? {
+                      backgroundColor: "var(--primary-subtle)",
+                      color: "var(--primary-color)",
+                      borderColor: "var(--primary-ring)",
+                    }
+                  : undefined
+              }
+            >
               {type}
             </span>
           );
@@ -632,10 +649,10 @@ export default function WalletsMasterPage() {
                   ? { backgroundColor: "var(--primary-color)", color: "#ffffff" }
                   : undefined
               }
-              title="Tampilan Kartu Drag-and-Drop"
+              title="Tampilan Grid Kartu (Drag-and-Drop)"
             >
               <LayoutGrid className="w-3.5 h-3.5" />
-              <span>Kartu (DnD)</span>
+              <span>Grid Kartu</span>
             </button>
             <button
               type="button"
@@ -650,10 +667,10 @@ export default function WalletsMasterPage() {
                   ? { backgroundColor: "var(--primary-color)", color: "#ffffff" }
                   : undefined
               }
-              title="Tampilan Tabel TanStack"
+              title="Tampilan Daftar Tabel"
             >
               <TableIcon className="w-3.5 h-3.5" />
-              <span>Tabel TanStack</span>
+              <span>Daftar Tabel</span>
             </button>
           </div>
 
@@ -694,93 +711,122 @@ export default function WalletsMasterPage() {
       {/* ── 2. Top Summary KPI Cards (High Contrast Surface) ─────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Liquid Capital */}
-        <Card className="p-4.5 rounded-2xl border border-default-200/80 dark:border-default-800 bg-white dark:bg-gray-900 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-default-500 uppercase tracking-wider">
-              Total Saldo Likuid
-            </span>
-            <div
-              className="p-1.5 rounded-lg bg-theme-primary/10 text-theme-primary"
-              style={{ color: "var(--primary-color)" }}
-            >
-              <Wallet className="w-4 h-4" />
+        <Card className="p-4.5 rounded-2xl border border-default-200/80 dark:border-default-800 bg-white dark:bg-gray-900 shadow-2xs flex flex-col justify-between min-h-[136px]">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-default-500 uppercase tracking-wider">
+                Total Saldo Likuid
+              </span>
+              <div
+                className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                style={{ backgroundColor: "var(--primary-subtle)", color: "var(--primary-color)" }}
+              >
+                <Wallet className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <span
+                className="text-2xl font-extrabold tracking-tight block truncate"
+                style={{ color: "var(--primary-color)" }}
+                title={formatCurrency(totalBalance)}
+              >
+                {formatCurrency(totalBalance)}
+              </span>
             </div>
           </div>
-          <div className="mt-2 flex items-baseline justify-between">
+          <div className="mt-3 pt-2.5 border-t border-default-100 dark:border-default-800/80 flex items-center justify-between text-xs">
+            <span className="text-[11px] text-default-400 truncate">Seluruh saldo kas terintegrasi</span>
             <span
-              className="text-2xl font-bold tracking-tight"
-              style={{ color: "var(--primary-color)" }}
+              className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md shrink-0"
+              style={{ backgroundColor: "var(--primary-subtle)", color: "var(--primary-color)" }}
             >
-              {formatCurrency(totalBalance)}
-            </span>
-            <span className="text-xs text-default-400 font-mono font-semibold">
               {accounts.length} rekening
             </span>
           </div>
-          <p className="mt-2 text-xs text-default-500">Seluruh saldo kas terintegrasi dalam entitas ini</p>
         </Card>
 
         {/* Bank Accounts Total */}
-        <Card className="p-4.5 rounded-2xl border border-default-200/80 dark:border-default-800 bg-white dark:bg-gray-900 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-default-500 uppercase tracking-wider">
-              Rekening Bank
-            </span>
-            <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
-              <Landmark className="w-4 h-4" />
+        <Card className="p-4.5 rounded-2xl border border-default-200/80 dark:border-default-800 bg-white dark:bg-gray-900 shadow-2xs flex flex-col justify-between min-h-[136px]">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-default-500 uppercase tracking-wider">
+                Rekening Bank
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                <Landmark className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <span
+                className="text-2xl font-extrabold text-foreground tracking-tight block truncate"
+                title={formatCurrency(bankTotal)}
+              >
+                {formatCurrency(bankTotal)}
+              </span>
             </div>
           </div>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-foreground tracking-tight">
-              {formatCurrency(bankTotal)}
-            </span>
-            <span className="text-xs text-indigo-600 dark:text-indigo-400 font-mono font-semibold">
+          <div className="mt-3 pt-2.5 border-t border-default-100 dark:border-default-800/80 flex items-center justify-between text-xs">
+            <span className="text-[11px] text-default-400 truncate">Giro & tabungan perbankan</span>
+            <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 shrink-0">
               {accounts.filter((a) => a.type === "bank").length} bank aktif
             </span>
           </div>
-          <p className="mt-2 text-xs text-default-500">Rekening giro & tabungan perbankan terdaftar</p>
         </Card>
 
         {/* E-Wallets Total */}
-        <Card className="p-4.5 rounded-2xl border border-default-200/80 dark:border-default-800 bg-white dark:bg-gray-900 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-default-500 uppercase tracking-wider">
-              Dompet Digital (E-Wallet)
-            </span>
-            <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <CreditCard className="w-4 h-4" />
+        <Card className="p-4.5 rounded-2xl border border-default-200/80 dark:border-default-800 bg-white dark:bg-gray-900 shadow-2xs flex flex-col justify-between min-h-[136px]">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-default-500 uppercase tracking-wider">
+                Dompet Digital (E-Wallet)
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <CreditCard className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <span
+                className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight block truncate"
+                title={formatCurrency(ewalletTotal)}
+              >
+                {formatCurrency(ewalletTotal)}
+              </span>
             </div>
           </div>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tracking-tight">
-              {formatCurrency(ewalletTotal)}
-            </span>
-            <span className="text-xs text-emerald-600 font-mono font-semibold">
+          <div className="mt-3 pt-2.5 border-t border-default-100 dark:border-default-800/80 flex items-center justify-between text-xs">
+            <span className="text-[11px] text-default-400 truncate">GoPay, OVO, ShopeePay & instan</span>
+            <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
               {accounts.filter((a) => a.type === "ewallet").length} e-wallet
             </span>
           </div>
-          <p className="mt-2 text-xs text-default-500">GoPay, OVO, ShopeePay & dompet instan</p>
         </Card>
 
         {/* Physical Cash Total */}
-        <Card className="p-4.5 rounded-2xl border border-default-200/80 dark:border-default-800 bg-white dark:bg-gray-900 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-default-500 uppercase tracking-wider">
-              Kas Tunai & Petty Cash
-            </span>
-            <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
-              <Coins className="w-4 h-4" />
+        <Card className="p-4.5 rounded-2xl border border-default-200/80 dark:border-default-800 bg-white dark:bg-gray-900 shadow-2xs flex flex-col justify-between min-h-[136px]">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-default-500 uppercase tracking-wider">
+                Kas Tunai & Petty Cash
+              </span>
+              <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                <Coins className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="mt-2">
+              <span
+                className="text-2xl font-extrabold text-amber-600 dark:text-amber-400 tracking-tight block truncate"
+                title={formatCurrency(cashTotal)}
+              >
+                {formatCurrency(cashTotal)}
+              </span>
             </div>
           </div>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-amber-600 dark:text-amber-400 tracking-tight">
-              {formatCurrency(cashTotal)}
-            </span>
-            <span className="text-xs text-amber-600 font-mono font-semibold">
+          <div className="mt-3 pt-2.5 border-t border-default-100 dark:border-default-800/80 flex items-center justify-between text-xs">
+            <span className="text-[11px] text-default-400 truncate">Brankas fisik & operasional</span>
+            <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
               {accounts.filter((a) => a.type === "cash").length} pos kas
             </span>
           </div>
-          <p className="mt-2 text-xs text-default-500">Brankas fisik, uang kembalian & kas kecil</p>
         </Card>
       </div>
 
@@ -967,14 +1013,19 @@ export default function WalletsMasterPage() {
                   {/* Subtle top accent gradient */}
                   <div
                     className={`absolute top-0 left-0 right-0 h-1.5 ${
-                      isBank
-                        ? "bg-linear-to-r from-blue-500 to-indigo-600"
-                        : isEwallet
+                      isEwallet
                         ? "bg-linear-to-r from-emerald-500 to-teal-600"
                         : isCash
                         ? "bg-linear-to-r from-amber-500 to-orange-600"
-                        : "bg-linear-to-r from-purple-500 to-pink-600"
+                        : !isBank
+                        ? "bg-linear-to-r from-purple-500 to-pink-600"
+                        : ""
                     }`}
+                    style={
+                      isBank
+                        ? { background: "var(--primary-gradient)" }
+                        : undefined
+                    }
                   />
 
                   {/* Drop Indicator Overlay if dragging over */}
@@ -996,25 +1047,12 @@ export default function WalletsMasterPage() {
                           <GripVertical className="w-4 h-4" />
                         </div>
 
-                        <div
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-2xs ${
-                            isBank
-                              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                              : isEwallet
-                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                              : isCash
-                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                              : "bg-purple-500/10 text-purple-600 dark:text-purple-400"
-                          }`}
-                        >
-                          {isBank ? (
-                            <Landmark className="w-5 h-5" />
-                          ) : isEwallet ? (
-                            <CreditCard className="w-5 h-5" />
-                          ) : (
-                            <Coins className="w-5 h-5" />
-                          )}
-                        </div>
+                        <BankLogo
+                          bankName={acc.bankName}
+                          accountName={acc.name}
+                          type={acc.type}
+                          size={42}
+                        />
                         <div>
                           <div className="text-sm font-bold text-foreground leading-snug group-hover:text-theme-primary transition">
                             {acc.name}
@@ -1117,9 +1155,10 @@ export default function WalletsMasterPage() {
                       type="button"
                       onClick={() => handleOpenEdit(acc)}
                       className="text-default-500 hover:text-foreground font-medium flex items-center gap-1 text-xs cursor-pointer"
+                      title="Sesuaikan saldo awal atau rekonsiliasi kas"
                     >
                       <Sliders className="w-3 h-3" />
-                      <span>Ubah Saldo</span>
+                      <span>Sesuaikan Saldo</span>
                     </button>
                   </div>
                 </Card>
@@ -1173,24 +1212,40 @@ export default function WalletsMasterPage() {
             </div>
 
             {/* Visual Transfer Flow Diagram */}
-            <div className="p-3.5 rounded-xl bg-default-50 dark:bg-default-800/80 border border-default-200/60 dark:border-default-700/60 flex items-center justify-between text-xs font-mono">
-              <div className="space-y-0.5">
-                <span className="text-[10px] text-default-400 uppercase">Sumber (Keluar)</span>
-                <p className="font-bold text-foreground truncate max-w-[130px]">{transferSource.name}</p>
-                <span className="text-[11px] text-default-500">{formatCurrency(transferSource.balance)}</span>
+            <div className="p-3.5 rounded-xl bg-default-50 dark:bg-default-800/80 border border-default-200/60 dark:border-default-700/60 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2.5 max-w-[150px]">
+                <BankLogo
+                  bankName={transferSource.bankName}
+                  accountName={transferSource.name}
+                  type={transferSource.type}
+                  size={32}
+                />
+                <div className="space-y-0.5 min-w-0">
+                  <span className="text-[10px] text-default-400 uppercase font-mono block">Sumber</span>
+                  <p className="font-bold text-foreground truncate text-xs">{transferSource.name}</p>
+                  <span className="text-[11px] text-default-500 font-mono block">{formatCurrency(transferSource.balance)}</span>
+                </div>
               </div>
 
               <div
-                className="p-2 rounded-full bg-white dark:bg-gray-900 border border-default-200 dark:border-default-700"
+                className="p-2 rounded-full bg-white dark:bg-gray-900 border border-default-200 dark:border-default-700 shrink-0 shadow-2xs"
                 style={{ color: "var(--primary-color)" }}
               >
                 <ArrowRight className="w-4 h-4" />
               </div>
 
-              <div className="space-y-0.5 text-right">
-                <span className="text-[10px] text-default-400 uppercase">Tujuan (Masuk)</span>
-                <p className="font-bold text-foreground truncate max-w-[130px]">{transferTarget.name}</p>
-                <span className="text-[11px] text-default-500">{formatCurrency(transferTarget.balance)}</span>
+              <div className="flex items-center justify-end gap-2.5 max-w-[150px] text-right">
+                <div className="space-y-0.5 min-w-0">
+                  <span className="text-[10px] text-default-400 uppercase font-mono block">Tujuan</span>
+                  <p className="font-bold text-foreground truncate text-xs">{transferTarget.name}</p>
+                  <span className="text-[11px] text-default-500 font-mono block">{formatCurrency(transferTarget.balance)}</span>
+                </div>
+                <BankLogo
+                  bankName={transferTarget.bankName}
+                  accountName={transferTarget.name}
+                  type={transferTarget.type}
+                  size={32}
+                />
               </div>
             </div>
 
@@ -1551,10 +1606,23 @@ export default function WalletsMasterPage() {
                 <label className="font-semibold text-foreground">Nama Bank / Provider</label>
                 <input
                   type="text"
+                  placeholder="BCA, Mandiri, BRI, GoPay, Chase..."
                   value={formBankName}
                   onChange={(e) => setFormBankName(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-default-200 dark:border-default-700 bg-default-50 dark:bg-default-800 text-foreground text-xs focus:outline-none focus:ring-2 focus:ring-theme-primary/40"
                 />
+                <div className="flex items-center gap-1 mt-1 overflow-x-auto py-0.5">
+                  {BANK_PRESETS.slice(0, 8).map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setFormBankName(p)}
+                      className="px-2 py-0.5 rounded-md text-[10px] bg-default-50 dark:bg-default-800 hover:bg-default-100 dark:hover:bg-default-700 border border-default-200 dark:border-default-700 text-default-600 dark:text-default-300 shrink-0 cursor-pointer"
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Nomor Rekening */}
@@ -1568,16 +1636,22 @@ export default function WalletsMasterPage() {
                 />
               </div>
 
-              {/* Saldo Terkini */}
-              <div className="space-y-1">
-                <label className="font-semibold text-foreground">Saldo Terkini ({currency})</label>
+              {/* Penyesuaian Saldo Kas */}
+              <div className="space-y-1.5 p-3 rounded-xl bg-default-50/80 dark:bg-default-800/50 border border-default-200/60 dark:border-default-700/60">
+                <div className="flex items-center justify-between">
+                  <label className="font-semibold text-foreground text-xs">Penyesuaian Saldo Kas ({currency})</label>
+                  <span className="text-[10px] text-default-400 font-mono">Rekonsiliasi / Saldo Awal</span>
+                </div>
                 <input
                   type="number"
                   step="1000"
                   value={formBalance}
                   onChange={(e) => setFormBalance(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-default-200 dark:border-default-700 bg-default-50 dark:bg-default-800 text-foreground text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-theme-primary/40"
+                  className="w-full px-3 py-2 rounded-xl border border-default-200 dark:border-default-700 bg-white dark:bg-default-900 text-foreground text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-theme-primary/40"
                 />
+                <p className="text-[10.5px] text-default-400 leading-relaxed">
+                  💡 <strong>Mengapa saldo bisa disesuaikan?</strong> Fitur ini berguna saat onboarding akun baru atau opname fisik (rekonsiliasi selisih kas). Untuk transaksi operasional reguler, catat melalui menu Transaksi agar buku besar (double-entry ledger) tetap presisi.
+                </p>
               </div>
 
               {/* Action Buttons */}

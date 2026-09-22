@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+    <rect width="48" height="48" rx="12" fill="#00A39D"/>
+    <circle cx="24" cy="24" r="13" fill="#00827C"/>
+    <path d="M24 15L25.8 21.2H32L26.9 24.8L28.8 31L24 27.3L19.2 31L21.1 24.8L16 21.2H22.2L24 15Z" fill="#F9A01B"/>
+    <text x="24" y="37" font-family="Arial, sans-serif" font-size="7" font-weight="bold" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">BSI</text>
+  </svg>
